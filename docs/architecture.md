@@ -20,7 +20,7 @@ flowchart TB
         evalm["eval/<br/>duplicate tournaments"]
         cli["cli/<br/>poker big2 play · analyze · tournament"]
         server["server/<br/>FastAPI · game sessions · review"]
-        rl["rl/ (Phase 3)<br/>PyTorch agents"]
+        rl["rl/<br/>DMC · PPO · distillation · network search"]
     end
     web["web/<br/>React + TypeScript"]
     pybind --> helpers --> agents --> evalm --> cli

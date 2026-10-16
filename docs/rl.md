@@ -1,121 +1,163 @@
 # Reinforcement learning
 
-Phase 3 trains a neural network to play Big Two by self-play and compares it
-with the Phase 1 search solver. Results are in
-[study-results/phase3-rl.md](study-results/phase3-rl.md).
+Phase 3 trains neural networks to play Big Two and compares them with the
+Phase 1 search solver. Full results: [study-results/phase3-rl.md](study-results/phase3-rl.md).
+
+**In one paragraph:** two self-play methods (DMC and PPO) learned to beat the greedy
+bot but stayed about 2 points per game behind the solver after 1–1.5 hours of
+laptop training. Distilling the solver into the network worked much better: the
+distilled network nearly matches the solver (−0.5 ± 1.0 points per game) while
+choosing moves ~13× faster, and with a little search on top it ties the solver.
+The web UI uses the distilled network.
 
 ## 1. Search vs learning
 
-| | Search solver (Phase 1) | RL network (Phase 3) |
+| | Search solver (Phase 1) | Network (Phase 3) |
 |---|---|---|
 | When it thinks | At the table, every move | Beforehand, during training |
-| Time per move | 15 ms – 0.2 s | ~1 ms |
+| Time per move | 2–15 ms (more for hints) | ~1 ms |
 | Hidden cards | Uniform random guesses | Learns what the history implies |
-| Model of opponents | Greedy rollout bot | Itself (trained against copies of itself) |
+| Model of opponents | Greedy rollout bot | Whatever it was trained against |
 | Uncertainty | 95% intervals from simulations | None built in |
 
-The network does not replace search; the most successful game AIs (AlphaZero,
-ReBeL, Student of Games) combine both. Section 5 does a simple version.
+## 2. What the network sees and outputs
 
-## 2. The method: Deep Monte Carlo (DouZero)
-
-DouZero (Zha et al., ICML 2021) was the first program to beat all earlier AIs at
-Dou Dizhu, a Chinese shedding game close to Big Two, with a strikingly simple
-recipe that suits huge action spaces (every legal combination is an action):
-
-1. **Play** many games of the current network against itself. At each decision,
-   the network scores every legal move; play the best (with probability
-   ε = 0.05, a random legal move instead, to keep exploring).
-2. **Label** every (position, move) pair with the final score of the player who
-   made it. This *Monte Carlo return* needs no value bootstrapping.
-3. **Fit** the network to those labels (mean squared error), then repeat.
-
-The network therefore learns `Q(position, move)` = the expected final score if
-you play `move` here and everyone continues as the current network would.
-
-Two additions here:
-
-* A second output head predicts the **probability of going out first**
-  (cross-entropy loss), so study mode can show win rates as the solver does.
-* Training samples from the last 4 iterations are kept (a small replay window)
-  to smooth updates.
-
-Implementation: `python/poker/rl/dmc.py`; one iteration plays 1,024 games
-(~45,000 decisions), then trains one epoch over the replay window.
-
-## 3. What the network sees
-
-Features are 0/1 values computed in Rust (`crates/big2/src/features.rs`), from the
+Features are 0/1 values computed in Rust (`crates/big2/src/features.rs`) from the
 acting player's viewpoint, with seats relative to them (next, across, previous):
+your hand; the cards you have not seen; the cards each seat has played; each
+opponent's card count; the play to beat and who made it; whether you lead;
+passes so far this trick; the last 12 actions. A test checks that two positions
+differing only in hidden cards encode identically — the network cannot cheat.
 
-* your hand; the cards you have not seen; the cards each seat has played;
-* each opponent's card count;
-* the play to beat and who made it; whether you lead; passes so far this trick;
-* the last 12 actions (cards and who played or passed).
-
-Each candidate move is encoded as its cards, its kind, and the hand you would have
-left after it. A test checks that two positions differing only in hidden cards
-encode identically — the network cannot cheat.
-
-## 4. Network
+Each candidate move is encoded as its cards, its kind, and the hand you would
+have left after it.
 
 ```
 state (1,103) ─ 512 ─ 256 ─┐
-                            ├─ 256 ─ 128 ─ 2   (score, win logit)
+                            ├─ 256 ─ 128 ─ 2   (expected score, win logit)
 move (61 + 52) ─ 128 ──────┘
 ```
 
-The state tower runs once per decision; only the small head runs per legal move,
-so scoring 100 candidates costs little more than scoring one. ~0.8 M parameters.
+The state tower runs once per decision; only the small head runs per legal move.
+About 0.8 M parameters, 3.3 MB on disk. The network plays the move with the
+highest predicted score (or win probability, with `objective=win`).
 
-## 5. Network + search
+## 3. Methods
 
-`python/poker/rl/search.py` combines the network with the Phase 1 recipe:
+### 3.1 Deep Monte Carlo self-play (DouZero) — `poker rl train`
+
+DouZero (Zha et al., ICML 2021) beat all earlier programs at Dou Dizhu, a close
+relative of Big Two, with a simple recipe:
+
+1. **Play** games of the current network against itself; at each decision score
+   every legal move and play the best (ε = 5% random moves to explore).
+2. **Label** each (position, move) with the final score of the player who made it.
+3. **Fit** the network to those labels (squared error; plus cross-entropy for the
+   win head), keeping the last 4 iterations' data. Repeat.
+
+One iteration = 1,024 games (~45,000 decisions) in about 3 seconds on the M1;
+the Rust batched environment (`Big2VecEnv`) plays ~13,000 random games/s, so the
+network is the bottleneck.
+
+### 3.2 PPO self-play — `poker rl ppo`
+
+Proximal Policy Optimization (Schulman et al., 2017), as in Charlesworth's Big
+Two agent (2018). Instead of move values, the network outputs move
+probabilities (softmax over the legal moves) plus a position value:
+
+1. Play self-play games, *sampling* moves from the policy.
+2. Advantage = final score − predicted value: did it go better than expected?
+3. For 4 epochs, raise the probability of better-than-expected moves and lower
+   the others, clipped so one batch cannot change the policy much; regress the
+   value toward the final score; small entropy bonus for exploration.
+
+### 3.3 Search distillation (expert iteration) — `poker rl distill-gen` + `distill-train`
+
+Self-play learns from one noisy number per decision. The solver already
+estimates every promising move from hundreds of simulated games. Distillation
+uses those estimates as targets:
+
+1. **Generate:** worker processes play games in which ISMCTS (1,000 simulations)
+   analyzes every decision. Store the state and, for each move simulated at least
+   20 times, its mean score, win rate and simulation count. Play the solver's best
+   move (25% of the time, a random one of its top 3, for variety).
+2. **Train:** regress the network toward those values, weighting each move by its
+   simulation count.
+
+This is the "expert iteration" idea behind AlphaZero, with ISMCTS as the expert.
+The network becomes a fast copy of the solver, including its assumption that
+opponents play like the greedy bot.
+
+### 3.4 Network + search — `dmcsearch:` agents
+
+`python/poker/rl/search.py` combines a network with Monte Carlo search:
 
 1. The network ranks the legal moves; keep the best 6.
 2. Sample 32 deals of the hidden cards.
-3. For each deal and candidate, play the game to the end with **the network
-   playing every seat** (instead of the greedy bot).
+3. Play each (deal, candidate) to the end with **the network playing every seat**
+   (instead of the greedy bot), all 192 games in lockstep with batched network calls.
 4. Pick the candidate with the best average result.
 
-All 192 playouts of a decision run in lockstep, one batched network call per step.
+## 4. Models in `models/`
 
-## 6. Commands
+| File | Method | Committed |
+|---|---|---|
+| `big2-distilled.pt` | Distillation (used by the web UI) | yes |
+| `big2-dmc-selfplay.pt` | DMC self-play, 90 min | no (retrain) |
+| `big2-ppo.pt` | PPO self-play, 60 min | no (retrain) |
+| `big2-distilled-finetuned.pt` | Distilled, then 60 min DMC self-play | no (retrain) |
+
+All were trained under the default rules; the network does not know other rule
+variants, so the UI disables RL options for them.
+
+## 5. Commands
 
 ```sh
-poker rl train --run-dir runs/dmc/v1 --minutes 90         # train (logs + checkpoints in run dir)
-poker rl train --resume runs/dmc/v1/latest.pt ...          # continue
-poker big2 tournament dmc:checkpoint=models/big2-dmc.pt ismcts:iterations=1000 \
-    dmc:checkpoint=models/big2-dmc.pt ismcts:iterations=1000 --deals 100 --workers 6
-python experiments/phase3_rl.py --checkpoint models/big2-dmc.pt
+# Self-play
+poker rl train --run-dir runs/dmc/v1 --minutes 90             # DMC
+poker rl train --run-dir runs/dmc/ft --init models/big2-distilled.pt   # DMC from given weights
+poker rl ppo --run-dir runs/ppo/v1 --minutes 60                # PPO
+
+# Distillation (run the two side by side; the trainer picks up new data as it appears)
+poker rl distill-gen --out-dir runs/distill/data --workers 4 --minutes 60
+poker rl distill-train --data-dir runs/distill/data --run-dir runs/distill/v1 --minutes 75
+
+# Use a network
+poker big2 tournament dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 \
+    dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 --deals 100 --workers 6
+
+# Reproduce the Phase 3 study
+python experiments/phase3_rl.py round-robin --deals 100 --workers 7
+python experiments/phase3_rl.py agreement --positions 300
 ```
 
-Agent specs: `dmc:checkpoint=PATH[,objective=win]` (network alone) and
-`dmcsearch:checkpoint=PATH[,determinizations=32,top=6]` (network + search).
+Agent specs: `dmc:checkpoint=PATH[,objective=win]` (any network, including PPO and
+distilled ones) and `dmcsearch:checkpoint=PATH[,determinizations=32,top=6]`.
 
-The web UI offers both as opponents ("RL network", "RL network + search") and
-shows the network's pick next to the solver's in study mode, when
-`models/big2-dmc.pt` exists (override with `POKER_RL_CHECKPOINT`). The network
-was trained under the default rules, so these options are disabled for other
-rule variants.
+Each run directory holds `log.jsonl` (one line per iteration or evaluation),
+`config.json`, `latest.pt` (resumable) and `best.pt` (best evaluation vs greedy).
 
-## 7. Limits
+## 6. Limits
 
-* **Compute.** DouZero trained for days on four GPUs with dozens of actor
-  processes. This project trains for about 1.5 hours on a laptop CPU, i.e. a few
-  million games instead of billions of decisions. Results show where the curve
-  is at that budget, not how far it can go.
-* **Self-play only.** The network learns to beat copies of itself; nothing
-  guarantees it is hard to exploit by a different style.
-* **One rule set.** A change of rules needs a new network.
+* **Compute.** DouZero trained on billions of decisions with many GPUs. These runs
+  used 1–1.5 hours on a laptop CPU, several at once. The results describe this
+  budget, not the methods' ceilings.
+* **Evaluation vs greedy is biased.** Agents that learned from the solver inherit
+  its greedy-opponent model and score extra against greedy bots. Compare agents
+  head-to-head (`round-robin`).
+* **Self-play only finds what it plays against.** Nothing guarantees a network is
+  hard to exploit by a different style, including human play.
 
 ## References
 
 * Zha et al. *DouZero: Mastering DouDizhu with Self-Play Deep Reinforcement
   Learning.* ICML 2021.
-* Yang et al. *PerfectDou: Dominating DouDizhu with Perfect Information
-  Distillation.* NeurIPS 2022.
+* Schulman et al. *Proximal Policy Optimization Algorithms.* arXiv:1707.06347, 2017.
 * Charlesworth. *Application of Self-Play Reinforcement Learning to a Four-Player
-  Game of Imperfect Information* (Big Two, PPO). arXiv:1808.10442, 2018.
+  Game of Imperfect Information* (Big Two). arXiv:1808.10442, 2018.
+* Anthony, Tian, Barber. *Thinking Fast and Slow with Deep Learning and Tree
+  Search* (expert iteration). NeurIPS 2017.
+* Silver et al. *Mastering the game of Go without human knowledge* (AlphaGo
+  Zero). Nature, 2017.
 * Tesauro, Galperin. *On-line Policy Improvement using Monte-Carlo Search.*
   NeurIPS 1996.

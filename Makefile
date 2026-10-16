@@ -2,7 +2,7 @@
 .PHONY: dev test test-rust test-python test-web test-e2e lint fmt bench docs web serve web-dev
 
 dev:            ## Build the Rust extension, install the Python package (editable) and UI deps
-	pip install -e ".[dev]"
+	pip install -e ".[dev,rl]"
 	npm install --prefix web
 
 test: test-rust test-python test-web
