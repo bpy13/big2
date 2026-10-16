@@ -8,8 +8,8 @@ A research codebase for studying imperfect-information card games, starting with
 2. **A playable UI** against solver bots, with a study mode showing the top 3 moves.
 3. **Reinforcement learning** agents, compared head-to-head with the solver.
 
-> Status: **Phase 1 complete** (rules engine, solver, CLI). Next: Phase 2 (web UI
-> with study mode), then Phase 3 (reinforcement learning).
+> Status: **Phases 1–2 complete** (rules engine, solver, CLI, web UI with study
+> mode). Next: Phase 3 (reinforcement learning).
 
 ## Quick start
 
@@ -23,6 +23,9 @@ make test
 ## Using it
 
 ```sh
+# Web UI: play against solver bots, with study mode (top-3 hints, quiz, post-game review)
+make serve                                   # then open http://127.0.0.1:8000
+
 # Play a deal in the terminal against three solver bots ("?" asks for a hint)
 poker big2 play
 poker big2 play --hints --bots greedy        # easier bots, top-3 hint every turn
@@ -55,6 +58,7 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 |---|---|
 | [docs/rules/big2.md](docs/rules/big2.md) | The exact Big Two rules implemented, with variants |
 | [docs/solver.md](docs/solver.md) | What the solver computes, how, and how far to trust it |
+| [docs/ui.md](docs/ui.md) | Web UI, study mode, review, game logs, API |
 | [docs/study-results/](docs/study-results/) | Measured results of each experiment |
 | [docs/architecture.md](docs/architecture.md) | Code layout, correctness strategy, performance |
 | [docs/decisions/](docs/decisions/) | Why the project is built the way it is |
@@ -64,7 +68,8 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 
 ```
 crates/        Rust: cards, games (traits), big2 (engine), search (solvers), pybind
-python/poker/  Python: games helpers, agents, eval (tournaments), cli
+python/poker/  Python: games helpers, agents, eval (tournaments), cli, server (FastAPI)
+web/           React + TypeScript UI (Vite); browser tests in web/tests
 experiments/   Scripts that produce the results in docs/study-results/
 docs/          Rules spec, solver notes, architecture, decisions, results
 ```

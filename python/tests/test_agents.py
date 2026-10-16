@@ -37,3 +37,10 @@ def test_search_agent_ignores_hidden_cards() -> None:
     a1 = SearchAgent(iterations=500, seed=1).analyze(s1)
     a2 = SearchAgent(iterations=500, seed=1).analyze(s2)
     assert a1["moves"] == a2["moves"]
+
+
+def test_search_agent_accepts_large_seeds() -> None:
+    # Regression: the web server uses 48-bit deal seeds; derived seeds must fit a u64.
+    agent = make_agent("ismcts:iterations=20", seed=2**48 + 3)
+    state = Rules().new_deal(seed=2**48)
+    assert agent.act(state) in state.legal_actions()
