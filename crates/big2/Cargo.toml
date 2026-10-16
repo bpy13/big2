@@ -1,0 +1,21 @@
+[package]
+name = "poker-big2"
+description = "Big Two rules: combinations, move generation, game state and scoring."
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+poker-cards.workspace = true
+poker-games.workspace = true
+rand.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "engine"
+harness = false
+
+[lib]
+bench = false

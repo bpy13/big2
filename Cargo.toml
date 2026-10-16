@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["crates/cards", "crates/games", "crates/big2"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+poker-cards = { path = "crates/cards" }
+poker-games = { path = "crates/games" }
+poker-big2 = { path = "crates/big2" }
+poker-search = { path = "crates/search" }
+rand = { version = "0.8", features = ["small_rng"] }
+rayon = "1.10"
+proptest = "1.5"
+criterion = { version = "0.5", default-features = false }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+debug = 1  # keep symbols so profilers show function names
