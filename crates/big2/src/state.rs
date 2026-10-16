@@ -5,7 +5,7 @@ use crate::combo::{classify, Combo, Kind};
 use crate::movegen::{highest_card, legal_combos};
 use crate::rules::{PassRule, RuleSet, Scoring};
 use poker_cards::mask;
-use poker_games::{Game, Outcome, Player};
+use poker_games::{Game, Outcome, Player, Transposable};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::fmt;
@@ -165,6 +165,73 @@ impl State {
             opening: true,
             winner: None,
             history: Vec::with_capacity(64),
+        })
+    }
+
+    /// Sets up a mid-game position, for puzzles, study mode and tests.
+    ///
+    /// * `hands`: each player's remaining cards (disjoint; 0–13 cards each). Cards in
+    ///   no hand count as already played.
+    /// * `current`: the player to act.
+    /// * `current_play`: the play to beat and who made it, or `None` if `current`
+    ///   leads. It must be disjoint from every hand.
+    ///
+    /// The position is never an opening position, and the history starts empty.
+    pub fn from_position(
+        rules: RuleSet,
+        hands: [u64; NUM_PLAYERS],
+        current: usize,
+        current_play: Option<(usize, u64)>,
+    ) -> Result<State, String> {
+        let mut seen = 0u64;
+        for (p, &h) in hands.iter().enumerate() {
+            if h & !FULL_DECK != 0 || h.count_ones() > HAND_SIZE {
+                return Err(format!("player {p} has an invalid hand"));
+            }
+            if seen & h != 0 {
+                return Err(format!(
+                    "player {p} shares cards with another player: {}",
+                    format_mask(seen & h)
+                ));
+            }
+            seen |= h;
+        }
+        if current >= NUM_PLAYERS {
+            return Err(format!("no player {current}"));
+        }
+        let out: Vec<usize> = (0..NUM_PLAYERS).filter(|&p| hands[p] == 0).collect();
+        if out.len() > 1 {
+            return Err("at most one player can have an empty hand".into());
+        }
+        let trick = match current_play {
+            None => None,
+            Some((holder, cards)) => {
+                if holder >= NUM_PLAYERS || holder == current {
+                    return Err("the current play must belong to another player".into());
+                }
+                if cards & seen != 0 {
+                    return Err("the current play overlaps a hand".into());
+                }
+                let combo = classify(cards, &rules)
+                    .ok_or_else(|| format!("{} is not a combination", format_mask(cards)))?;
+                Some((holder as u8, combo))
+            }
+        };
+        let winner = out.first().map(|&p| p as u8);
+        if winner.is_some() && trick.map(|(h, _)| h) != winner {
+            return Err("a player with no cards must have made the last play".into());
+        }
+        Ok(State {
+            rules,
+            hands,
+            played: FULL_DECK & !seen,
+            current: current as u8,
+            trick,
+            passes: 0,
+            locked: 0,
+            opening: false,
+            winner,
+            history: Vec::new(),
         })
     }
 
@@ -429,6 +496,10 @@ impl Game for State {
         })
     }
 
+    fn endgame_size(&self) -> usize {
+        self.hands.iter().map(|h| h.count_ones() as usize).sum()
+    }
+
     fn max_abs_score(&self) -> f64 {
         match self.rules.scoring {
             Scoring::WinLoss => 3.0,
@@ -461,6 +532,32 @@ impl Game for State {
             s.hands[p] = h;
         }
         s
+    }
+}
+
+/// Everything that determines the future of a position (the history does not).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct PositionKey {
+    hands: [u64; NUM_PLAYERS],
+    current: u8,
+    trick: Option<(u8, u64)>,
+    passes: u8,
+    locked: u8,
+    opening: bool,
+}
+
+impl Transposable for State {
+    type Key = PositionKey;
+
+    fn position_key(&self) -> PositionKey {
+        PositionKey {
+            hands: self.hands,
+            current: self.current,
+            trick: self.trick.map(|(p, c)| (p, c.cards)),
+            passes: self.passes,
+            locked: self.locked,
+            opening: self.opening,
+        }
     }
 }
 

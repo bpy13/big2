@@ -63,6 +63,13 @@ pub trait Game: Clone + Send + Sync + Debug {
     /// consistent possibilities, unless the game documents otherwise).
     fn determinize<R: Rng + ?Sized>(&self, observer: Player, rng: &mut R) -> Self;
 
+    /// A rough measure of how much game is left (Big Two: cards still in hands).
+    /// Search uses it to decide when a position is small enough to solve exactly.
+    /// The default, `usize::MAX`, means "never solve exactly".
+    fn endgame_size(&self) -> usize {
+        usize::MAX
+    }
+
     /// `true` once the game is over.
     fn is_terminal(&self) -> bool {
         self.current_player().is_none()
@@ -74,6 +81,14 @@ pub trait Game: Clone + Send + Sync + Debug {
         self.legal_actions(&mut v);
         v
     }
+}
+
+/// A game whose positions can be cached: two states with equal keys must have
+/// the same future (same hands, same player to move, same trick state), even if
+/// they were reached by different histories.
+pub trait Transposable: Game {
+    type Key: Hash + Eq + Clone + Send + Sync;
+    fn position_key(&self) -> Self::Key;
 }
 
 /// Something that picks an action in a state: a bot, a rollout policy inside a
