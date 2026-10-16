@@ -32,9 +32,18 @@ Add `?botDelay=0` to the URL to make bots move instantly (default 700 ms per mov
 | Medium | Solver, 300 simulations per move |
 | Hard | Solver, 2,000 simulations per move |
 | Expert | Solver, 10,000 simulations per move on 4 threads |
+| RL network | The distilled network (`models/big2-distilled.pt`), ~1 ms per move |
+| RL network + search | The network plus rollout search (~0.2 s per move) |
+
+The RL options appear only when the model file exists and the default rules are
+chosen (the network was trained on them). With them available, study mode also
+shows the network's own pick under the solver's top 3 — a quick way to see where
+fast intuition and search disagree.
 
 From the Phase 1 results, Medium through Expert are close in strength, because extra
 simulations add little ([study-results/phase1-solver.md](study-results/phase1-solver.md)).
+RL network + search is about as strong as the solver bots; the RL network alone is slightly
+weaker ([study-results/phase3-rl.md](study-results/phase3-rl.md)).
 
 ## Study mode
 

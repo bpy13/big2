@@ -6,17 +6,34 @@ A research codebase for studying imperfect-information card games, starting with
 1. **A search-based solver** — information-set Monte Carlo tree search with an exact
    endgame solver — that recommends moves with estimated win rates.
 2. **A playable UI** against solver bots, with a study mode showing the top 3 moves.
-3. **Reinforcement learning** agents, compared head-to-head with the solver.
+3. **Reinforcement learning** agents (DMC, PPO, search distillation), compared
+   head-to-head with the solver.
 
-> Status: **Phases 1–2 complete** (rules engine, solver, CLI, web UI with study
-> mode). Next: Phase 3 (reinforcement learning).
+## Findings so far
+
+| Agent | vs the field (head-to-head) | ms / move |
+|---|---:|---:|
+| ISMCTS search solver | +1.40 | 14 |
+| Distilled network + search | +1.31 | 188 |
+| PIMC search | +0.76 | 2 |
+| Distilled network | +0.17 | 1 |
+| DMC self-play network | −1.07 | 1 |
+| PPO self-play network | −1.49 | 1 |
+
+Search beats self-play learning at this compute budget (1–1.5 CPU-hours of
+training); distilling the solver into a network gives nearly the solver's
+strength at a fraction of the cost. Details: [Phase 1](docs/study-results/phase1-solver.md),
+[Phase 3](docs/study-results/phase3-rl.md).
+
+> Status: **Phases 1–3 complete** — rules engine, search solver, CLI, web UI with
+> study mode, and reinforcement-learning agents compared head-to-head with the solver.
 
 ## Quick start
 
 ```sh
 conda env create -f environment.yml
 conda activate poker
-make dev     # builds the Rust extension and installs the `poker` Python package
+make dev     # builds the Rust extension, installs the `poker` package (with PyTorch) and UI deps
 make test
 ```
 
@@ -59,6 +76,7 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 | [docs/rules/big2.md](docs/rules/big2.md) | The exact Big Two rules implemented, with variants |
 | [docs/solver.md](docs/solver.md) | What the solver computes, how, and how far to trust it |
 | [docs/ui.md](docs/ui.md) | Web UI, study mode, review, game logs, API |
+| [docs/rl.md](docs/rl.md) | Reinforcement learning: methods, models, commands |
 | [docs/study-results/](docs/study-results/) | Measured results of each experiment |
 | [docs/architecture.md](docs/architecture.md) | Code layout, correctness strategy, performance |
 | [docs/decisions/](docs/decisions/) | Why the project is built the way it is |
@@ -68,8 +86,9 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 
 ```
 crates/        Rust: cards, games (traits), big2 (engine), search (solvers), pybind
-python/poker/  Python: games helpers, agents, eval (tournaments), cli, server (FastAPI)
+python/poker/  Python: games helpers, agents, eval (tournaments), cli, server (FastAPI), rl
 web/           React + TypeScript UI (Vite); browser tests in web/tests
 experiments/   Scripts that produce the results in docs/study-results/
+models/        Trained network used by the web UI
 docs/          Rules spec, solver notes, architecture, decisions, results
 ```

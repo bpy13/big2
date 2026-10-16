@@ -106,7 +106,7 @@ def test_rl_opponents_and_network_hints(
     pytest.importorskip("torch")
     from poker.server import session
 
-    ckpt = Path(__file__).resolve().parents[2] / "models" / "big2-dmc.pt"
+    ckpt = Path(__file__).resolve().parents[2] / "models" / "big2-distilled.pt"
     if not ckpt.exists():
         pytest.skip("no trained model in models/")
     monkeypatch.setattr(session, "RL_CHECKPOINT", ckpt)

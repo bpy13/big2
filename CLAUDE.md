@@ -24,6 +24,7 @@ make dev                              # build the Rust extension + install Pytho
 | Web UI + API | `make serve` (http://127.0.0.1:8000) |
 | UI dev server | `uvicorn poker.server.app:app --reload` + `make web-dev` |
 | Browser tests | `make test-e2e` (once: `cd web && npx playwright install chromium`) |
+| RL training | `poker rl train` / `poker rl ppo` / `poker rl distill-gen` + `distill-train` (see docs/rl.md) |
 
 ## Layout
 
@@ -42,5 +43,7 @@ make dev                              # build the Rust extension + install Pytho
   Hands are `u64` masks. Text notation: `3d Tc Ah 2s`.
 * Public Rust items get rustdoc; public Python functions get docstrings.
 * Commit in small, descriptive steps.
+* Do not rebuild the extension (`pip install -e .`) while a training job runs: the
+  running process has the old `_core` library loaded.
 * Node tools must run inside the conda env (`conda activate poker`); the system
   Node is too old for Vite.

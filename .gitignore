@@ -32,4 +32,4 @@ web/playwright-report/
 
 # Trained models: only the one the web UI uses is committed (see docs/rl.md to retrain others)
 /models/*
-!/models/big2-dmc.pt
+!/models/big2-distilled.pt

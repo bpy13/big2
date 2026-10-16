@@ -38,7 +38,7 @@ DIFFICULTIES: dict[str, str] = {
 #: Trained under the default rules only. Override with POKER_RL_CHECKPOINT.
 RL_CHECKPOINT = Path(
     os.environ.get(
-        "POKER_RL_CHECKPOINT", Path(__file__).resolve().parents[3] / "models" / "big2-dmc.pt"
+        "POKER_RL_CHECKPOINT", Path(__file__).resolve().parents[3] / "models" / "big2-distilled.pt"
     )
 )
 
