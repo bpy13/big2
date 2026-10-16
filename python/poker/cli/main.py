@@ -253,5 +253,27 @@ def tournament(
         console.print(f"Saved to {out}")
 
 
+# serve ------------------------------------------------------------------------
+
+
+@app.command()
+def serve(
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    reload: Annotated[bool, typer.Option(help="Restart on code changes (development).")] = False,
+) -> None:
+    """Start the web UI and API (build the UI first with `make web`)."""
+    import uvicorn
+
+    from poker.server.app import WEB_DIST
+
+    if not WEB_DIST.is_dir():
+        console.print(
+            f"[yellow]No built UI at {WEB_DIST}; serving the API only. Run `make web` first.[/]"
+        )
+    console.print(f"Open http://{host}:{port}")
+    uvicorn.run("poker.server.app:app", host=host, port=port, reload=reload)
+
+
 if __name__ == "__main__":
     app()

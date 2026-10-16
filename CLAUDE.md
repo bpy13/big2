@@ -21,6 +21,9 @@ make dev                              # build the Rust extension + install Pytho
 | Python tests only | `pytest` |
 | Lint / format | `make lint`, `make fmt` |
 | Engine benchmark | `make bench` |
+| Web UI + API | `make serve` (http://127.0.0.1:8000) |
+| UI dev server | `uvicorn poker.server.app:app --reload` + `make web-dev` |
+| Browser tests | `make test-e2e` (once: `cd web && npx playwright install chromium`) |
 
 ## Layout
 
@@ -39,3 +42,5 @@ make dev                              # build the Rust extension + install Pytho
   Hands are `u64` masks. Text notation: `3d Tc Ah 2s`.
 * Public Rust items get rustdoc; public Python functions get docstrings.
 * Commit in small, descriptive steps.
+* Node tools must run inside the conda env (`conda activate poker`); the system
+  Node is too old for Vite.

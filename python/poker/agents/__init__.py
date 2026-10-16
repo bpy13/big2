@@ -96,7 +96,7 @@ class SearchAgent:
             state,
             algorithm=self.algorithm,
             iterations=self.iterations,
-            seed=self.seed * 1_000_003 + self._calls,
+            seed=(self.seed * 1_000_003 + self._calls) % 2**64,  # the engine takes a u64
             **self.options,
         )
 
