@@ -16,6 +16,11 @@ tournament runner create them::
     make_agent("greedy")
     make_agent("ismcts:iterations=2000,exploration=0.25")
     make_agent("pimc:iterations=200")
+    make_agent("dmc:checkpoint=runs/dmc/v1/best.pt")
+    make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
+
+The ``dmc`` and ``dmcsearch`` kinds need PyTorch and a checkpoint from
+``poker rl train`` (see docs/rl.md).
 """
 
 from __future__ import annotations
@@ -116,7 +121,8 @@ def _parse_value(v: str) -> Any:
 def make_agent(spec: str, seed: int | None = None) -> Agent:
     """Builds an agent from a spec string like ``"ismcts:iterations=2000"``.
 
-    Kinds: ``random``, ``greedy[:epsilon=…]``, ``ismcts[:…]``, ``pimc[:…]``.
+    Kinds: ``random``, ``greedy[:epsilon=…]``, ``ismcts[:…]``, ``pimc[:…]``,
+    ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
     """
     kind, _, rest = spec.partition(":")
     opts = {
@@ -133,7 +139,20 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return SearchAgent(
             algorithm=kind, iterations=iterations, seed=seed or 0, options=opts, name=spec
         )
-    raise ValueError(f"unknown agent kind {kind!r} in {spec!r} (random, greedy, ismcts, pimc)")
+    if kind in ("dmc", "dmcsearch"):
+        if "checkpoint" not in opts:
+            raise ValueError(f"{kind} needs checkpoint=<path to .pt> in {spec!r}")
+        # Imported lazily so the rest of the package works without PyTorch.
+        if kind == "dmc":
+            from poker.rl.agent import DMCAgent
+
+            return DMCAgent(str(opts.pop("checkpoint")), name=spec, **opts)
+        from poker.rl.search import RolloutSearchAgent
+
+        return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
+    raise ValueError(
+        f"unknown agent kind {kind!r} in {spec!r} (random, greedy, ismcts, pimc, dmc, dmcsearch)"
+    )
 
 
 __all__ = ["Agent", "RandomAgent", "GreedyAgent", "SearchAgent", "make_agent"]

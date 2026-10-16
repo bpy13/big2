@@ -23,6 +23,8 @@ use rand::rngs::SmallRng;
 use rand::{RngCore, SeedableRng};
 use std::time::Duration;
 
+mod vecenv;
+
 fn value_error(e: impl std::fmt::Display) -> PyErr {
     PyValueError::new_err(e.to_string())
 }
@@ -35,7 +37,7 @@ fn rng_from(seed: Option<u64>) -> SmallRng {
 }
 
 /// Builds a `RuleSet` from optional variant names.
-fn rules_from(
+pub(crate) fn rules_from(
     straights: Option<&str>,
     flush_order: Option<&str>,
     pass_rule: Option<&str>,
@@ -89,8 +91,8 @@ fn classify_cards(
 /// A Big Two deal. Holds the true state, including every player's hidden hand.
 #[pyclass(name = "Big2State", module = "poker._core")]
 #[derive(Clone)]
-struct PyState {
-    inner: State,
+pub(crate) struct PyState {
+    pub(crate) inner: State,
 }
 
 #[pymethods]
@@ -424,6 +426,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(format_cards, m)?)?;
     m.add_function(wrap_pyfunction!(classify_cards, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
+    m.add_class::<vecenv::VecEnv>()?;
+    m.add_function(wrap_pyfunction!(vecenv::encode, m)?)?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }

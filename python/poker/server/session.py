@@ -14,6 +14,7 @@ Study features:
 from __future__ import annotations
 
 import json
+import os
 import secrets
 import threading
 import time
@@ -32,6 +33,29 @@ DIFFICULTIES: dict[str, str] = {
     "hard": "ismcts:iterations=2000",
     "expert": "ismcts:iterations=10000,threads=4",
 }
+
+#: Trained network for the RL opponents and the network's pick in study mode.
+#: Trained under the default rules only. Override with POKER_RL_CHECKPOINT.
+RL_CHECKPOINT = Path(
+    os.environ.get(
+        "POKER_RL_CHECKPOINT", Path(__file__).resolve().parents[3] / "models" / "big2-dmc.pt"
+    )
+)
+
+
+def rl_available(rules: Rules | None = None) -> bool:
+    """True if the RL checkpoint exists (and, given ``rules``, they are the default rules)."""
+    return RL_CHECKPOINT.is_file() and (rules is None or rules == Rules())
+
+
+def difficulties() -> dict[str, str]:
+    """Opponent presets: the solver levels, plus the RL agents when a checkpoint exists."""
+    d = dict(DIFFICULTIES)
+    if rl_available():
+        d["rl"] = f"dmc:checkpoint={RL_CHECKPOINT}"
+        d["rl_search"] = f"dmcsearch:checkpoint={RL_CHECKPOINT},determinizations=32,top=6"
+    return d
+
 
 #: Solver settings for study-mode analysis (ISMCTS simulations) and the
 #: post-game review (PIMC sampled deals per decision).
@@ -150,12 +174,31 @@ class GameSession:
     def analyze(
         self, iterations: int = ANALYSIS_ITERATIONS, top: int = 3, objective: str = "score"
     ) -> dict[str, Any]:
-        """Solver recommendation for the human's current turn."""
+        """Solver recommendation for the human's current turn, plus (when available)
+        the trained network's own top moves under ``"network"``."""
         if self.state.current_player != self.seat:
             raise ValueError("analysis is only available on your turn")
-        return _analysis_view(
+        view = _analysis_view(
             self.state, self.rules, "ismcts", iterations, top, objective, seed=len(self.actions)
         )
+        view["network"] = self._network_view(objective) if rl_available(self.rules) else None
+        return view
+
+    def _network_view(self, objective: str) -> list[dict[str, Any]]:
+        from poker.rl.agent import evaluate_moves, load_model
+
+        moves = evaluate_moves(load_model(RL_CHECKPOINT), self.state)
+        if objective == "win":
+            moves.sort(key=lambda m: -m["win_rate"])
+        return [
+            {
+                "cards": card_list(m["cards"]),
+                "kind": "pass" if not m["cards"] else kind_of(m["cards"], self.rules),
+                "mean_score": m["mean_score"],
+                "win_rate": m["win_rate"],
+            }
+            for m in moves[:3]
+        ]
 
     def review(self, iterations: int = REVIEW_DEALS) -> list[dict[str, Any]]:
         """After the game: each human decision with the solver's top moves and the

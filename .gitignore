@@ -29,3 +29,7 @@ web/playwright-report/
 .DS_Store
 .idea/
 .vscode/
+
+# Trained models: only the one the web UI uses is committed (see docs/rl.md to retrain others)
+/models/*
+!/models/big2-dmc.pt

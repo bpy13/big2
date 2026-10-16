@@ -306,5 +306,8 @@ export default function App() {
 }
 
 function difficultyLabel(d: string | undefined): string {
-  return d ? d[0].toUpperCase() + d.slice(1) : ''
+  if (!d) return ''
+  if (d === 'rl') return 'RL'
+  if (d === 'rl_search') return 'RL + search'
+  return d[0].toUpperCase() + d.slice(1)
 }

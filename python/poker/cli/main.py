@@ -13,7 +13,7 @@ Run ``poker big2 <command> --help`` for all options.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
 from rich.console import Console
@@ -251,6 +251,115 @@ def tournament(
     if out:
         result.save(out)
         console.print(f"Saved to {out}")
+
+
+# rl ---------------------------------------------------------------------------
+
+rl = typer.Typer(help="Reinforcement learning (see docs/rl.md).", no_args_is_help=True)
+app.add_typer(rl, name="rl")
+
+
+@rl.command("train")
+def rl_train(
+    run_dir: Annotated[
+        str, typer.Option(help="Output directory (logs, checkpoints).")
+    ] = "runs/dmc/default",
+    minutes: Annotated[float, typer.Option(help="Wall-clock budget.")] = 60.0,
+    iters: Annotated[int, typer.Option(help="Maximum iterations.")] = 1_000_000,
+    games_per_iter: int = 1024,
+    epsilon: float = 0.05,
+    lr: float = 3e-4,
+    eval_every: int = 10,
+    seed: int = 0,
+    device: Annotated[str, typer.Option(help="cpu | mps")] = "cpu",
+    resume: Annotated[str | None, typer.Option(help="Checkpoint to continue from.")] = None,
+    init: Annotated[
+        str | None, typer.Option(help="Start from these weights (e.g. a distilled network).")
+    ] = None,
+) -> None:
+    """Train a Q-network by Deep Monte Carlo self-play (default rules)."""
+    from poker.rl.dmc import TrainConfig, train
+
+    cfg = TrainConfig(
+        run_dir=run_dir,
+        max_minutes=minutes,
+        max_iters=iters,
+        games_per_iter=games_per_iter,
+        epsilon=epsilon,
+        lr=lr,
+        eval_every=eval_every,
+        seed=seed,
+        device=device,
+    )
+
+    def log(r: dict[str, Any]) -> None:
+        line = (
+            f"iter {r['iter']:>5}  {r['minutes']:6.1f} min  games {r['games']:>9,}"
+            f"  loss {r['loss_score']:.4f}"
+        )
+        if "eval_score" in r:
+            line += (
+                f"  vs greedy {r['eval_score']:+.2f} ± {r['eval_score_ci95']:.2f}"
+                f"  win {r['eval_win_rate']:.1%}"
+            )
+        console.print(line)
+
+    train(cfg, resume=resume, log=log, init=init)
+
+
+@rl.command("ppo")
+def rl_ppo(
+    run_dir: str = "runs/ppo/v1",
+    minutes: float = 60.0,
+    lr: float = 3e-4,
+    seed: int = 0,
+) -> None:
+    """Train a policy by PPO self-play (default rules)."""
+    from poker.rl.ppo import PPOConfig, train
+
+    def log(r: dict[str, Any]) -> None:
+        line = (
+            f"iter {r['iter']:>5}  {r['minutes']:6.1f} min  games {r['games']:>9,}"
+            f"  entropy {r['entropy']:.3f}"
+        )
+        if "eval_score" in r:
+            line += f"  vs greedy {r['eval_score']:+.2f} ± {r['eval_score_ci95']:.2f}"
+        console.print(line)
+
+    train(PPOConfig(run_dir=run_dir, max_minutes=minutes, lr=lr, seed=seed), log=log)
+
+
+@rl.command("distill-gen")
+def rl_distill_gen(
+    out_dir: Annotated[str, typer.Option(help="Where to write data shards.")] = "runs/distill/data",
+    workers: int = 4,
+    minutes: float = 60.0,
+    iterations: Annotated[int, typer.Option(help="Solver simulations per decision.")] = 1000,
+) -> None:
+    """Generate solver-labelled training data for search distillation."""
+    from poker.rl.distill import generate
+
+    n = generate(out_dir, workers=workers, minutes=minutes, iterations=iterations)
+    console.print(f"{n:,} decisions written to {out_dir}")
+
+
+@rl.command("distill-train")
+def rl_distill_train(
+    data_dir: str = "runs/distill/data",
+    run_dir: str = "runs/distill/v1",
+    minutes: float = 60.0,
+) -> None:
+    """Train a Q-network on solver-labelled data (picks up new shards as they appear)."""
+    from poker.rl.distill import DistillConfig, train
+
+    def log(r: dict[str, Any]) -> None:
+        console.print(
+            f"{r['minutes']:6.1f} min  {r['decisions']:>9,} decisions  loss {r['loss_score']:.4f}"
+            f"  vs greedy {r['eval_score']:+.2f} ± {r['eval_score_ci95']:.2f}"
+            f"  win {r['eval_win_rate']:.1%}"
+        )
+
+    train(DistillConfig(data_dir=data_dir, run_dir=run_dir, max_minutes=minutes), log=log)
 
 
 # serve ------------------------------------------------------------------------

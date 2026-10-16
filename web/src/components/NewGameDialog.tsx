@@ -6,6 +6,17 @@ const DIFFICULTY_HELP: Record<string, string> = {
   medium: 'Solver with 300 simulations per move.',
   hard: 'Solver with 2,000 simulations per move.',
   expert: 'Solver with 10,000 simulations per move (4 threads).',
+  rl: 'Reinforcement-learning network (trained by self-play), one forward pass per move. Default rules only.',
+  rl_search: 'RL network + search: plays out sampled deals with the network for its top moves. Default rules only.',
+}
+
+const DIFFICULTY_LABEL: Record<string, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+  expert: 'Expert',
+  rl: 'RL network',
+  rl_search: 'RL network + search',
 }
 
 const RULE_LABELS: Record<keyof Rules, string> = {
@@ -55,7 +66,7 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
           <select id="difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
             {Object.keys(config.difficulties).map((d) => (
               <option key={d} value={d}>
-                {d[0].toUpperCase() + d.slice(1)}
+                {DIFFICULTY_LABEL[d] ?? d}
               </option>
             ))}
           </select>
