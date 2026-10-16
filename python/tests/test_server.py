@@ -98,3 +98,38 @@ def test_bad_requests(client: TestClient) -> None:
     assert client.post("/api/games", json={"difficulty": "godlike"}).status_code == 422
     assert client.post("/api/games", json={"bots": "alphago"}).status_code == 422
     assert client.post("/api/games", json={"rules": {"scoring": "bogus"}}).status_code == 422
+
+
+def test_rl_opponents_and_network_hints(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("torch")
+    from poker.server import session
+
+    ckpt = Path(__file__).resolve().parents[2] / "models" / "big2-dmc.pt"
+    if not ckpt.exists():
+        pytest.skip("no trained model in models/")
+    monkeypatch.setattr(session, "RL_CHECKPOINT", ckpt)
+    assert {"rl", "rl_search"} <= set(client.get("/api/config").json()["difficulties"])
+    v = run_bots(client, new_game(client, difficulty="rl", bots=None))
+    a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 300}).json()
+    assert a["network"] and 1 <= len(a["network"]) <= 3
+    legal = {tuple(m) for m in v["legal"]}
+    assert all(tuple(m["cards"]) in legal for m in a["network"])
+    # The network was trained on the default rules only.
+    r = client.post("/api/games", json={"difficulty": "rl", "rules": {"scoring": "original"}})
+    assert r.status_code == 422
+
+
+def test_without_a_model_rl_is_not_offered(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from poker.server import session
+
+    monkeypatch.setattr(session, "RL_CHECKPOINT", Path("/nonexistent/model.pt"))
+    assert "rl" not in client.get("/api/config").json()["difficulties"]
+    v = run_bots(client, new_game(client))
+    assert (
+        client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 200}).json()["network"]
+        is None
+    )

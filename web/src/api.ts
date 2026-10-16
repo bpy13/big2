@@ -53,11 +53,20 @@ export interface MoveStats {
   share: number
 }
 
+export interface NetworkMove {
+  cards: Card[]
+  kind: string
+  mean_score: number
+  win_rate: number
+}
+
 export interface Analysis {
   simulations: number
   seconds: number
   objective: 'score' | 'win'
   moves: MoveStats[]
+  /** The trained RL network's own top moves (null if no checkpoint or non-default rules). */
+  network: NetworkMove[] | null
 }
 
 export interface ReviewItem {

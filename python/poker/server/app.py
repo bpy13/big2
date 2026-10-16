@@ -34,7 +34,7 @@ from pydantic import BaseModel, Field
 
 from poker.agents import make_agent
 from poker.games.big2 import Rules, cards
-from poker.server.session import DIFFICULTIES, GameSession
+from poker.server.session import GameSession, difficulties, rl_available
 
 MAX_SESSIONS = 200
 GAME_LOG_DIR = Path(os.environ.get("POKER_GAME_LOG_DIR", "runs/games"))
@@ -98,18 +98,20 @@ def _after_move(s: GameSession) -> None:
 
 @app.get("/api/config")
 def config() -> dict[str, Any]:
-    return {"difficulties": DIFFICULTIES, "rules": RULE_OPTIONS, "defaults": Rules().kwargs()}
+    return {"difficulties": difficulties(), "rules": RULE_OPTIONS, "defaults": Rules().kwargs()}
 
 
 @app.post("/api/games")
 def new_game(body: NewGame) -> dict[str, Any]:
-    spec = body.bots or DIFFICULTIES.get(body.difficulty or "hard")
+    spec = body.bots or difficulties().get(body.difficulty or "hard")
     if spec is None:
         raise HTTPException(422, f"unknown difficulty {body.difficulty!r}")
     try:
-        make_agent(spec)
         rules = Rules(**body.rules.model_dump())
         rules.new_deal(0)  # validates rule names
+        if spec.startswith("dmc") and not rl_available(rules):
+            raise ValueError("the RL bots were trained on the default rules only")
+        make_agent(spec)
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
     seed = body.seed if body.seed is not None else random.getrandbits(32)

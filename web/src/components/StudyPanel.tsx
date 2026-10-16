@@ -1,4 +1,4 @@
-import type { Analysis, Card, MoveStats } from '../api'
+import type { Analysis, Card, MoveStats, NetworkMove } from '../api'
 import { cardsText, KIND_LABEL } from '../cards'
 
 export type StudyMode = 'off' | 'live' | 'quiz'
@@ -110,6 +110,9 @@ export function StudyPanel(p: Props) {
                   ))}
                 </div>
               )}
+              {p.analysis?.network && p.analysis.network.length > 0 && (
+                <NetworkPick net={p.analysis.network[0]} solverBest={p.analysis.moves[0]} onPick={p.onPick} />
+              )}
               {p.analysis && (
                 <p className="small-print">
                   {p.analysis.simulations.toLocaleString()} simulated games in {p.analysis.seconds.toFixed(2)}s.
@@ -127,6 +130,22 @@ export function StudyPanel(p: Props) {
         </>
       )}
     </section>
+  )
+}
+
+/** The RL network's choice, shown under the solver's for comparison. */
+function NetworkPick(props: { net: NetworkMove; solverBest: MoveStats | undefined; onPick: (c: Card[]) => void }) {
+  const { net, solverBest } = props
+  const agrees = solverBest !== undefined && net.cards.join() === solverBest.cards.join()
+  return (
+    <div className="verdict" data-testid="network-pick" style={{ marginTop: 10 }}>
+      <b>RL network</b> would play{' '}
+      <button type="button" className="linklike" onClick={() => props.onPick(net.cards)}>
+        {cardsText(net.cards)}
+      </button>{' '}
+      (predicts {signed(net.mean_score)}, win {pct(net.win_rate)})
+      {agrees ? ' — same as the solver.' : ' — the solver disagrees.'}
+    </div>
   )
 }
 

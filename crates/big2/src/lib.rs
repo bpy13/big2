@@ -9,6 +9,7 @@
 //! * [`movegen`] — generating legal plays.
 //! * [`state`] — the [`State`] of a deal, implementing [`poker_games::Game`].
 //! * [`bots`] — simple rule-based policies used as baselines and search rollouts.
+//! * [`features`] — neural-network input encoding (Phase 3).
 //!
 //! ```
 //! use poker_big2::{State, RuleSet};
@@ -24,6 +25,7 @@
 pub mod bots;
 pub mod card;
 pub mod combo;
+pub mod features;
 pub mod movegen;
 pub mod rules;
 pub mod state;
