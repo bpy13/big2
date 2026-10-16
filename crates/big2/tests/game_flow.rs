@@ -326,3 +326,33 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn from_position_sets_up_a_mid_game_state() {
+    let hands = ["3d 4d", "5c", "Kh Ks", "2s"].map(|h| parse_mask(h).unwrap());
+    let s = State::from_position(
+        RuleSet::default(),
+        hands,
+        0,
+        Some((3, parse_mask("Ac").unwrap())),
+    )
+    .unwrap();
+    assert_eq!(s.current_player(), Some(0));
+    assert_eq!(s.played().count_ones(), 52 - 6);
+    // 3d and 4d can't beat Ac, so P0 must pass
+    assert_eq!(s.legal_actions_vec(), vec![Action::Pass]);
+    assert!(State::from_position(
+        RuleSet::default(),
+        hands,
+        0,
+        Some((0, parse_mask("Ac").unwrap()))
+    )
+    .is_err());
+    assert!(State::from_position(
+        RuleSet::default(),
+        hands,
+        0,
+        Some((3, parse_mask("2s").unwrap()))
+    )
+    .is_err());
+}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/cards", "crates/games", "crates/big2"]
+members = ["crates/cards", "crates/games", "crates/big2", "crates/search", "crates/pybind"]
 
 [workspace.package]
 version = "0.1.0"
