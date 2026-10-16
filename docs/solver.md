@@ -118,7 +118,7 @@ Caveats, in order of importance:
 | `exploration` | 0.25 | 0.1–0.7 performed the same; ≥1.0 slightly worse |
 | `threads` | 1 | Independent trees, results summed |
 | `objective` | `score` | or `win` |
-| `rollout_epsilon` | 0.1 | Random-move rate of the rollout policy |
+| `rollout_epsilon` | 0.1 | Random-move rate of the rollout policy (0–0.3 measured the same) |
 | `endgame_threshold` | 0 (off) | Cards in all hands at which to solve exactly |
 | `endgame_max_nodes` | 20,000 | Budget per exact solve; falls back to a rollout |
 | `time_limit` | none | Seconds; stops early |
