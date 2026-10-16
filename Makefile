@@ -15,14 +15,14 @@ test-python:
 lint:
 	cargo fmt --all --check
 	cargo clippy --workspace --all-targets -- -D warnings
-	ruff check python
-	ruff format --check python
+	ruff check python experiments
+	ruff format --check python experiments
 	mypy python/poker
 
 fmt:
 	cargo fmt --all
-	ruff format python
-	ruff check --fix python
+	ruff format python experiments
+	ruff check --fix python experiments
 
 bench:
 	cargo bench -p poker-big2 --bench engine

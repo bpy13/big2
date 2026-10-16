@@ -134,7 +134,9 @@ def analyze(
 def _show_table(state: Big2State, you: int, names: list[str]) -> None:
     sizes = state.hand_sizes
     row = "   ".join(
-        f"[bold]{'You' if p == you else f'P{p}'}[/] ({names[p]}): {sizes[p]} cards"
+        f"[bold]{'You' if p == you else f'P{p}'}[/]"
+        + ("" if p == you else f" ({names[p]})")
+        + f": {sizes[p]} cards"
         for p in range(4)
     )
     console.print(row)
