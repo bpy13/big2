@@ -37,9 +37,12 @@ Add `?botDelay=0` to the URL to make bots move instantly (default 700 ms per mov
 | RL network + search | The network plus rollout search (~0.2 s per move) |
 
 **Network** (in the New game dialog) picks the trained network for the RL
-opponents and for the study-mode hint. The default is the best available one
-(distilled, +10 h of training). The RL options appear only when a network file
-exists and the default rules are chosen (the networks were trained on them).
+opponents and for the study-mode hint. Each network was trained under one set of
+rules and is offered only for games under those rules: the Phase 3 networks
+with last-card duty off, the newer one with the current defaults (duty on). The
+default is the best network for the chosen rules. If no network was trained for
+them, the RL opponents are unavailable and the hint compares the solver with the
+greedy bot instead.
 
 From the Phase 1 results, Medium through Expert are close in strength, because extra
 simulations add little ([study-results/phase1-solver.md](study-results/phase1-solver.md)).
@@ -64,8 +67,8 @@ for *Win* costs about 7.6 points per deal.
 
 ### Solver and network side by side
 
-With a network available (default rules), **Hints** shows two columns: the
-solver's top 3 moves and the network's top 3. The same move has the same colour
+**Hints** shows two columns: the solver's top 3 moves and the network's top 3
+(or the greedy bot's move). The same move has the same colour
 in both, so you can see where each ranks the other's choices. Below them:
 
 * **Agree** — both pick the same move.
@@ -74,14 +77,18 @@ in both, so you can see where each ranks the other's choices. Below them:
   optimizing for *Win*), with the solver's ± for that move.
 
 The network's numbers are its own predictions from one forward pass: no
-simulation, no interval. A PPO network gives each move a probability instead.
+simulation, no interval. A PPO network gives each move a probability instead,
+and the greedy bot only its move. The greedy bot is how the solver imagines its
+opponents play, so comparing with it shows where the solver expects to exploit them.
 In **Quiz** mode the verdict also says what the network would have played.
 
-**Network** in the panel switches the hint to another network. Choosing one only
+**Network** in the panel switches the hint to another network that fits the
+game's rules, or to the **Greedy bot** (any rules). Choosing a network only
 stages it; it is loaded on the server when you press **Load** (or **Use**, if it
 is already in memory). Nothing but the default network is loaded until you ask.
-The networks offered are listed in `python/poker/server/models.py`; set
-`POKER_RL_CHECKPOINT` to add any other checkpoint as the default.
+The networks offered, and the rules each was trained under, are listed in
+`python/poker/server/models.py`; set `POKER_RL_CHECKPOINT` to add any other
+checkpoint (for the default rules) as the default.
 
 ### How to read the numbers
 

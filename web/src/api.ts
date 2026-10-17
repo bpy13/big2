@@ -55,20 +55,30 @@ export interface MoveStats {
   share: number
 }
 
-/** A trained network the server can use (see python/poker/server/models.py). */
+/** A trained network, or the greedy bot, the hint can compare the solver with
+ * (see python/poker/server/models.py). */
 export interface ModelInfo {
   id: string
   label: string
   note: string
-  /** "q": predicts score and win chance per move; "policy" (PPO): a probability per move. */
-  kind: 'q' | 'policy'
+  /** "q": predicts score and win chance per move; "policy" (PPO): a probability per
+   * move; "bot": the greedy bot, only its move. */
+  kind: 'q' | 'policy' | 'bot'
   loaded: boolean
+  /** The rules it was trained under (null: any rules). */
+  rules: Rules | null
+}
+
+/** True if `m` can be used for a game under `rules`. */
+export function fits(m: ModelInfo, rules: Rules): boolean {
+  if (!m.rules) return true
+  return (Object.keys(m.rules) as (keyof Rules)[]).every((k) => m.rules![k] === rules[k])
 }
 
 export interface NetworkMove {
   cards: Card[]
   kind: string
-  /** Null for a policy network. */
+  /** Null for a policy network or the greedy bot. */
   mean_score: number | null
   win_rate: number | null
   /** Policy networks only. */
@@ -113,7 +123,7 @@ export interface Config {
   difficulties: Record<string, string>
   rules: Record<keyof Rules, (string | boolean)[]>
   defaults: Rules
-  /** Available networks, default first. */
+  /** Available networks (default first for each rule set), then the greedy bot. */
   models: ModelInfo[]
 }
 

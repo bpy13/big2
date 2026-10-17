@@ -86,12 +86,16 @@ test('quiz mode hides the solver until you move, then shows a verdict', async ({
 })
 
 test('hints compare the solver with a network, and another network loads only when confirmed', async ({ page }) => {
+  // The Phase 3 networks were trained with last-card duty off.
   const config = await (await page.request.get('/api/config')).json()
-  test.skip(config.models.length < 2, 'needs two trained networks in models/')
-  const [first, second] = config.models as { id: string; label: string }[]
+  const nets = (config.models as { id: string; label: string; kind: string; rules: { last_card_duty: boolean } | null }[])
+    .filter((m) => m.kind !== 'bot' && m.rules && !m.rules.last_card_duty)
+  test.skip(nets.length < 2, 'needs two trained networks in models/')
+  const [first, second] = nets
 
   await page.goto('/?botDelay=0')
   await page.getByLabel('Opponents').selectOption('easy')
+  await page.getByLabel('Last-card duty').selectOption('false')
   await page.getByLabel('Network').selectOption(first.id)
   await page.getByRole('button', { name: 'Deal' }).click()
 
@@ -110,4 +114,19 @@ test('hints compare the solver with a network, and another network loads only wh
   await page.getByRole('button', { name: /^(Load|Use)$/ }).click()
   await expect(compare.getByRole('heading', { name: second.label })).toBeVisible({ timeout: 30_000 })
   await page.screenshot({ path: 'test-results/compare.png' })
+})
+
+test('the hint can compare the solver with the greedy bot, under any rules', async ({ page }) => {
+  await page.goto('/?botDelay=0')
+  await page.getByLabel('Opponents').selectOption('easy')
+  await page.getByLabel('Scoring').selectOption('original') // no network was trained for this
+  await page.getByRole('button', { name: 'Deal' }).click()
+  await expect(page.getByRole('status')).toHaveText(/Your lead|Beat/, { timeout: 30_000 })
+  // With no network for these rules, the greedy bot is already the default.
+  await expect(page.getByRole('combobox', { name: 'Network' })).toHaveValue('greedy')
+  const compare = page.getByTestId('compare')
+  await expect(compare.getByRole('heading', { name: 'Greedy bot' })).toBeVisible({ timeout: 30_000 })
+  await expect(compare.getByTestId('network-move')).toHaveCount(1)
+  await expect(compare.getByTestId('network-move')).toContainText('its move')
+  await expect(page.getByTestId('network-pick')).toHaveText(/Agree|Disagree/)
 })

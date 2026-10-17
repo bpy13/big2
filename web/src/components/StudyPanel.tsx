@@ -105,8 +105,8 @@ export function StudyPanel(p: Props) {
             </span>
           </div>
 
-          {p.model && p.models.length > 0 && (
-            <ModelPicker key={p.model} models={p.models} current={p.model} onLoad={p.onLoadModel} />
+          {p.models.length > 0 && (
+            <ModelPicker key={p.model ?? ''} models={p.models} current={p.model} onLoad={p.onLoadModel} />
           )}
 
           {p.verdict && <VerdictBox v={p.verdict} />}
@@ -146,12 +146,13 @@ export function StudyPanel(p: Props) {
   )
 }
 
-/** Picks the hint's network. Choosing one only stages it; "Load" loads it on the server. */
-function ModelPicker(props: { models: ModelInfo[]; current: string; onLoad: (id: string) => Promise<void> }) {
-  const [chosen, setChosen] = useState(props.current)
+/** Picks what the hint compares the solver with. Choosing a network only stages it;
+ * "Load" loads it on the server. */
+function ModelPicker(props: { models: ModelInfo[]; current: string | null; onLoad: (id: string) => Promise<void> }) {
+  const [chosen, setChosen] = useState(props.current ?? '')
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const staged = props.models.find((m) => m.id === chosen)
-  const pending = chosen !== props.current
+  const pending = chosen !== (props.current ?? '')
   return (
     <div className="model-picker">
       <label htmlFor="hint-model" className="muted">
@@ -166,6 +167,7 @@ function ModelPicker(props: { models: ModelInfo[]; current: string; onLoad: (id:
           setState('idle')
         }}
       >
+        {props.current === null && <option value="">None (no network for these rules)</option>}
         {props.models.map((m) => (
           <option key={m.id} value={m.id}>
             {m.label}
@@ -264,7 +266,9 @@ function Compare(props: {
               <span className="nums">
                 {m.prob !== null
                   ? `probability ${pct(m.prob)}`
-                  : `win ${pct(m.win_rate ?? 0)} · ${signed(m.mean_score ?? 0)}`}
+                  : m.mean_score !== null && m.win_rate !== null
+                    ? `win ${pct(m.win_rate)} · ${signed(m.mean_score)}`
+                    : 'its move'}
               </span>
             </button>
           ))}
@@ -277,7 +281,7 @@ function Compare(props: {
           </>
         ) : (
           <>
-            <b>Disagree</b> — the solver ranks the network's pick{' '}
+            <b>Disagree</b> — the solver ranks the {net.model.kind === 'bot' ? "bot's" : "network's"} pick{' '}
             <button type="button" className="linklike" onClick={() => props.onPick(pick.cards)}>
               {cardsText(pick.cards)}
             </button>{' '}
