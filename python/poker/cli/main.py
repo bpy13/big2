@@ -258,6 +258,21 @@ def tournament(
 rl = typer.Typer(help="Reinforcement learning (see docs/rl.md).", no_args_is_help=True)
 app.add_typer(rl, name="rl")
 
+Device = Annotated[
+    str, typer.Option(help="auto (NVIDIA GPU if available, else CPU) | cpu | cuda | mps")
+]
+Envs = Annotated[int, typer.Option(help="Games played in lockstep (one network call per step).")]
+
+
+def _show_device(device: str) -> None:
+    from poker.rl.device import actor_device, resolve_device
+
+    try:
+        d = resolve_device(device)
+    except ValueError as e:
+        raise typer.BadParameter(str(e), param_hint="--device") from e
+    console.print(f"Learning on [bold]{d}[/], choosing moves on [bold]{actor_device(d)}[/]")
+
 
 @rl.command("train")
 def rl_train(
@@ -267,11 +282,12 @@ def rl_train(
     minutes: Annotated[float, typer.Option(help="Wall-clock budget.")] = 60.0,
     iters: Annotated[int, typer.Option(help="Maximum iterations.")] = 1_000_000,
     games_per_iter: int = 1024,
+    envs: Envs = 256,
     epsilon: float = 0.05,
     lr: float = 3e-4,
     eval_every: int = 10,
     seed: int = 0,
-    device: Annotated[str, typer.Option(help="cpu | mps")] = "cpu",
+    device: Device = "auto",
     resume: Annotated[str | None, typer.Option(help="Checkpoint to continue from.")] = None,
     init: Annotated[
         str | None, typer.Option(help="Start from these weights (e.g. a distilled network).")
@@ -285,6 +301,7 @@ def rl_train(
         max_minutes=minutes,
         max_iters=iters,
         games_per_iter=games_per_iter,
+        envs=envs,
         epsilon=epsilon,
         lr=lr,
         eval_every=eval_every,
@@ -304,6 +321,7 @@ def rl_train(
             )
         console.print(line)
 
+    _show_device(device)
     train(cfg, resume=resume, log=log, init=init)
 
 
@@ -312,7 +330,10 @@ def rl_ppo(
     run_dir: str = "runs/ppo/v1",
     minutes: float = 60.0,
     lr: float = 3e-4,
+    games_per_iter: int = 512,
+    envs: Envs = 256,
     seed: int = 0,
+    device: Device = "auto",
 ) -> None:
     """Train a policy by PPO self-play (default rules)."""
     from poker.rl.ppo import PPOConfig, train
@@ -326,7 +347,17 @@ def rl_ppo(
             line += f"  vs greedy {r['eval_score']:+.2f} ± {r['eval_score_ci95']:.2f}"
         console.print(line)
 
-    train(PPOConfig(run_dir=run_dir, max_minutes=minutes, lr=lr, seed=seed), log=log)
+    cfg = PPOConfig(
+        run_dir=run_dir,
+        max_minutes=minutes,
+        lr=lr,
+        games_per_iter=games_per_iter,
+        envs=envs,
+        seed=seed,
+        device=device,
+    )
+    _show_device(device)
+    train(cfg, log=log)
 
 
 @rl.command("distill-gen")
@@ -348,6 +379,9 @@ def rl_distill_train(
     data_dir: str = "runs/distill/data",
     run_dir: str = "runs/distill/v1",
     minutes: float = 60.0,
+    batch_size: Annotated[int, typer.Option(help="Decisions per minibatch.")] = 1024,
+    init: Annotated[str | None, typer.Option(help="Start from these weights.")] = None,
+    device: Device = "auto",
 ) -> None:
     """Train a Q-network on solver-labelled data (picks up new shards as they appear)."""
     from poker.rl.distill import DistillConfig, train
@@ -359,7 +393,16 @@ def rl_distill_train(
             f"  win {r['eval_win_rate']:.1%}"
         )
 
-    train(DistillConfig(data_dir=data_dir, run_dir=run_dir, max_minutes=minutes), log=log)
+    cfg = DistillConfig(
+        data_dir=data_dir,
+        run_dir=run_dir,
+        max_minutes=minutes,
+        batch_size=batch_size,
+        init=init,
+        device=device,
+    )
+    _show_device(device)
+    train(cfg, log=log)
 
 
 # serve ------------------------------------------------------------------------
