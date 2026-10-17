@@ -128,13 +128,15 @@ export default function App() {
   const playable = useMemo(() => (view?.your_turn ? completions(selected, view.legal) : null), [selected, view])
 
   const play = useCallback(
-    async (cards: Card[]) => {
+    async (cards: Card[], forced = false) => {
       if (!view || busy) return
       setBusy(true)
       setError(null)
       try {
         const next = await api.play(view.id, cards)
-        if (currentAnalysis && studyMode !== 'off') {
+        if (forced) {
+          // Keep the verdict on your last real decision.
+        } else if (currentAnalysis && studyMode !== 'off') {
           const playedStats = currentAnalysis.moves.find((m) => m.cards.length === cards.length && m.cards.every((c) => cards.includes(c)))
           const net = currentAnalysis.network
           setVerdict({
@@ -181,7 +183,7 @@ export default function App() {
 
   useEffect(() => {
     if (!forcedPass || dialog || busy) return
-    const t = setTimeout(() => play([]), BOT_DELAY_MS)
+    const t = setTimeout(() => play([], true), BOT_DELAY_MS)
     return () => clearTimeout(t)
   }, [forcedPass, dialog, busy, play])
 
