@@ -82,6 +82,7 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 | [docs/ui.md](docs/ui.md) | Web UI, study mode, review, game logs, API |
 | [docs/rl.md](docs/rl.md) | Reinforcement learning: methods, models, commands |
 | [docs/study-results/](docs/study-results/) | Measured results of each experiment |
+| [docs/research/prior-work.md](docs/research/prior-work.md) | Published Big Two and Dou Dizhu AI, compared with this project; improvement plan |
 | [docs/architecture.md](docs/architecture.md) | Code layout, correctness strategy, performance |
 | [docs/decisions/](docs/decisions/) | Why the project is built the way it is |
 | [CLAUDE.md](CLAUDE.md) | Commands, layout and conventions for contributors |
