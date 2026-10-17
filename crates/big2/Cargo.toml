@@ -7,6 +7,7 @@ edition.workspace = true
 [dependencies]
 poker-cards.workspace = true
 poker-games.workspace = true
+poker-nn.workspace = true
 rand.workspace = true
 
 [dev-dependencies]

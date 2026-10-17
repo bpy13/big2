@@ -1,6 +1,6 @@
 //! The result type shared by all solvers.
 
-use poker_games::{Game, Outcome, Player};
+use poker_games::{Estimate, Game, Outcome, Player};
 use std::time::Duration;
 
 /// What the searching player tries to maximize.
@@ -21,6 +21,14 @@ impl Objective {
             Objective::Win => (outcome.winner == Some(player)) as u8 as f64,
         }
     }
+
+    /// The same for an estimated result (e.g. from a value network).
+    pub fn utility_estimate<G: Game>(self, game: &G, est: &Estimate, player: Player) -> f64 {
+        match self {
+            Objective::Score => est.scores[player] / game.max_abs_score(),
+            Objective::Win => est.wins[player],
+        }
+    }
 }
 
 /// Running sums for one action. Kept as sums so results from parallel searches
@@ -35,11 +43,18 @@ pub(crate) struct Sums {
 
 impl Sums {
     pub fn add(&mut self, outcome: &Outcome, player: Player) {
-        let s = outcome.scores[player];
+        self.add_value(
+            outcome.scores[player],
+            (outcome.winner == Some(player)) as u8 as f64,
+        );
+    }
+
+    /// Adds one result given as a score and a win probability.
+    pub fn add_value(&mut self, score: f64, win: f64) {
         self.n += 1;
-        self.score += s;
-        self.score_sq += s * s;
-        self.wins += (outcome.winner == Some(player)) as u8 as f64;
+        self.score += score;
+        self.score_sq += score * score;
+        self.wins += win;
     }
 
     pub fn merge(&mut self, other: &Sums) {

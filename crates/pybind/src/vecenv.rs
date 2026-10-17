@@ -12,7 +12,9 @@
 //!   `i % 4` of game `i`: a duplicate-deal evaluation.
 
 use poker_big2::bots::Greedy;
-use poker_big2::features::{encode_action, encode_state, ACTION_LEN, STATE_LEN};
+use poker_big2::features::{
+    encode_action, encode_full as encode_full_state, encode_state, ACTION_LEN, FULL_LEN, STATE_LEN,
+};
 use poker_big2::{Action, RuleSet, State};
 use poker_games::{Game, Policy};
 use pyo3::exceptions::PyValueError;
@@ -239,6 +241,17 @@ impl VecEnv {
         )
     }
 
+    /// Full-information features (`FULL_LEN` bytes each, every hand visible) of the
+    /// games returned by the last `observe`, in the same order. For training value
+    /// networks; never give these to a playing agent.
+    fn full_features<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        let mut out = Vec::with_capacity(self.observed.len() * FULL_LEN);
+        for &i in &self.observed {
+            encode_full_state(&self.envs[i], &mut out);
+        }
+        PyBytes::new(py, &out)
+    }
+
     /// Card masks of the legal actions of game `i`, in the order `observe` used.
     fn legal_cards(&self, i: usize) -> Vec<u64> {
         self.legal[i].iter().map(Action::cards).collect()
@@ -309,4 +322,15 @@ pub fn encode<'py>(
         PyBytes::new(py, &a),
         legal.iter().map(Action::cards).collect(),
     ))
+}
+
+/// Full-information features of one state (every hand visible), for value networks.
+#[pyfunction]
+pub fn encode_full<'py>(py: Python<'py>, state: &crate::PyState) -> PyResult<Bound<'py, PyBytes>> {
+    if state.inner.is_terminal() {
+        return Err(PyValueError::new_err("the deal is over"));
+    }
+    let mut out = Vec::with_capacity(FULL_LEN);
+    encode_full_state(&state.inner, &mut out);
+    Ok(PyBytes::new(py, &out))
 }

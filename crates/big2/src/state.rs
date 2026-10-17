@@ -5,7 +5,7 @@ use crate::combo::{classify, Combo, Kind};
 use crate::movegen::{highest_card, legal_combos};
 use crate::rules::{PassRule, RuleSet, Scoring};
 use poker_cards::mask;
-use poker_games::{Game, Outcome, Player, Transposable};
+use poker_games::{Game, Outcome, Player, Rewind, Transposable};
 use rand::seq::SliceRandom;
 use rand::Rng;
 use std::fmt;
@@ -114,6 +114,8 @@ pub struct State {
     opening: bool,
     winner: Option<u8>,
     history: Vec<Turn>,
+    /// Started from a full deal ([`State::from_hands`]), so [`Rewind`] can replay it.
+    from_deal: bool,
 }
 
 impl State {
@@ -165,6 +167,7 @@ impl State {
             opening: true,
             winner: None,
             history: Vec::with_capacity(64),
+            from_deal: true,
         })
     }
 
@@ -232,6 +235,7 @@ impl State {
             opening: false,
             winner,
             history: Vec::new(),
+            from_deal: false,
         })
     }
 
@@ -532,6 +536,22 @@ impl Game for State {
             s.hands[p] = h;
         }
         s
+    }
+}
+
+impl Rewind for State {
+    /// The deal (each hand plus the cards that player has played) and the history.
+    /// `None` for positions from [`State::from_position`].
+    fn rewind(&self) -> Option<(State, Vec<Action>)> {
+        if !self.from_deal {
+            return None;
+        }
+        let mut hands = self.hands;
+        for t in &self.history {
+            hands[t.player as usize] |= t.action.cards();
+        }
+        let start = State::from_hands(self.rules, hands).ok()?;
+        Some((start, self.history.iter().map(|t| t.action).collect()))
     }
 }
 

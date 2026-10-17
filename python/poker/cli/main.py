@@ -428,6 +428,35 @@ def rl_distill_train(
     train(cfg, log=log)
 
 
+@rl.command("value-train")
+def rl_value_train(
+    policy: Annotated[
+        str, typer.Option(help="Network that plays the self-play games.")
+    ] = "models/big2-distilled.pt",
+    out: Annotated[str, typer.Option(help="Where to write the .pknn network.")] = (
+        "models/big2-value.pknn"
+    ),
+    run_dir: str = "runs/value/v1",
+    minutes: float = 30.0,
+    device: Device = "auto",
+    threads: Threads = 0,
+) -> None:
+    """Train a value network for search leaves (see poker/rl/value.py)."""
+    from poker.rl.value import ValueConfig, train
+
+    def log(r: dict[str, Any]) -> None:
+        console.print(
+            f"round {r['round']:>4}  {r['minutes']:6.1f} min  games {r['games']:>8,}"
+            f"  held-out R² {r['val_r2']:.3f}  winner CE {r['val_ce']:.3f}"
+        )
+
+    _set_threads(threads)
+    _show_device(device)
+    cfg = ValueConfig(policy=policy, out=out, run_dir=run_dir, max_minutes=minutes, device=device)
+    train(cfg, log=log)
+    console.print(f"Best network written to {out}")
+
+
 # serve ------------------------------------------------------------------------
 
 

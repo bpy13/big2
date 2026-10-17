@@ -1,0 +1,8 @@
+[package]
+name = "poker-nn"
+description = "Tiny dependency-free inference for small fully connected networks exported from PyTorch."
+version.workspace = true
+edition.workspace = true
+
+[lib]
+bench = false

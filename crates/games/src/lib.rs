@@ -122,3 +122,45 @@ pub fn play_out<G: Game, P: Policy<G>, R: Rng + ?Sized>(
     }
     state.outcome().expect("terminal state has an outcome")
 }
+
+/// A game that can be replayed from its start: needed to ask "how likely were the
+/// actions so far, if the hidden cards were these?" (see `poker_search::belief`).
+pub trait Rewind: Game {
+    /// The state at the start of the game, with this state's private information
+    /// (for a determinized state: the sampled hidden cards), and every action
+    /// taken since, in order. `None` if the start is unknown (e.g. a position set
+    /// up mid-game).
+    fn rewind(&self) -> Option<(Self, Vec<Self::Action>)>;
+}
+
+/// A model of how players choose actions: the log-probability that the player
+/// to act in `state` picks `action` among `legal`.
+pub trait ActionModel<G: Game>: Send + Sync {
+    fn log_prob(&self, state: &G, legal: &[G::Action], action: G::Action) -> f64;
+}
+
+/// An estimate of a game's final result from a (full-information) position,
+/// in place of playing it out.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Estimate {
+    /// Expected score per player.
+    pub scores: Vec<f64>,
+    /// Probability of each player being the winner.
+    pub wins: Vec<f64>,
+}
+
+impl From<&Outcome> for Estimate {
+    fn from(o: &Outcome) -> Self {
+        let n = o.scores.len();
+        Estimate {
+            scores: o.scores.clone(),
+            wins: (0..n).map(|p| (o.winner == Some(p)) as u8 as f64).collect(),
+        }
+    }
+}
+
+/// Evaluates positions without playing them out (e.g. a learned value network).
+pub trait Evaluator<G: Game>: Send + Sync {
+    /// Estimate for a non-terminal `state`.
+    fn evaluate(&self, state: &G) -> Estimate;
+}

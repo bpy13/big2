@@ -413,6 +413,7 @@ dependencies = [
  "criterion",
  "poker-cards",
  "poker-games",
+ "poker-nn",
  "proptest",
  "rand 0.8.8",
 ]
@@ -427,6 +428,10 @@ version = "0.1.0"
 dependencies = [
  "rand 0.8.8",
 ]
+
+[[package]]
+name = "poker-nn"
+version = "0.1.0"
 
 [[package]]
 name = "poker-pybind"

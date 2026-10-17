@@ -24,6 +24,20 @@
 //! (pass, single, pair, triple, straight, flush, full house, four of a kind,
 //! straight flush).
 //!
+//! **Full-information features** ([`FULL_LEN`] bytes, [`encode_full`]) for value
+//! networks that judge a fully dealt position (used inside search, where the
+//! hidden cards have been sampled). Seats are relative to the player to act:
+//!
+//! | Offset | Size | Meaning |
+//! |---:|---:|---|
+//! | 0 | 4×52 | each relative seat's hand |
+//! | 208 | 52 | the play to beat (all zero when leading) |
+//! | 260 | 4 | who made it (relative seat) |
+//! | 264 | 1 | the player to act leads |
+//! | 265 | 1 | opening play (must include 3♦) |
+//! | 266 | 3 | consecutive passes since the last play, one-hot 0–2 |
+//! | 269 | 4 | relative seats locked out of this trick |
+//!
 //! The network is trained for one rule set; rules are not part of the features.
 
 use crate::combo::Kind;
@@ -129,6 +143,65 @@ pub fn encode_state(s: &State, out: &mut Vec<u8>) {
     }
 }
 
+pub const FULL_HANDS: usize = 0;
+pub const FULL_CURRENT: usize = 208;
+pub const FULL_HOLDER: usize = 260;
+pub const FULL_LEADING: usize = 264;
+pub const FULL_OPENING: usize = 265;
+pub const FULL_PASSES: usize = 266;
+pub const FULL_LOCKED: usize = 269;
+/// Length of the full-information feature vector.
+pub const FULL_LEN: usize = 273;
+/// Name of this encoding, stored in exported networks' metadata.
+pub const FULL_FEATURES_NAME: &str = "big2-full-v1";
+
+/// Indices of the full-information features that are 1, for the player to act
+/// (see the module docs). Every hand is visible: use only on sampled states.
+///
+/// # Panics
+/// Panics if the game is over.
+pub fn active_full(s: &State, out: &mut Vec<usize>) {
+    let me = s.current_player().expect("game not over");
+    out.clear();
+    for p in 0..NUM_PLAYERS {
+        let base = FULL_HANDS + 52 * rel(me, p);
+        out.extend(mask::bits(s.hand(p)).map(|c| base + c as usize));
+    }
+    match s.current_play() {
+        Some((holder, combo)) => {
+            out.extend(mask::bits(combo.cards).map(|c| FULL_CURRENT + c as usize));
+            out.push(FULL_HOLDER + rel(me, holder));
+            let passes = s
+                .history()
+                .iter()
+                .rev()
+                .take_while(|t| t.action == Action::Pass)
+                .count();
+            out.push(FULL_PASSES + passes.min(2));
+        }
+        None => out.push(FULL_LEADING),
+    }
+    if s.is_opening() {
+        out.push(FULL_OPENING);
+    }
+    for (p, &locked) in s.locked_out().iter().enumerate() {
+        if locked {
+            out.push(FULL_LOCKED + rel(me, p));
+        }
+    }
+}
+
+/// Appends the full-information features (0/1 bytes) for the player to act.
+pub fn encode_full(s: &State, out: &mut Vec<u8>) {
+    let start = out.len();
+    out.resize(start + FULL_LEN, 0);
+    let mut active = Vec::with_capacity(64);
+    active_full(s, &mut active);
+    for i in active {
+        out[start + i] = 1;
+    }
+}
+
 /// Index of an action's kind in the action features' one-hot (pass = 0).
 pub fn kind_index(a: &Action) -> usize {
     match a {
@@ -228,6 +301,35 @@ mod tests {
         assert_eq!(s.current_player(), Some((opener + 1) % 4));
         assert_eq!(f[OFF_HOLDER + 3], 1);
         assert_eq!(f[OFF_PASSES], 1, "no passes yet");
+    }
+
+    #[test]
+    fn full_features_rotate_with_the_player_to_act() {
+        let mut rng = SmallRng::seed_from_u64(3);
+        let mut s = State::new_deal(RuleSet::default(), &mut rng);
+        let mut f = Vec::new();
+        encode_full(&s, &mut f);
+        assert_eq!(f.len(), FULL_LEN);
+        assert_eq!(
+            f.iter().map(|&x| x as u32).sum::<u32>(),
+            52 + 2,
+            "52 cards, lead, opening"
+        );
+        assert_eq!(f[FULL_HANDS], 1, "the opener (relative seat 0) holds 3d");
+        let opener = s.current_player().unwrap();
+        let first = s.legal_actions_vec()[0];
+        s.apply(first);
+        f.clear();
+        encode_full(&s, &mut f);
+        // For the next player, the opener is the previous seat (3) and made the play.
+        assert_eq!(f[FULL_HOLDER + 3], 1);
+        assert_eq!(f[FULL_CURRENT], 1, "3d is the play to beat");
+        assert_eq!(f[FULL_PASSES], 1);
+        let mine = s.hand(s.current_player().unwrap());
+        for c in mask::bits(mine) {
+            assert_eq!(f[FULL_HANDS + c as usize], 1);
+        }
+        assert_eq!(s.current_player(), Some((opener + 1) % 4));
     }
 
     #[test]
