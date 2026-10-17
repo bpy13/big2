@@ -236,6 +236,11 @@ export default function App() {
           </span>
         )}
         <span className="spacer" />
+        {view?.over && dialog === null && (
+          <button type="button" onClick={() => setDialog('result')}>
+            Results
+          </button>
+        )}
         <button type="button" onClick={() => setDialog('new')}>
           New game
         </button>

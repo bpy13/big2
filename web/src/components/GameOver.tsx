@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api, type GameView, type ReviewItem } from '../api'
 import { cardsText } from '../cards'
+import { useEscape } from '../useEscape'
 import { Played } from './Card'
 
 /** Points of expected score lost before a move is flagged as a mistake. */
@@ -18,6 +19,7 @@ export function GameOver({ view, names, onNewGame, onClose }: Props) {
   const [review, setReview] = useState<ReviewItem[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  useEscape(onClose)
   const you = view.seat
   const won = view.winner === you
 

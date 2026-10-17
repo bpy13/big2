@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Config, Rules } from '../api'
+import { useEscape } from '../useEscape'
 
 const DIFFICULTY_HELP: Record<string, string> = {
   easy: 'Greedy bot: sheds its weakest cards first.',
@@ -59,6 +60,7 @@ interface Props {
 export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
   const [difficulty, setDifficulty] = useState(initial.difficulty)
   const [rules, setRules] = useState<Rules>(initial.rules)
+  useEscape(onCancel)
   const known = config.models.some((m) => m.id === initial.model)
   const [model, setModel] = useState(known ? initial.model : config.models[0]?.id)
   const chosenModel = config.models.find((m) => m.id === model)

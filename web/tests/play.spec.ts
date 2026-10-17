@@ -57,6 +57,12 @@ test('play a full deal against easy bots, with hints and the post-game review', 
     timeout: 60_000,
   })
   await page.screenshot({ path: 'test-results/game-over.png' })
+
+  // Escape closes the results; "Results" brings them back.
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await page.getByRole('button', { name: 'Results' }).click()
+  await expect(dialog.getByRole('heading')).toHaveText(/went out first/)
   expect(errors).toEqual([])
 })
 
