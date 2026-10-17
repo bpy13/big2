@@ -306,8 +306,9 @@ def rl_train(
     init: Annotated[
         str | None, typer.Option(help="Start from these weights (e.g. a distilled network).")
     ] = None,
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
-    """Train a Q-network by Deep Monte Carlo self-play (default rules)."""
+    """Train a Q-network by Deep Monte Carlo self-play."""
     from poker.rl.dmc import TrainConfig, train
 
     cfg = TrainConfig(
@@ -321,6 +322,7 @@ def rl_train(
         eval_every=eval_every,
         seed=seed,
         device=device,
+        rules=Rules(last_card_duty=last_card_duty).kwargs(),
     )
 
     def log(r: dict[str, Any]) -> None:
@@ -351,8 +353,9 @@ def rl_ppo(
     device: Device = "auto",
     threads: Threads = 0,
     resume: Annotated[str | None, typer.Option(help="Checkpoint to continue from.")] = None,
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
-    """Train a policy by PPO self-play (default rules)."""
+    """Train a policy by PPO self-play."""
     from poker.rl.ppo import PPOConfig, train
 
     def log(r: dict[str, Any]) -> None:
@@ -372,6 +375,7 @@ def rl_ppo(
         envs=envs,
         seed=seed,
         device=device,
+        rules=Rules(last_card_duty=last_card_duty).kwargs(),
     )
     _set_threads(threads)
     _show_device(device)

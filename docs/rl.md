@@ -101,20 +101,21 @@ opponents play like the greedy bot.
 
 ## 4. Models in `models/`
 
-| File | Method | Committed |
-|---|---|---|
-| `big2-distilled-10h.pt` | Distillation, +291 min ([long-training.md](study-results/long-training.md)); the web UI's default | yes |
-| `big2-dmc-selfplay-10h.pt` | DMC self-play, +10 h | no (retrain) |
-| `big2-ppo-10h.pt` | PPO self-play, +10 h | no (retrain) |
-| `big2-distilled.pt` | Distillation (Phase 3) | yes |
-| `big2-dmc-selfplay.pt` | DMC self-play, 90 min | no (retrain) |
-| `big2-ppo.pt` | PPO self-play, 60 min | no (retrain) |
-| `big2-distilled-finetuned.pt` | Distilled, then 60 min DMC self-play | no (retrain) |
+| File | Method | Last-card duty | Committed |
+|---|---|---|---|
+| `big2-distilled-duty.pt` | Distillation, 4 h from `big2-distilled-10h.pt`; the web UI's default | on (current default) | yes |
+| `big2-distilled-10h.pt` | Distillation, +291 min ([long-training.md](study-results/long-training.md)) | off | yes |
+| `big2-dmc-selfplay-10h.pt` | DMC self-play, +10 h | off | no (retrain) |
+| `big2-ppo-10h.pt` | PPO self-play, +10 h | off | no (retrain) |
+| `big2-distilled.pt` | Distillation (Phase 3) | off | yes |
+| `big2-dmc-selfplay.pt` | DMC self-play, 90 min | off | no (retrain) |
+| `big2-ppo.pt` | PPO self-play, 60 min | off | no (retrain) |
+| `big2-distilled-finetuned.pt` | Distilled, then 60 min DMC self-play | off | no (retrain) |
 
-The web UI lists the networks in `python/poker/server/models.py` whose files exist.
-
-All were trained under the default rules; the network does not know other rule
-variants, so the UI disables RL options for them.
+A network does not know other rule variants than the one it was trained under.
+The web UI lists the networks in `python/poker/server/models.py` whose files
+exist, each with its rules, and offers a network only for games under those rules.
+The trainers take `--last-card-duty/--no-last-card-duty` (default: on).
 
 ## 5. Commands
 
