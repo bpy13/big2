@@ -17,8 +17,8 @@ use poker_big2::value::ValueNet;
 use poker_big2::{classify, Action, RuleSet, State};
 use poker_games::{Game, Policy};
 use poker_search::{
-    ismcts_with, pimc, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective, PimcConfig,
-    PolicyModel, UniformSampler,
+    ismcts_with, pimc, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective,
+    OracleSampler, PimcConfig, PolicyModel, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -390,19 +390,21 @@ fn analyze<'py>(
         epsilon: rollout_epsilon,
     };
     let s = state.inner.clone();
+    // "oracle" sees the true hidden cards: a diagnostic upper bound, not fair play.
+    let oracle = belief == Some("oracle");
     let model = match belief {
-        None | Some("none") => None,
+        None | Some("none") | Some("oracle") => None,
         Some("greedy") => Some(PolicyModel {
             policy: Greedy { epsilon: 0.0 },
             epsilon: belief_epsilon,
         }),
         Some(other) => {
             return Err(value_error(format!(
-                "unknown belief model {other:?} (use \"greedy\" or none)"
+                "unknown belief model {other:?} (use \"greedy\", \"oracle\" or none)"
             )))
         }
     };
-    if algorithm != "ismcts" && (model.is_some() || value.is_some()) {
+    if algorithm != "ismcts" && (model.is_some() || oracle || value.is_some()) {
         return Err(value_error(
             "belief and value are only supported with ismcts",
         ));
@@ -435,6 +437,9 @@ fn analyze<'py>(
                 let weighted = model.and_then(|m| Belief::new(&s, player, &m, &bcfg, &mut rng));
                 let ess = weighted.as_ref().map(|b| b.ess);
                 let a = match &weighted {
+                    _ if oracle => {
+                        ismcts_with(&s, player, &cfg, &rollout, &OracleSampler, leaf.as_ref())
+                    }
                     Some(b) => ismcts_with(&s, player, &cfg, &rollout, b, leaf.as_ref()),
                     None => ismcts_with(&s, player, &cfg, &rollout, &UniformSampler, leaf.as_ref()),
                 };

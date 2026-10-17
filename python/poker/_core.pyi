@@ -108,7 +108,7 @@ def analyze(
     endgame_threshold: int = 0,
     endgame_max_nodes: int = 20_000,
     rollout_epsilon: float = 0.1,
-    belief: str | None = None,
+    belief: str | None = None,  # None | "greedy" | "oracle" (cheats; diagnostics only)
     belief_candidates: int = 256,
     belief_epsilon: float = 0.2,
     belief_min_ess: float = 0.25,

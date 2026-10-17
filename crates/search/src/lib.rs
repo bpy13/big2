@@ -25,6 +25,6 @@ pub mod ismcts;
 pub mod pimc;
 
 pub use analysis::{Analysis, MoveStats, Objective};
-pub use belief::{Belief, BeliefConfig, PolicyModel, Sampler, UniformSampler};
+pub use belief::{Belief, BeliefConfig, OracleSampler, PolicyModel, Sampler, UniformSampler};
 pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
 pub use pimc::{pimc, PimcConfig};
