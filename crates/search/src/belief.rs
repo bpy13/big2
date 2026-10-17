@@ -51,6 +51,18 @@ impl<G: Game> Sampler<G> for UniformSampler {
     }
 }
 
+/// **Cheats**: every "sample" is the true state, hidden cards included. Only for
+/// measuring how much perfect knowledge of the hidden cards would be worth (an
+/// upper bound for any belief model); never for play against others.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct OracleSampler;
+
+impl<G: Game> Sampler<G> for OracleSampler {
+    fn sample(&self, root: &G, _observer: Player, _rng: &mut SmallRng) -> G {
+        root.clone()
+    }
+}
+
 /// Settings for [`Belief::new`].
 #[derive(Clone, Debug)]
 pub struct BeliefConfig {

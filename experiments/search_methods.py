@@ -19,6 +19,8 @@ Variants (see docs/solver.md §6):
 * ``value`` — leaves judged by the learned value network instead of rollouts.
 * ``value-mix`` — half value network, half greedy rollout.
 * ``belief+value`` — both.
+* ``oracle`` — **cheats**: searches the true deal (hidden cards visible). Not a
+  playable method; it bounds what any better model of the hidden cards could gain.
 
 ``--vs-greedy`` instead seats each agent (variant, then baseline) against three
 greedy bots on the same deals. That is where the belief model is exactly right
@@ -44,6 +46,7 @@ VARIANTS: dict[str, str] = {
     "value": f"{BASELINE},value={VALUE}",
     "value-mix": f"{BASELINE},value={VALUE},value_rollout_weight=0.5",
     "belief+value": f"{BASELINE},belief=greedy,belief_epsilon=0.2,value={VALUE}",
+    "oracle": f"{BASELINE},belief=oracle",
 }
 
 
