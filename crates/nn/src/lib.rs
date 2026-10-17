@@ -39,9 +39,26 @@ impl Dense {
             self.weight
                 .chunks_exact(self.n_in)
                 .zip(&self.bias)
-                .map(|(row, b)| b + row.iter().zip(x).map(|(w, v)| w * v).sum::<f32>()),
+                .map(|(row, b)| b + dot(row, x)),
         );
     }
+}
+
+/// Dot product with eight independent partial sums. A single running sum forces
+/// the additions into one sequence (floating-point addition is not reassociated
+/// by the compiler); eight lanes let it use SIMD instructions.
+#[inline]
+fn dot(a: &[f32], b: &[f32]) -> f32 {
+    let mut acc = [0.0f32; 8];
+    let (ca, ra) = a.as_chunks::<8>();
+    let (cb, rb) = b.as_chunks::<8>();
+    let tail: f32 = ra.iter().zip(rb).map(|(x, y)| x * y).sum();
+    for (x, y) in ca.iter().zip(cb) {
+        for k in 0..8 {
+            acc[k] += x[k] * y[k];
+        }
+    }
+    acc.iter().sum::<f32>() + tail
 }
 
 /// A multi-layer perceptron with ReLU activations between layers.

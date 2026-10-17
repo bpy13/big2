@@ -4,12 +4,14 @@
 flowchart TB
     subgraph rust["Rust (crates/)"]
         cards["cards<br/>Rank, Suit, Card, text notation"]
-        games["games<br/>Game / Policy / Transposable traits"]
-        big2["big2<br/>rules · combos · movegen · State · bots"]
-        search["search<br/>ISMCTS · PIMC · max^n endgame"]
+        games["games<br/>Game / Policy / Rewind / Evaluator traits"]
+        nn["nn<br/>MLP inference (.pknn)"]
+        big2["big2<br/>rules · combos · movegen · State · bots · features · value net"]
+        search["search<br/>ISMCTS · PIMC · max^n endgame · belief sampling"]
         pybind["pybind<br/>PyO3 module poker._core"]
         cards --> big2
         games --> big2
+        nn --> big2
         games --> search
         big2 --> pybind
         search --> pybind
@@ -37,6 +39,9 @@ not how cards are ordered: that depends on the game.
 player, legal actions, apply, outcome, and `determinize` — sample hidden cards
 consistent with one player's view. The search crate only talks to this trait, so a
 second game (e.g. Hold'em) gets the solvers for free.
+
+**`crates/nn`** runs small fully connected networks exported from PyTorch
+(`.pknn` files), so the search can call a learned value network without Python.
 
 **`crates/big2`** is the Big Two engine. Hands are `u64` masks with card index
 `rank*4 + suit` (ranks 3…2), so "higher index = stronger single". A combination's
