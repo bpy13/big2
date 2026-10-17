@@ -7,12 +7,13 @@ Endpoints (all JSON):
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET  | /api/config | Difficulty presets and rule variants |
+| GET  | /api/config | Difficulty presets, rule variants and the trained networks |
 | POST | /api/games | New game → view |
 | GET  | /api/games/{id} | Current view |
 | POST | /api/games/{id}/play | Human move ``{"cards": ["3d", "3c"]}`` (``[]`` = pass) → view |
 | POST | /api/games/{id}/step | One bot move → ``{"move": …, "view": …}`` |
-| POST | /api/games/{id}/analyze | Solver's top moves for the human's turn |
+| POST | /api/games/{id}/analyze | Solver's (and the network's) top moves for the human's turn |
+| POST | /api/games/{id}/model | Load a network and use it for the hint ``{"model": "dmc-10h"}`` |
 | GET  | /api/games/{id}/review | Post-game review of the human's decisions |
 | GET  | /api/games/{id}/log | Replayable game log |
 
@@ -34,6 +35,7 @@ from pydantic import BaseModel, Field
 
 from poker.agents import make_agent
 from poker.games.big2 import Rules, cards
+from poker.server import models
 from poker.server.session import GameSession, difficulties, rl_available
 
 MAX_SESSIONS = 200
@@ -67,6 +69,9 @@ class RulesIn(BaseModel):
 class NewGame(BaseModel):
     difficulty: str | None = Field(None, description="easy | medium | hard | expert")
     bots: str | None = Field(None, description="Agent spec; overrides difficulty")
+    model: str | None = Field(
+        None, description="Network id (see /api/config) for the RL bots and the hint"
+    )
     rules: RulesIn = Field(default_factory=RulesIn)
     seed: int | None = None
     seat: int = Field(0, ge=0, le=3)
@@ -74,6 +79,10 @@ class NewGame(BaseModel):
 
 class PlayIn(BaseModel):
     cards: list[str] = Field(default_factory=list, description="Card codes; empty = pass")
+
+
+class ModelIn(BaseModel):
+    model: str
 
 
 class AnalyzeIn(BaseModel):
@@ -98,12 +107,21 @@ def _after_move(s: GameSession) -> None:
 
 @app.get("/api/config")
 def config() -> dict[str, Any]:
-    return {"difficulties": difficulties(), "rules": RULE_OPTIONS, "defaults": Rules().kwargs()}
+    return {
+        "difficulties": difficulties(),
+        "rules": RULE_OPTIONS,
+        "defaults": Rules().kwargs(),
+        "models": [models.describe(m) for m in models.available()],
+    }
 
 
 @app.post("/api/games")
 def new_game(body: NewGame) -> dict[str, Any]:
-    spec = body.bots or difficulties().get(body.difficulty or "hard")
+    try:
+        model = models.get(body.model) if body.model else None
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+    spec = body.bots or difficulties(model).get(body.difficulty or "hard")
     if spec is None:
         raise HTTPException(422, f"unknown difficulty {body.difficulty!r}")
     try:
@@ -115,7 +133,13 @@ def new_game(body: NewGame) -> dict[str, Any]:
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
     seed = body.seed if body.seed is not None else random.getrandbits(32)
-    s = GameSession(rules=rules, seat=body.seat, bot_spec=spec, seed=seed)
+    s = GameSession(
+        rules=rules,
+        seat=body.seat,
+        bot_spec=spec,
+        seed=seed,
+        model=model.id if model and rl_available(rules) else None,
+    )
     _sessions[s.id] = s
     while len(_sessions) > MAX_SESSIONS:
         _sessions.popitem(last=False)
@@ -156,6 +180,16 @@ def analyze(game_id: str, body: AnalyzeIn) -> dict[str, Any]:
             return s.analyze(body.iterations, body.top, body.objective)
         except ValueError as e:
             raise HTTPException(409, str(e)) from e
+
+
+@app.post("/api/games/{game_id}/model")
+def set_model(game_id: str, body: ModelIn) -> dict[str, Any]:
+    s = _get(game_id)
+    with s.lock:
+        try:
+            return s.set_model(body.model)
+        except ValueError as e:
+            raise HTTPException(422, str(e)) from e
 
 
 @app.get("/api/games/{game_id}/review")
