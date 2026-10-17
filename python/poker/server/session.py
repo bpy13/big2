@@ -188,16 +188,16 @@ class GameSession:
 
     def hint_model(self) -> models.ModelInfo | None:
         """What the hint compares the solver with: the chosen model, else the default
-        network for this game's rules, else ``None``."""
-        if self.model:
-            return models.get(self.model, self.rules)
-        return models.default_model(self.rules)
+        network for this game's rules; ``None`` for no comparison."""
+        m = models.get(self.model, self.rules) if self.model else models.default_model(self.rules)
+        return None if m is None or m.kind == "none" else m
 
     def set_model(self, model_id: str) -> dict[str, Any]:
-        """Switches the hint to another network (loading it now) or the greedy bot.
-        Raises ``ValueError`` for an unknown model or one trained under other rules."""
+        """Switches the hint to another network (loading it now), the greedy bot or no
+        comparison. Raises ``ValueError`` for an unknown model or one trained under
+        other rules."""
         m = models.get(model_id, self.rules)
-        if m.kind != "bot":
+        if m.kind in ("q", "policy"):
             from poker.rl.agent import load_model
 
             load_model(m.path)

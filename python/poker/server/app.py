@@ -111,7 +111,7 @@ def config() -> dict[str, Any]:
         "difficulties": difficulties(),
         "rules": RULE_OPTIONS,
         "defaults": Rules().kwargs(),
-        "models": [models.describe(m) for m in [*models.available(), models.GREEDY]],
+        "models": [models.describe(m) for m in [*models.available(), models.GREEDY, models.NONE]],
     }
 
 
@@ -143,7 +143,8 @@ def _bot_spec(difficulty: str, rules: Rules, model: models.ModelInfo | None) -> 
     """The agent spec for a difficulty preset; the RL presets use ``model`` if it is a
     network, else the default network for ``rules``."""
     if difficulty in ("rl", "rl_search"):
-        net = model if model is not None and model.kind != "bot" else models.default_model(rules)
+        net = model if model is not None and model.kind in ("q", "policy") else None
+        net = net or models.default_model(rules)
         if net is None:
             raise ValueError("no network was trained for these rules")
         return difficulties(net)[difficulty]

@@ -138,14 +138,14 @@ export function StudyPanel(p: Props) {
 /** Picks what the hint compares the solver with. Choosing a network only stages it;
  * "Load" loads it on the server. */
 function ModelPicker(props: { models: ModelInfo[]; current: string | null; onLoad: (id: string) => Promise<void> }) {
-  const [chosen, setChosen] = useState(props.current ?? '')
+  const [chosen, setChosen] = useState(props.current ?? 'none')
   const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
   const staged = props.models.find((m) => m.id === chosen)
-  const pending = chosen !== (props.current ?? '')
+  const pending = chosen !== (props.current ?? 'none')
   return (
     <div className="model-picker">
       <label htmlFor="hint-model" className="muted">
-        Network
+        Compare with
       </label>
       <select
         id="hint-model"
@@ -156,7 +156,6 @@ function ModelPicker(props: { models: ModelInfo[]; current: string | null; onLoa
           setState('idle')
         }}
       >
-        {props.current === null && <option value="">None (no network for these rules)</option>}
         {props.models.map((m) => (
           <option key={m.id} value={m.id}>
             {m.label}

@@ -7,7 +7,7 @@ rule set, the first one listed is the default. ``POKER_RL_CHECKPOINT`` adds any
 other checkpoint, for the default rules, under the id ``"custom"``.
 
 The hint can also compare the solver with the greedy bot (:data:`GREEDY`), which
-needs no file and works under any rules.
+needs no file and works under any rules, or show the solver alone (:data:`NONE`).
 
 Nothing is loaded at startup. The default model loads on first use; any other
 model loads only when the player confirms it (``POST /api/games/{id}/model``) or
@@ -41,6 +41,7 @@ class ModelInfo:
     #: ``"q"``: predicts each move's score and win chance (DMC, distillation).
     #: ``"policy"``: gives each move a probability (PPO); no score predictions.
     #: ``"bot"``: a rule-based bot; only its move.
+    #: ``"none"``: no comparison, the solver alone.
     kind: str = "q"
     #: The rules it was trained under (``None``: any rules).
     rules: Rules | None = field(default_factory=Rules)
@@ -109,6 +110,9 @@ GREEDY = ModelInfo(
     rules=None,
 )
 
+#: No comparison: the hint shows the solver alone.
+NONE = ModelInfo("none", "No comparison", "", "Only the solver's moves.", kind="none", rules=None)
+
 
 def available(rules: Rules | None = None) -> list[ModelInfo]:
     """The networks whose files exist (for ``rules``, if given), defaults first."""
@@ -129,9 +133,9 @@ def default_model(rules: Rules) -> ModelInfo | None:
 
 
 def get(model_id: str, rules: Rules | None = None) -> ModelInfo:
-    """The model with this id (a network, or :data:`GREEDY`). ``ValueError`` if it
-    does not exist or, given ``rules``, was trained under other rules."""
-    for m in [*available(), GREEDY]:
+    """The model with this id (a network, :data:`GREEDY` or :data:`NONE`). ``ValueError``
+    if it does not exist or, given ``rules``, was trained under other rules."""
+    for m in [*available(), GREEDY, NONE]:
         if m.id == model_id:
             if rules is not None and not m.fits(rules):
                 raise ValueError(f"model {model_id!r} was trained under other rules")
@@ -141,7 +145,7 @@ def get(model_id: str, rules: Rules | None = None) -> ModelInfo:
 
 def is_loaded(m: ModelInfo) -> bool:
     """True if the network is already in memory (always true for the greedy bot)."""
-    if m.kind == "bot":
+    if m.kind in ("bot", "none"):
         return True
     try:
         from poker.rl.agent import is_cached
