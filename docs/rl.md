@@ -144,6 +144,13 @@ distilled ones) and `dmcsearch:checkpoint=PATH[,determinizations=32,top=6]`.
 Each run directory holds `log.jsonl` (one line per iteration or evaluation),
 `config.json`, `latest.pt` (resumable) and `best.pt` (best evaluation vs greedy).
 
+### 3.5 Value network for search leaves — `poker rl value-train`
+
+Trains a small MLP on full-information positions from distilled-network
+self-play to predict every seat's final score and the winner, and exports it
+for the Rust search (`analyze(..., value=...)`; see
+[solver.md §6.2](solver.md#62-learned-leaf-values-value)).
+
 ## 6. Hardware: CPU, NVIDIA GPU, Apple GPU
 
 Every trainer takes `--device`:
