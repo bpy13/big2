@@ -121,7 +121,7 @@ select {
 .app {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
   max-width: 1400px;
@@ -130,23 +130,27 @@ select {
   height: 100dvh;
 }
 
-.topbar {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+/* Title (top-left of the table) and game buttons (top-right). */
+.area-title {
+  grid-area: title;
 }
-.topbar h1 {
+.area-menu {
+  grid-area: menu;
+}
+.table-title h1 {
   font-size: 20px;
-  margin: 0 8px 0 0;
+  margin: 0;
 }
-.topbar .spacer {
-  flex: 1;
+.table-title .meta {
+  font-size: 13px;
+  opacity: 0.75;
 }
-.topbar .meta {
-  color: var(--muted);
-  font-size: 14px;
+.table-menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .side {
@@ -187,7 +191,7 @@ select {
   /* Narrow screens: table above the panels, and the page scrolls as usual. */
   .app {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
     padding: 12px;
     height: auto;
   }
@@ -218,13 +222,21 @@ select {
     --card-w: 42px;
     --card-h: 62px;
   }
+  .table-title h1 {
+    font-size: 16px;
+  }
+  .table-menu button {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
   .table {
     padding: 10px 6px;
     border-width: 6px;
     gap: 6px;
   }
-  /* 13 cards must fit a phone: overlap them more. */
-  .hand .card + .card {
+  /* 13 cards must fit a phone: overlap them more. (".table" outranks the general
+     rule further down.) */
+  .table .hand .card + .card {
     margin-left: calc(var(--card-w) * -0.56);
   }
   /* Opponents' plays: overlap the cards on one line. */
@@ -252,7 +264,7 @@ select {
   overflow: auto; /* only if the window is too short for the table */
   display: grid;
   grid-template-areas:
-    '.    top   .'
+    'title top   menu'
     'left mid   right'
     'me   me    me';
   grid-template-columns: 1fr 2.2fr 1fr;
