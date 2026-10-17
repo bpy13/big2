@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -205,6 +207,15 @@ def test_distillation_generates_and_trains(tmp_path: Path, device: str) -> None:
     )
     run = distill.train(cfg, log=lambda r: None)
     assert (run / "latest.pt").exists()
+    steps = torch.load(run / "latest.pt", weights_only=False)["info"]["iter"]
+    # More data from a second generator run lands beside the first, then training resumes.
+    first = set(data.glob("*.npz"))
+    time.sleep(1.1)  # new run prefix
+    distill.generate(str(data), workers=1, minutes=0.01, iterations=100, shard_games=1)
+    assert set(data.glob("*.npz")) > first
+    resumed = replace(cfg, run_dir=str(tmp_path / "run2"), resume=str(run / "latest.pt"))
+    distill.train(resumed, log=lambda r: None)
+    assert torch.load(tmp_path / "run2" / "latest.pt", weights_only=False)["info"]["iter"] > steps
     agent = make_agent(f"dmc:checkpoint={run / 'latest.pt'}")
     assert agent.act(Rules().new_deal(seed=1)) in Rules().new_deal(seed=1).legal_actions()
 
@@ -230,6 +241,16 @@ def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path, device: str) -> Non
         device=device,
     )
     ppo_train(cfg, log=lambda r: None)
+    first = torch.load(tmp_path / "latest.pt", weights_only=False)
+    assert "optimizer" in first and first["info"]["best_eval"] >= first["info"]["eval_score"]
+    ppo_train(
+        replace(cfg, run_dir=str(tmp_path / "more")),
+        log=lambda r: None,
+        resume=str(tmp_path / "latest.pt"),
+    )
+    more = torch.load(tmp_path / "more" / "latest.pt", weights_only=False)
+    assert more["info"]["iter"] > first["info"]["iter"]
+    assert more["info"]["games"] > first["info"]["games"]
     agent = make_agent(f"dmc:checkpoint={tmp_path / 'latest.pt'}")
     s = Rules().new_deal(seed=2)
     assert agent.act(s) in s.legal_actions()

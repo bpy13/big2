@@ -264,6 +264,16 @@ Device = Annotated[
 Envs = Annotated[int, typer.Option(help="Games played in lockstep (one network call per step).")]
 
 
+Threads = Annotated[int, typer.Option(help="CPU threads for PyTorch (0 = all cores).")]
+
+
+def _set_threads(threads: int) -> None:
+    if threads > 0:
+        import torch
+
+        torch.set_num_threads(threads)
+
+
 def _show_device(device: str) -> None:
     from poker.rl.device import actor_device, resolve_device
 
@@ -288,6 +298,7 @@ def rl_train(
     eval_every: int = 10,
     seed: int = 0,
     device: Device = "auto",
+    threads: Threads = 0,
     resume: Annotated[str | None, typer.Option(help="Checkpoint to continue from.")] = None,
     init: Annotated[
         str | None, typer.Option(help="Start from these weights (e.g. a distilled network).")
@@ -321,6 +332,7 @@ def rl_train(
             )
         console.print(line)
 
+    _set_threads(threads)
     _show_device(device)
     train(cfg, resume=resume, log=log, init=init)
 
@@ -334,6 +346,8 @@ def rl_ppo(
     envs: Envs = 256,
     seed: int = 0,
     device: Device = "auto",
+    threads: Threads = 0,
+    resume: Annotated[str | None, typer.Option(help="Checkpoint to continue from.")] = None,
 ) -> None:
     """Train a policy by PPO self-play (default rules)."""
     from poker.rl.ppo import PPOConfig, train
@@ -356,8 +370,9 @@ def rl_ppo(
         seed=seed,
         device=device,
     )
+    _set_threads(threads)
     _show_device(device)
-    train(cfg, log=log)
+    train(cfg, log=log, resume=resume)
 
 
 @rl.command("distill-gen")
@@ -381,7 +396,12 @@ def rl_distill_train(
     minutes: float = 60.0,
     batch_size: Annotated[int, typer.Option(help="Decisions per minibatch.")] = 1024,
     init: Annotated[str | None, typer.Option(help="Start from these weights.")] = None,
+    resume: Annotated[str | None, typer.Option(help="Checkpoint to continue from.")] = None,
+    max_decisions: Annotated[
+        int, typer.Option(help="Most recent decisions kept in memory (~1.4 GB per million).")
+    ] = 600_000,
     device: Device = "auto",
+    threads: Threads = 0,
 ) -> None:
     """Train a Q-network on solver-labelled data (picks up new shards as they appear)."""
     from poker.rl.distill import DistillConfig, train
@@ -399,8 +419,11 @@ def rl_distill_train(
         max_minutes=minutes,
         batch_size=batch_size,
         init=init,
+        resume=resume,
+        max_decisions=max_decisions,
         device=device,
     )
+    _set_threads(threads)
     _show_device(device)
     train(cfg, log=log)
 

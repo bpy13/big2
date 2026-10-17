@@ -40,7 +40,13 @@ from torch import nn
 from poker._core import analyze, encode
 from poker.games.big2 import Rules
 from poker.rl.device import actor_device, resolve_device
-from poker.rl.dmc import TrainConfig, _to_float, evaluate_vs_greedy, save_checkpoint
+from poker.rl.dmc import (
+    TrainConfig,
+    _to_float,
+    best_eval_so_far,
+    evaluate_vs_greedy,
+    save_checkpoint,
+)
 from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
 
 # ---------------------------------------------------------------------------
@@ -59,6 +65,8 @@ def _generate_worker(
 ) -> int:
     rng = random.Random(1_000_003 * worker + int(time.time()))
     deadline = time.time() + 60 * minutes
+    # A per-run prefix, so a new run adds shards instead of overwriting earlier ones.
+    run_tag = time.strftime("%Y%m%d-%H%M%S")
     shard = 0
     decisions = 0
     while time.time() < deadline:
@@ -94,7 +102,7 @@ def _generate_worker(
                 pick = rng.choice(top) if rng.random() < epsilon else top[0]
                 s.apply(pick["cards"])
         # Write under a temporary name, then rename: readers never see a partial shard.
-        final = Path(out_dir) / f"w{worker:02d}_{shard:05d}.npz"
+        final = Path(out_dir) / f"{run_tag}_w{worker:02d}_{shard:05d}.npz"
         tmp = final.with_suffix(".tmp.npz")
         np.savez_compressed(
             tmp,
@@ -148,6 +156,7 @@ class DistillConfig:
     eval_every_minutes: float = 3.0
     eval_deals: int = 256
     init: str | None = None  # start from these weights
+    resume: str | None = None  # continue a run: weights, optimizer, step count
     max_minutes: float = 60.0
     seed: int = 0
     device: str = "auto"  # see poker.rl.device
@@ -162,11 +171,12 @@ class _Data:
         self.parts: list[dict[str, np.ndarray]] = []
 
     def refresh(self, data_dir: str, max_decisions: int) -> int:
-        new = sorted(
+        # Oldest first (by write time), so trimming below drops the oldest data.
+        new = [
             str(p)
-            for p in Path(data_dir).glob("*.npz")
+            for p in sorted(Path(data_dir).glob("*.npz"), key=lambda p: p.stat().st_mtime)
             if str(p) not in self.files and not p.name.endswith(".tmp.npz")
-        )
+        ]
         for f in new:
             try:
                 with np.load(f) as z:
@@ -229,10 +239,17 @@ def train(cfg: DistillConfig, log: Any = print) -> Path:
     adev = actor_device(dev)
     actor = QNet(cfg.net).to(adev)  # plays the evaluation games
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr)
+    steps, best = 0, -math.inf
+    if cfg.resume:
+        ckpt = torch.load(cfg.resume, map_location=dev, weights_only=False)
+        net.load_state_dict(ckpt["model"])
+        if "optimizer" in ckpt:
+            opt.load_state_dict(ckpt["optimizer"])
+        steps = int(ckpt["info"]["iter"])
+        best = best_eval_so_far(ckpt, Path(cfg.resume).parent / "best.pt")
     data = _Data()
     t0 = time.time()
     last_eval = t0
-    steps, best = 0, -math.inf
     # Checkpoints use the DMC format so DMCAgent can load them.
     ckpt_cfg = TrainConfig(run_dir=cfg.run_dir, device=dev, net=cfg.net)
     while data.refresh(cfg.data_dir, cfg.max_decisions) == 0 and data.decisions() == 0:
