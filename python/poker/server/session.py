@@ -36,17 +36,17 @@ DIFFICULTIES: dict[str, str] = {
 }
 
 
-def rl_available(rules: Rules | None = None) -> bool:
-    """True if a trained network exists (and, given ``rules``, they are the default
-    rules, the only ones the networks were trained on)."""
-    return models.default_model() is not None and (rules is None or rules == Rules())
+def rl_available(rules: Rules) -> bool:
+    """True if a network was trained for games under ``rules``."""
+    return models.default_model(rules) is not None
 
 
 def difficulties(model: models.ModelInfo | None = None) -> dict[str, str]:
-    """Opponent presets: the solver levels, plus the RL agents when a network exists
-    (``model``, or the default one)."""
+    """Opponent presets: the solver levels, plus the RL agents when any network
+    exists (playing ``model``, or the first network listed)."""
     d = dict(DIFFICULTIES)
-    m = model or models.default_model()
+    nets = models.available()
+    m = model or (nets[0] if nets else None)
     if m is not None:
         d["rl"] = f"dmc:checkpoint={m.path}"
         d["rl_search"] = f"dmcsearch:checkpoint={m.path},determinizations=32,top=6"
@@ -187,20 +187,20 @@ class GameSession:
         return view
 
     def hint_model(self) -> models.ModelInfo | None:
-        """The network used for the hint, or ``None`` (none available, or non-default rules)."""
-        if not rl_available(self.rules):
-            return None
-        return models.get(self.model) if self.model else models.default_model()
+        """What the hint compares the solver with: the chosen model, else the default
+        network for this game's rules, else ``None``."""
+        if self.model:
+            return models.get(self.model, self.rules)
+        return models.default_model(self.rules)
 
     def set_model(self, model_id: str) -> dict[str, Any]:
-        """Switches the hint to another network, loading it now. Raises ``ValueError``
-        for an unknown model or non-default rules."""
-        if not rl_available(self.rules):
-            raise ValueError("the networks were trained on the default rules only")
-        from poker.rl.agent import load_model
+        """Switches the hint to another network (loading it now) or the greedy bot.
+        Raises ``ValueError`` for an unknown model or one trained under other rules."""
+        m = models.get(model_id, self.rules)
+        if m.kind != "bot":
+            from poker.rl.agent import load_model
 
-        m = models.get(model_id)
-        load_model(m.path)
+            load_model(m.path)
         self.model = m.id
         return models.describe(m)
 
@@ -213,11 +213,46 @@ class GameSession:
         solver's best), the solver's ``solver`` stats for it, and ``loss`` — how
         much worse the solver rates it than its own best, in points (objective
         "score") or win probability ("win"). Q-networks give each move a predicted
-        ``mean_score`` and ``win_rate``; a policy network (PPO) gives ``prob``.
+        ``mean_score`` and ``win_rate``; a policy network (PPO) gives ``prob``; the
+        greedy bot gives only its move.
         """
         m = self.hint_model()
         if m is None:
             return None
+        if m.kind == "bot":
+            moves: list[dict[str, Any]] = [{"cards": self.state.greedy_action()}]
+            kind = "bot"
+        else:
+            moves, kind = self._network_moves(m, objective)
+        shown = [
+            {
+                "cards": card_list(mv["cards"]),
+                "kind": "pass" if not mv["cards"] else kind_of(mv["cards"], self.rules),
+                "mean_score": mv.get("mean_score") if kind == "q" else None,
+                "win_rate": mv.get("win_rate") if kind == "q" else None,
+                "prob": mv.get("prob"),
+            }
+            for mv in moves[:3]
+        ]
+        pick = shown[0]["cards"]
+        rank = next((i for i, s in enumerate(solver) if s["cards"] == pick), None)
+        key = "mean_score" if objective == "score" else "win_rate"
+        return {
+            "model": {**models.describe(m), "kind": kind},
+            "moves": shown,
+            "pick": {
+                "cards": pick,
+                "solver_rank": None if rank is None else rank + 1,
+                "solver": None if rank is None else solver[rank],
+                "loss": None if rank is None else solver[0][key] - solver[rank][key],
+            },
+        }
+
+    def _network_moves(
+        self, m: models.ModelInfo, objective: str
+    ) -> tuple[list[dict[str, Any]], str]:
+        """Every legal move as the network rates it, its best first, and the network's
+        kind (``"q"`` or ``"policy"``)."""
         from poker.rl.agent import evaluate_moves, is_policy, load_model
         from poker.rl.model import SCORE_SCALE
 
@@ -232,29 +267,7 @@ class GameSession:
                 mv["prob"] = x / sum(w)
         elif objective == "win":
             moves.sort(key=lambda mv: -mv["win_rate"])
-        shown = [
-            {
-                "cards": card_list(mv["cards"]),
-                "kind": "pass" if not mv["cards"] else kind_of(mv["cards"], self.rules),
-                "mean_score": None if policy else mv["mean_score"],
-                "win_rate": None if policy else mv["win_rate"],
-                "prob": mv.get("prob"),
-            }
-            for mv in moves[:3]
-        ]
-        pick = shown[0]["cards"]
-        rank = next((i for i, s in enumerate(solver) if s["cards"] == pick), None)
-        key = "mean_score" if objective == "score" else "win_rate"
-        return {
-            "model": {**models.describe(m), "kind": "policy" if policy else "q"},
-            "moves": shown,
-            "pick": {
-                "cards": pick,
-                "solver_rank": None if rank is None else rank + 1,
-                "solver": None if rank is None else solver[rank],
-                "loss": None if rank is None else solver[0][key] - solver[rank][key],
-            },
-        }
+        return moves, "policy" if policy else "q"
 
     def review(self, iterations: int = REVIEW_DEALS) -> list[dict[str, Any]]:
         """After the game: each human decision with the solver's top moves and the
