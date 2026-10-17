@@ -63,6 +63,13 @@ test('play a full deal against easy bots, with hints and the post-game review', 
   await expect(dialog).toBeHidden()
   await page.getByRole('button', { name: 'Results' }).click()
   await expect(dialog.getByRole('heading')).toHaveText(/went out first/)
+
+  // Continue deals the next game with the same settings.
+  const deal = await page.locator('.table-title .meta').textContent()
+  await dialog.getByRole('button', { name: 'Continue' }).click()
+  await expect(dialog).toBeHidden()
+  await expect(page.locator('.table-title .meta')).not.toHaveText(deal ?? '')
+  await expect(page.locator('.table-title .meta')).toContainText('Easy bots')
   expect(errors).toEqual([])
 })
 
