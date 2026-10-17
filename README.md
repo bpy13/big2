@@ -37,6 +37,10 @@ make dev     # builds the Rust extension, installs the `poker` package (with PyT
 make test
 ```
 
+Works on macOS, Windows and Linux. On Windows, install the Visual Studio Build
+Tools (C++ workload) first, for the Rust linker. To train on an NVIDIA GPU, run
+`make torch-cuda` before `make dev` — see [docs/rl.md §6](docs/rl.md#6-hardware-cpu-nvidia-gpu-apple-gpu).
+
 ## Using it
 
 ```sh

@@ -55,9 +55,10 @@ relative of Big Two, with a simple recipe:
 3. **Fit** the network to those labels (squared error; plus cross-entropy for the
    win head), keeping the last 4 iterations' data. Repeat.
 
-One iteration = 1,024 games (~45,000 decisions) in about 3 seconds on the M1;
-the Rust batched environment (`Big2VecEnv`) plays ~13,000 random games/s, so the
-network is the bottleneck.
+One iteration = 1,024 games (~45,000 decisions). On the M1 CPU (shared with
+other jobs) it took ~9 s: ~2.3 s playing the games and ~6.6 s of gradient steps.
+The Rust batched environment (`Big2VecEnv`) plays ~13,000 random games/s, so the
+network — mostly learning, partly choosing moves — is the bottleneck; see §6.
 
 ### 3.2 PPO self-play — `poker rl ppo`
 
@@ -113,7 +114,7 @@ variants, so the UI disables RL options for them.
 ## 5. Commands
 
 ```sh
-# Self-play
+# Self-play (all trainers take --device auto|cpu|cuda|mps, see §6)
 poker rl train --run-dir runs/dmc/v1 --minutes 90             # DMC
 poker rl train --run-dir runs/dmc/ft --init models/big2-distilled.pt   # DMC from given weights
 poker rl ppo --run-dir runs/ppo/v1 --minutes 60                # PPO
@@ -137,7 +138,49 @@ distilled ones) and `dmcsearch:checkpoint=PATH[,determinizations=32,top=6]`.
 Each run directory holds `log.jsonl` (one line per iteration or evaluation),
 `config.json`, `latest.pt` (resumable) and `best.pt` (best evaluation vs greedy).
 
-## 6. Limits
+## 6. Hardware: CPU, NVIDIA GPU, Apple GPU
+
+Every trainer takes `--device`:
+
+| `--device` | Learning (gradient steps) | Choosing moves (self-play, evaluation) |
+|---|---|---|
+| `auto` (default) | NVIDIA GPU if PyTorch sees one, else CPU | same |
+| `cuda` | NVIDIA GPU | NVIDIA GPU |
+| `mps` | Apple GPU | CPU (small batches are faster there) |
+| `cpu` | CPU | CPU |
+
+The line printed at start-up and `config.json` show which device was used.
+`distill-gen` is unaffected: it runs the Rust solver, which uses CPU cores only
+(`--workers`).
+
+**Where the time goes.** Training has two network workloads (`log.jsonl` records
+both as `collect_s` and `train_s`):
+
+* *Choosing moves.* `--envs` games (default 256) are played in lockstep: each step
+  the Rust environment hands over every pending decision with all its legal moves,
+  and the network scores them in **one batched call** (the state tower runs once
+  per decision, only the small move head per legal move). A GPU makes the call
+  cheap, after which per-step overhead dominates; raise `--envs` (e.g. 1024–4096)
+  so each call does more work.
+* *Learning.* Minibatches of 2,048 samples — this is where a GPU helps most, and in
+  the Phase 3 DMC runs it was ~75% of the time.
+
+**NVIDIA GPU setup** (Windows or Linux):
+
+```sh
+conda env create -f environment.yml && conda activate poker
+make torch-cuda      # PyTorch's CUDA build; prints "CUDA available: True"
+make dev
+pytest python/tests/test_rl.py    # also runs the trainers on the GPU
+poker rl train --run-dir runs/dmc/gpu --minutes 600 --envs 1024
+```
+
+On Windows, `pip install torch` alone installs a CPU-only build — hence
+`make torch-cuda`. Building the Rust extension needs the Visual Studio Build Tools
+(workload "Desktop development with C++"). WSL2 with Ubuntu also works, using the
+Linux steps.
+
+## 7. Limits
 
 * **Compute.** DouZero trained on billions of decisions with many GPUs. These runs
   used 1–1.5 hours on a laptop CPU, several at once. The results describe this

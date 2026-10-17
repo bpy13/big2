@@ -1,0 +1,4 @@
+# Same line endings on every OS (Windows checkouts otherwise get CRLF).
+* text=auto eol=lf
+*.pt binary
+*.npz binary
