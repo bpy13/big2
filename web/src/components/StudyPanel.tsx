@@ -68,7 +68,7 @@ function MoveRow({ m, i, onPick }: { m: MoveStats; i: number; onPick?: () => voi
 /** Study mode: the solver's top 3 moves for your turn, or a verdict on your last move. */
 export function StudyPanel(p: Props) {
   return (
-    <section className="panel" aria-label="Study mode">
+    <section className="panel study" aria-label="Study mode">
       <h2>
         <span className="grow">Study mode</span>
         <span className="toggle" role="group" aria-label="Study mode setting">
