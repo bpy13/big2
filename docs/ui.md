@@ -32,18 +32,18 @@ Add `?botDelay=0` to the URL to make bots move instantly (default 700 ms per mov
 | Medium | Solver, 300 simulations per move |
 | Hard | Solver, 2,000 simulations per move |
 | Expert | Solver, 10,000 simulations per move on 4 threads |
-| RL network | The distilled network (`models/big2-distilled.pt`), ~1 ms per move |
+| RL network | The chosen network (see below), ~1 ms per move |
 | RL network + search | The network plus rollout search (~0.2 s per move) |
 
-The RL options appear only when the model file exists and the default rules are
-chosen (the network was trained on them). With them available, study mode also
-shows the network's own pick under the solver's top 3 — a quick way to see where
-fast intuition and search disagree.
+**Network** (in the New game dialog) picks the trained network for the RL
+opponents and for the study-mode hint. The default is the best available one
+(distilled, +10 h of training). The RL options appear only when a network file
+exists and the default rules are chosen (the networks were trained on them).
 
 From the Phase 1 results, Medium through Expert are close in strength, because extra
 simulations add little ([study-results/phase1-solver.md](study-results/phase1-solver.md)).
-RL network + search is about as strong as the solver bots; the RL network alone is slightly
-weaker ([study-results/phase3-rl.md](study-results/phase3-rl.md)).
+The RL network (distilled or DMC, +10 h) and RL network + search are about as strong as the
+solver bots ([study-results/long-training.md](study-results/long-training.md)).
 
 ## Study mode
 
@@ -60,6 +60,27 @@ the expected final score under the table's scoring; *Win* is the chance of going
 out first. They often disagree late in a deal, when cutting your card count
 (and penalty) matters more than winning the trick. Phase 1 measured that playing
 for *Win* costs about 7.6 points per deal.
+
+### Solver and network side by side
+
+With a network available (default rules), **Hints** shows two columns: the
+solver's top 3 moves and the network's top 3. The same move has the same colour
+in both, so you can see where each ranks the other's choices. Below them:
+
+* **Agree** — both pick the same move.
+* **Disagree** — where the solver ranks the network's first choice, and how much
+  worse it rates it than its own best (points per game, or win-rate points when
+  optimizing for *Win*), with the solver's ± for that move.
+
+The network's numbers are its own predictions from one forward pass: no
+simulation, no interval. A PPO network gives each move a probability instead.
+In **Quiz** mode the verdict also says what the network would have played.
+
+**Network** in the panel switches the hint to another network. Choosing one only
+stages it; it is loaded on the server when you press **Load** (or **Use**, if it
+is already in memory). Nothing but the default network is loaded until you ask.
+The networks offered are listed in `python/poker/server/models.py`; set
+`POKER_RL_CHECKPOINT` to add any other checkpoint as the default.
 
 ### How to read the numbers
 

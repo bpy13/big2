@@ -6,7 +6,7 @@ const DIFFICULTY_HELP: Record<string, string> = {
   medium: 'Solver with 300 simulations per move.',
   hard: 'Solver with 2,000 simulations per move.',
   expert: 'Solver with 10,000 simulations per move (4 threads).',
-  rl: 'Reinforcement-learning network (trained by self-play), one forward pass per move. Default rules only.',
+  rl: 'The chosen network, one forward pass per move. Default rules only.',
   rl_search: 'RL network + search: plays out sampled deals with the network for its top moves. Default rules only.',
 }
 
@@ -44,6 +44,8 @@ const OPTION_LABELS: Record<string, string> = {
 export interface NewGameChoice {
   difficulty: string
   rules: Rules
+  /** Network id for the RL bots and the hint (undefined = the server's default). */
+  model?: string
 }
 
 interface Props {
@@ -57,6 +59,9 @@ interface Props {
 export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
   const [difficulty, setDifficulty] = useState(initial.difficulty)
   const [rules, setRules] = useState<Rules>(initial.rules)
+  const known = config.models.some((m) => m.id === initial.model)
+  const [model, setModel] = useState(known ? initial.model : config.models[0]?.id)
+  const chosenModel = config.models.find((m) => m.id === model)
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="new-game-title">
       <div className="dialog">
@@ -71,6 +76,23 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
             ))}
           </select>
           <span className="help">{DIFFICULTY_HELP[difficulty] ?? config.difficulties[difficulty]}</span>
+          {config.models.length > 0 && (
+            <>
+              <label htmlFor="model">Network</label>
+              <select id="model" value={model} onChange={(e) => setModel(e.target.value)}>
+                {config.models.map((m, i) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                    {i === 0 ? ' (default)' : ''}
+                  </option>
+                ))}
+              </select>
+              <span className="help">
+                For the RL bots and the study-mode hint. {chosenModel?.note}
+                {chosenModel && !chosenModel.loaded && ' Loaded when you deal.'}
+              </span>
+            </>
+          )}
           {(Object.keys(RULE_LABELS) as (keyof Rules)[]).map((k) => (
             <RuleSelect
               key={k}
@@ -88,7 +110,7 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
               Cancel
             </button>
           )}
-          <button type="button" className="primary" onClick={() => onStart({ difficulty, rules })}>
+          <button type="button" className="primary" onClick={() => onStart({ difficulty, rules, model })}>
             Deal
           </button>
         </div>

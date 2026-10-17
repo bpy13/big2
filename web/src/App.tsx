@@ -76,7 +76,8 @@ export default function App() {
     setVerdict(null)
     setAnalysis(null)
     try {
-      setView(await api.newGame({ difficulty: c.difficulty, rules: c.rules }))
+      setView(await api.newGame({ difficulty: c.difficulty, rules: c.rules, model: c.model }))
+      api.config().then(setConfig, () => {}) // refresh which networks are loaded
       setDialog(null)
     } catch (e) {
       setError((e as Error).message)
@@ -105,7 +106,7 @@ export default function App() {
   // Solver analysis for your turn (also computed silently in quiz mode, for the verdict).
   // `turnKey` changes once per human turn, so bot steps do not re-trigger the request.
   const gameId = view?.id
-  const turnKey = view && view.your_turn ? `${view.id}:${view.history.length}:${objective}` : null
+  const turnKey = view && view.your_turn ? `${view.id}:${view.history.length}:${objective}:${view.model}` : null
   useEffect(() => {
     if (!turnKey || !gameId || studyMode === 'off') return
     let cancelled = false
@@ -132,7 +133,13 @@ export default function App() {
         const next = await api.play(view.id, cards)
         if (currentAnalysis && studyMode !== 'off') {
           const playedStats = currentAnalysis.moves.find((m) => m.cards.length === cards.length && m.cards.every((c) => cards.includes(c)))
-          setVerdict({ played: cards, best: currentAnalysis.moves[0], playedStats })
+          const net = currentAnalysis.network
+          setVerdict({
+            played: cards,
+            best: currentAnalysis.moves[0],
+            playedStats,
+            network: net && net.moves.length > 0 ? { label: net.model.label, cards: net.moves[0].cards } : null,
+          })
         } else {
           setVerdict(null)
         }
@@ -146,6 +153,27 @@ export default function App() {
       }
     },
     [view, busy, currentAnalysis, studyMode],
+  )
+
+  // Loads a network on the server (only when the player confirms) and uses it for the hint.
+  const loadModel = useCallback(
+    async (id: string) => {
+      if (!view) return
+      try {
+        await api.setModel(view.id, id)
+      } catch (e) {
+        setError((e as Error).message)
+        throw e
+      }
+      setView((v) => (v && v.id === view.id ? { ...v, model: id } : v))
+      setConfig((c) => (c ? { ...c, models: c.models.map((m) => (m.id === id ? { ...m, loaded: true } : m)) } : c))
+      setChoice((c) => {
+        const next = c ? { ...c, model: id } : c
+        if (next) store('choice', next)
+        return next
+      })
+    },
+    [view],
   )
 
   // Keyboard: Enter plays the selection, P passes, Escape clears.
@@ -277,6 +305,9 @@ export default function App() {
           yourTurn={!!view?.your_turn}
           onPick={(cards) => setSelected(cards)}
           verdict={verdict}
+          models={config.models}
+          model={view?.model ?? null}
+          onLoadModel={loadModel}
         />
         <section className="panel" aria-label="History">
           <h2>History</h2>
