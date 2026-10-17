@@ -34,7 +34,7 @@ from torch import nn
 
 from poker._core import Big2VecEnv
 from poker.rl.device import actor_device, resolve_device
-from poker.rl.dmc import _to_float, evaluate_vs_greedy
+from poker.rl.dmc import _to_float, best_eval_so_far, evaluate_vs_greedy
 from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig
 
 
@@ -243,8 +243,11 @@ def update(
     return {k: v / max(n, 1) for k, v in stats.items()}
 
 
-def train(cfg: PPOConfig, log: Any = print) -> Path:
-    """Runs PPO self-play for ``max_minutes``; returns the run directory."""
+def train(cfg: PPOConfig, log: Any = print, resume: str | None = None) -> Path:
+    """Runs PPO self-play for ``max_minutes``; returns the run directory.
+
+    ``resume`` continues from a checkpoint: weights, optimizer (if saved) and counters.
+    """
     cfg = replace(cfg, device=resolve_device(cfg.device))
     run = Path(cfg.run_dir)
     run.mkdir(parents=True, exist_ok=True)
@@ -255,8 +258,16 @@ def train(cfg: PPOConfig, log: Any = print) -> Path:
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr)
     adev = actor_device(cfg.device)
     actor = PolicyValueNet(cfg.net).to(adev)
-    env = Big2VecEnv(cfg.envs, seed=cfg.seed)
     t0, it, games, best = time.time(), 0, 0, -math.inf
+    if resume:
+        ckpt = torch.load(resume, map_location=cfg.device, weights_only=False)
+        net.load_state_dict(ckpt["model"])
+        if "optimizer" in ckpt:
+            opt.load_state_dict(ckpt["optimizer"])
+        it, games = ckpt["info"]["iter"], ckpt["info"]["games"]
+        best = best_eval_so_far(ckpt, Path(resume).parent / "best.pt")
+    # Offset by the iteration so a resumed run does not replay the same deals.
+    env = Big2VecEnv(cfg.envs, seed=cfg.seed + it)
     with (run / "log.jsonl").open("a") as logf:
         while (time.time() - t0) / 60 < cfg.max_minutes:
             it += 1
@@ -282,12 +293,12 @@ def train(cfg: PPOConfig, log: Any = print) -> Path:
                     "model": {k: v.detach().cpu() for k, v in net.state_dict().items()},
                     "net_config": net.config_dict(),
                     "train_config": asdict(cfg),
-                    "info": rec,
+                    "info": {**rec, "best_eval": max(best, rec["eval_score"])},
                 }
-                torch.save(payload, run / "latest.pt")
                 if rec["eval_score"] > best:
                     best = rec["eval_score"]
                     torch.save(payload, run / "best.pt")
+                torch.save({**payload, "optimizer": opt.state_dict()}, run / "latest.pt")
             logf.write(json.dumps(rec) + "\n")
             logf.flush()
             log(rec)

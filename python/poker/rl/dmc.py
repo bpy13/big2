@@ -210,6 +210,17 @@ def evaluate_vs_greedy(
     }
 
 
+def best_eval_so_far(ckpt: dict[str, Any], best_path: Path) -> float:
+    """Best evaluation score recorded for a run being resumed: from the checkpoint's
+    ``best_eval`` or, for older checkpoints without it, from the run's ``best.pt``."""
+    best = ckpt["info"].get("best_eval")
+    if best is None and best_path.exists():
+        best = torch.load(best_path, map_location="cpu", weights_only=False)["info"].get(
+            "eval_score"
+        )
+    return -math.inf if best is None else float(best)
+
+
 def save_checkpoint(
     path: Path,
     net: QNet,
@@ -256,11 +267,12 @@ def train(
             opt.load_state_dict(ckpt["optimizer"])
         info = ckpt["info"]
         start_iter, total_games, total_samples = info["iter"], info["games"], info["samples"]
-        best = info.get("best_eval", -math.inf)
+        best = best_eval_so_far(ckpt, Path(resume).parent / "best.pt")
 
     adev = actor_device(cfg.device)
     actor = QNet(cfg.net).to(adev)
-    env = Big2VecEnv(cfg.envs, seed=cfg.seed, **cfg.rules)
+    # Offset by the iteration so a resumed run does not replay the same deals.
+    env = Big2VecEnv(cfg.envs, seed=cfg.seed + start_iter, **cfg.rules)
     replay: deque[Batch] = deque(maxlen=cfg.replay_iters)
     t0 = time.time()
     it = start_iter

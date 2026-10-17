@@ -123,6 +123,12 @@ poker rl ppo --run-dir runs/ppo/v1 --minutes 60                # PPO
 poker rl distill-gen --out-dir runs/distill/data --workers 4 --minutes 60
 poker rl distill-train --data-dir runs/distill/data --run-dir runs/distill/v1 --minutes 75
 
+# Continue a run (weights, optimizer, counters); every trainer takes --resume
+poker rl train --run-dir runs/dmc/v1_more --resume runs/dmc/v1/latest.pt --minutes 600
+poker rl ppo --run-dir runs/ppo/v1_more --resume runs/ppo/v1/latest.pt --minutes 600
+poker rl distill-train --run-dir runs/distill/more --resume runs/distill/v1/latest.pt
+# Sharing the CPU between jobs: --threads N (PyTorch), --workers N (distill-gen)
+
 # Use a network
 poker big2 tournament dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 \
     dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 --deals 100 --workers 6
