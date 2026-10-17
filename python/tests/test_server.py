@@ -100,35 +100,86 @@ def test_bad_requests(client: TestClient) -> None:
     assert client.post("/api/games", json={"rules": {"scoring": "bogus"}}).status_code == 422
 
 
+MODELS = Path(__file__).resolve().parents[2] / "models"
+
+
 def test_rl_opponents_and_network_hints(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("torch")
-    from poker.server import session
+    from poker.server import models
 
-    ckpt = Path(__file__).resolve().parents[2] / "models" / "big2-distilled.pt"
-    if not ckpt.exists():
+    if not (MODELS / "big2-distilled.pt").exists():
         pytest.skip("no trained model in models/")
-    monkeypatch.setattr(session, "RL_CHECKPOINT", ckpt)
-    assert {"rl", "rl_search"} <= set(client.get("/api/config").json()["difficulties"])
-    v = run_bots(client, new_game(client, difficulty="rl", bots=None))
+    monkeypatch.setattr(models, "MODELS_DIR", MODELS)
+    monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
+    c = client.get("/api/config").json()
+    assert {"rl", "rl_search"} <= set(c["difficulties"])
+    assert "distilled-v1" in {m["id"] for m in c["models"]}
+    v = run_bots(client, new_game(client, difficulty="rl", bots=None, model="distilled-v1"))
+    assert v["model"] == "distilled-v1"
     a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 300}).json()
-    assert a["network"] and 1 <= len(a["network"]) <= 3
+    net = a["network"]
+    assert net["model"]["id"] == "distilled-v1" and net["model"]["kind"] == "q"
+    assert 1 <= len(net["moves"]) <= 3
     legal = {tuple(m) for m in v["legal"]}
-    assert all(tuple(m["cards"]) in legal for m in a["network"])
+    assert all(tuple(m["cards"]) in legal for m in net["moves"])
+    # The solver rates every legal move, so the network's pick always has a rank.
+    pick = net["pick"]
+    assert pick["cards"] == net["moves"][0]["cards"]
+    assert pick["solver_rank"] >= 1 and pick["solver"]["cards"] == pick["cards"]
+    assert pick["loss"] >= 0 and (pick["solver_rank"] > 1 or pick["loss"] == 0)
     # The network was trained on the default rules only.
     r = client.post("/api/games", json={"difficulty": "rl", "rules": {"scoring": "original"}})
     assert r.status_code == 422
 
 
-def test_without_a_model_rl_is_not_offered(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
+def test_switching_the_hint_model(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from poker.server import session
+    pytest.importorskip("torch")
+    import shutil
 
-    monkeypatch.setattr(session, "RL_CHECKPOINT", Path("/nonexistent/model.pt"))
-    assert "rl" not in client.get("/api/config").json()["difficulties"]
+    from poker.server import models
+
+    if not (MODELS / "big2-distilled.pt").exists():
+        pytest.skip("no trained model in models/")
+    # Two copies of one network under two catalog names, neither loaded yet.
+    for name in ["big2-distilled-10h.pt", "big2-ppo-10h.pt"]:
+        shutil.copy(MODELS / "big2-distilled.pt", tmp_path / name)
+    monkeypatch.setattr(models, "MODELS_DIR", tmp_path)
+    monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
+    monkeypatch.setattr("poker.rl.agent._CACHE", {})
+    listed = client.get("/api/config").json()["models"]
+    assert [m["id"] for m in listed] == ["distilled-10h", "ppo-10h"]
+    assert not any(m["loaded"] for m in listed)
+
+    v = run_bots(client, new_game(client))  # greedy bots: nothing loaded
+    assert v["model"] == "distilled-10h"  # the default
+    assert not any(m["loaded"] for m in client.get("/api/config").json()["models"])
+    r = client.post(f"/api/games/{v['id']}/model", json={"model": "ppo-10h"})
+    assert r.status_code == 200 and r.json()["loaded"]
+    assert client.get(f"/api/games/{v['id']}").json()["model"] == "ppo-10h"
+    loaded = {m["id"]: m["loaded"] for m in client.get("/api/config").json()["models"]}
+    assert loaded == {"distilled-10h": False, "ppo-10h": True}
+    a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 200}).json()
+    assert a["network"]["model"]["id"] == "ppo-10h"
+    bad = client.post(f"/api/games/{v['id']}/model", json={"model": "nope"})
+    assert bad.status_code == 422
+    assert client.post("/api/games", json={"model": "nope"}).status_code == 422
+
+
+def test_without_a_model_rl_is_not_offered(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from poker.server import models
+
+    monkeypatch.setattr(models, "MODELS_DIR", tmp_path)
+    monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
+    c = client.get("/api/config").json()
+    assert "rl" not in c["difficulties"] and c["models"] == []
     v = run_bots(client, new_game(client))
+    assert v["model"] is None
     assert (
         client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 200}).json()["network"]
         is None

@@ -30,9 +30,10 @@ web/playwright-report/
 .idea/
 .vscode/
 
-# Trained models: only the one the web UI uses is committed (see docs/rl.md to retrain others)
+# Trained models: only the default and original distilled networks are committed (see docs/rl.md to retrain others)
 /models/*
 !/models/big2-distilled.pt
+!/models/big2-distilled-10h.pt
 
 # Frozen code snapshots that long training jobs run from
 /.worktrees/

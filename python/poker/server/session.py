@@ -14,7 +14,7 @@ Study features:
 from __future__ import annotations
 
 import json
-import os
+import math
 import secrets
 import threading
 import time
@@ -25,6 +25,7 @@ from typing import Any
 from poker._core import analyze as core_analyze
 from poker.agents import Agent, make_agent
 from poker.games.big2 import Big2State, Rules, card_list, kind_of
+from poker.server import models
 
 #: Bot strength presets offered by the UI. Values are agent specs.
 DIFFICULTIES: dict[str, str] = {
@@ -34,26 +35,21 @@ DIFFICULTIES: dict[str, str] = {
     "expert": "ismcts:iterations=10000,threads=4",
 }
 
-#: Trained network for the RL opponents and the network's pick in study mode.
-#: Trained under the default rules only. Override with POKER_RL_CHECKPOINT.
-RL_CHECKPOINT = Path(
-    os.environ.get(
-        "POKER_RL_CHECKPOINT", Path(__file__).resolve().parents[3] / "models" / "big2-distilled.pt"
-    )
-)
-
 
 def rl_available(rules: Rules | None = None) -> bool:
-    """True if the RL checkpoint exists (and, given ``rules``, they are the default rules)."""
-    return RL_CHECKPOINT.is_file() and (rules is None or rules == Rules())
+    """True if a trained network exists (and, given ``rules``, they are the default
+    rules, the only ones the networks were trained on)."""
+    return models.default_model() is not None and (rules is None or rules == Rules())
 
 
-def difficulties() -> dict[str, str]:
-    """Opponent presets: the solver levels, plus the RL agents when a checkpoint exists."""
+def difficulties(model: models.ModelInfo | None = None) -> dict[str, str]:
+    """Opponent presets: the solver levels, plus the RL agents when a network exists
+    (``model``, or the default one)."""
     d = dict(DIFFICULTIES)
-    if rl_available():
-        d["rl"] = f"dmc:checkpoint={RL_CHECKPOINT}"
-        d["rl_search"] = f"dmcsearch:checkpoint={RL_CHECKPOINT},determinizations=32,top=6"
+    m = model or models.default_model()
+    if m is not None:
+        d["rl"] = f"dmc:checkpoint={m.path}"
+        d["rl_search"] = f"dmcsearch:checkpoint={m.path},determinizations=32,top=6"
     return d
 
 
@@ -77,6 +73,8 @@ class GameSession:
     seat: int
     bot_spec: str
     seed: int
+    #: Network for the study-mode hint (a :mod:`poker.server.models` id; ``None`` = default).
+    model: str | None = None
     id: str = field(default_factory=lambda: secrets.token_urlsafe(8))
     created: float = field(default_factory=time.time)
     state: Big2State = field(init=False)
@@ -139,6 +137,7 @@ class GameSession:
             "rules": self.rules.kwargs(),
             "bots": self.bot_spec,
             "seed": self.seed,
+            "model": None if (m := self.hint_model()) is None else m.id,
             "hand": card_list(s.hand(self.seat)),
             "hand_sizes": s.hand_sizes,
             "current_player": s.current_player,
@@ -174,31 +173,88 @@ class GameSession:
     def analyze(
         self, iterations: int = ANALYSIS_ITERATIONS, top: int = 3, objective: str = "score"
     ) -> dict[str, Any]:
-        """Solver recommendation for the human's current turn, plus (when available)
-        the trained network's own top moves under ``"network"``."""
+        """The solver's top moves for the human's current turn and, when a network
+        is available, the network's top moves beside them (``"network"``, see
+        :meth:`network_view`)."""
         if self.state.current_player != self.seat:
             raise ValueError("analysis is only available on your turn")
         view = _analysis_view(
-            self.state, self.rules, "ismcts", iterations, top, objective, seed=len(self.actions)
+            self.state, self.rules, "ismcts", iterations, None, objective, seed=len(self.actions)
         )
-        view["network"] = self._network_view(objective) if rl_available(self.rules) else None
+        solver = view["moves"]
+        view["moves"] = solver[:top]
+        view["network"] = self.network_view(solver, objective)
         return view
 
-    def _network_view(self, objective: str) -> list[dict[str, Any]]:
-        from poker.rl.agent import evaluate_moves, load_model
+    def hint_model(self) -> models.ModelInfo | None:
+        """The network used for the hint, or ``None`` (none available, or non-default rules)."""
+        if not rl_available(self.rules):
+            return None
+        return models.get(self.model) if self.model else models.default_model()
 
-        moves = evaluate_moves(load_model(RL_CHECKPOINT), self.state)
-        if objective == "win":
-            moves.sort(key=lambda m: -m["win_rate"])
-        return [
+    def set_model(self, model_id: str) -> dict[str, Any]:
+        """Switches the hint to another network, loading it now. Raises ``ValueError``
+        for an unknown model or non-default rules."""
+        if not rl_available(self.rules):
+            raise ValueError("the networks were trained on the default rules only")
+        from poker.rl.agent import load_model
+
+        m = models.get(model_id)
+        load_model(m.path)
+        self.model = m.id
+        return models.describe(m)
+
+    def network_view(self, solver: list[dict[str, Any]], objective: str) -> dict[str, Any] | None:
+        """The hint network's top 3 moves, and how the solver rates its first choice.
+
+        ``solver`` is the solver's ranking of every legal move (best first). The
+        result has ``model`` (:func:`poker.server.models.describe`), ``moves`` and
+        ``pick``: the network's first choice with its ``solver_rank`` (1 = the
+        solver's best), the solver's ``solver`` stats for it, and ``loss`` — how
+        much worse the solver rates it than its own best, in points (objective
+        "score") or win probability ("win"). Q-networks give each move a predicted
+        ``mean_score`` and ``win_rate``; a policy network (PPO) gives ``prob``.
+        """
+        m = self.hint_model()
+        if m is None:
+            return None
+        from poker.rl.agent import evaluate_moves, is_policy, load_model
+        from poker.rl.model import SCORE_SCALE
+
+        net = load_model(m.path)
+        moves = evaluate_moves(net, self.state)
+        policy = is_policy(net)
+        if policy:
+            logits = [mv["mean_score"] / SCORE_SCALE for mv in moves]
+            hi = max(logits)
+            w = [math.exp(x - hi) for x in logits]
+            for mv, x in zip(moves, w, strict=True):
+                mv["prob"] = x / sum(w)
+        elif objective == "win":
+            moves.sort(key=lambda mv: -mv["win_rate"])
+        shown = [
             {
-                "cards": card_list(m["cards"]),
-                "kind": "pass" if not m["cards"] else kind_of(m["cards"], self.rules),
-                "mean_score": m["mean_score"],
-                "win_rate": m["win_rate"],
+                "cards": card_list(mv["cards"]),
+                "kind": "pass" if not mv["cards"] else kind_of(mv["cards"], self.rules),
+                "mean_score": None if policy else mv["mean_score"],
+                "win_rate": None if policy else mv["win_rate"],
+                "prob": mv.get("prob"),
             }
-            for m in moves[:3]
+            for mv in moves[:3]
         ]
+        pick = shown[0]["cards"]
+        rank = next((i for i, s in enumerate(solver) if s["cards"] == pick), None)
+        key = "mean_score" if objective == "score" else "win_rate"
+        return {
+            "model": {**models.describe(m), "kind": "policy" if policy else "q"},
+            "moves": shown,
+            "pick": {
+                "cards": pick,
+                "solver_rank": None if rank is None else rank + 1,
+                "solver": None if rank is None else solver[rank],
+                "loss": None if rank is None else solver[0][key] - solver[rank][key],
+            },
+        }
 
     def review(self, iterations: int = REVIEW_DEALS) -> list[dict[str, Any]]:
         """After the game: each human decision with the solver's top moves and the
@@ -271,10 +327,11 @@ def _analysis_view(
     rules: Rules,
     algorithm: str,
     iterations: int,
-    top: int,
+    top: int | None,
     objective: str,
     seed: int,
 ) -> dict[str, Any]:
+    """The solver's ranking of the legal moves (all of them if ``top`` is ``None``)."""
     r = core_analyze(
         state, algorithm=algorithm, iterations=iterations, threads=4, seed=seed, objective=objective
     )

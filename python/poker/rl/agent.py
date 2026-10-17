@@ -38,6 +38,18 @@ def load_model(path: str | Path) -> nn.Module:
     return _CACHE[key]
 
 
+def is_cached(path: str | Path) -> bool:
+    """True if :func:`load_model` has already loaded this checkpoint."""
+    return str(Path(path).resolve()) in _CACHE
+
+
+def is_policy(net: nn.Module) -> bool:
+    """True for a PPO policy, whose first output is a logit rather than a score."""
+    from poker.rl.ppo import PolicyValueNet
+
+    return isinstance(net, PolicyValueNet)
+
+
 @torch.no_grad()
 def evaluate_moves(net: nn.Module, state: Big2State) -> list[dict[str, Any]]:
     """Every legal move with the network's predicted score and win probability, best first."""
