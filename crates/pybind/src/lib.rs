@@ -13,20 +13,40 @@
 
 use poker_big2::bots::Greedy;
 use poker_big2::card::{format_mask, parse_mask};
+use poker_big2::value::ValueNet;
 use poker_big2::{classify, Action, RuleSet, State};
 use poker_games::{Game, Policy};
-use poker_search::{ismcts, pimc, Analysis, IsmctsConfig, Objective, PimcConfig};
+use poker_search::{
+    ismcts_with, pimc, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective, PimcConfig,
+    PolicyModel, UniformSampler,
+};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use rand::rngs::SmallRng;
 use rand::{RngCore, SeedableRng};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 mod vecenv;
 
 fn value_error(e: impl std::fmt::Display) -> PyErr {
     PyValueError::new_err(e.to_string())
+}
+
+/// Loads a `.pknn` value network once per path and keeps it for later calls.
+fn load_value_net(path: &str) -> PyResult<Arc<ValueNet>> {
+    static CACHE: OnceLock<Mutex<HashMap<String, Arc<ValueNet>>>> = OnceLock::new();
+    let mut cache = CACHE.get_or_init(Default::default).lock().unwrap();
+    if let Some(net) = cache.get(path) {
+        return Ok(net.clone());
+    }
+    let bytes = std::fs::read(path).map_err(|e| value_error(format!("{path}: {e}")))?;
+    let net =
+        Arc::new(ValueNet::from_bytes(&bytes).map_err(|e| value_error(format!("{path}: {e}")))?);
+    cache.insert(path.to_string(), net.clone());
+    Ok(net)
 }
 
 fn rng_from(seed: Option<u64>) -> SmallRng {
@@ -331,7 +351,7 @@ impl PyState {
 /// `algorithm` is `"ismcts"` (default) or `"pimc"`. For PIMC, `iterations` is the
 /// number of sampled deals. The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -346,6 +366,12 @@ fn analyze<'py>(
     endgame_threshold: usize,
     endgame_max_nodes: u64,
     rollout_epsilon: f64,
+    belief: Option<&str>,
+    belief_candidates: usize,
+    belief_epsilon: f64,
+    belief_min_ess: f64,
+    value: Option<&str>,
+    value_rollout_weight: f64,
 ) -> PyResult<Bound<'py, PyDict>> {
     let player = state
         .inner
@@ -364,6 +390,25 @@ fn analyze<'py>(
         epsilon: rollout_epsilon,
     };
     let s = state.inner.clone();
+    let model = match belief {
+        None | Some("none") => None,
+        Some("greedy") => Some(PolicyModel {
+            policy: Greedy { epsilon: 0.0 },
+            epsilon: belief_epsilon,
+        }),
+        Some(other) => {
+            return Err(value_error(format!(
+                "unknown belief model {other:?} (use \"greedy\" or none)"
+            )))
+        }
+    };
+    if algorithm != "ismcts" && (model.is_some() || value.is_some()) {
+        return Err(value_error(
+            "belief and value are only supported with ismcts",
+        ));
+    }
+    let net = value.map(load_value_net).transpose()?;
+    let mut belief_ess = None;
     let result: Analysis<Action> = match algorithm {
         "ismcts" => {
             let defaults = IsmctsConfig::default();
@@ -377,7 +422,26 @@ fn analyze<'py>(
                 endgame_threshold,
                 endgame_max_nodes,
             };
-            py.detach(|| ismcts(&s, player, &cfg, &rollout))
+            let bcfg = BeliefConfig {
+                candidates: belief_candidates,
+                min_ess: belief_min_ess,
+            };
+            let leaf = net.as_deref().map(|n| Leaf {
+                evaluator: n,
+                rollout_weight: value_rollout_weight,
+            });
+            let (analysis, ess) = py.detach(|| {
+                let mut rng = SmallRng::seed_from_u64(seed ^ 0xB3_11EF);
+                let weighted = model.and_then(|m| Belief::new(&s, player, &m, &bcfg, &mut rng));
+                let ess = weighted.as_ref().map(|b| b.ess);
+                let a = match &weighted {
+                    Some(b) => ismcts_with(&s, player, &cfg, &rollout, b, leaf.as_ref()),
+                    None => ismcts_with(&s, player, &cfg, &rollout, &UniformSampler, leaf.as_ref()),
+                };
+                (a, ess)
+            });
+            belief_ess = ess;
+            analysis
         }
         "pimc" => {
             let cfg = PimcConfig {
@@ -401,6 +465,7 @@ fn analyze<'py>(
     d.set_item("player", result.player)?;
     d.set_item("simulations", result.simulations)?;
     d.set_item("seconds", result.elapsed.as_secs_f64())?;
+    d.set_item("belief_ess", belief_ess)?;
     let moves = result
         .moves
         .iter()
@@ -419,6 +484,17 @@ fn analyze<'py>(
     Ok(d)
 }
 
+/// A value network's estimate for the position (all hands visible to it):
+/// `(scores, win_probabilities)` per absolute seat.
+#[pyfunction]
+fn value_estimate(state: &PyState, path: &str) -> PyResult<(Vec<f64>, Vec<f64>)> {
+    if state.inner.is_terminal() {
+        return Err(value_error("the deal is over"));
+    }
+    let est = poker_games::Evaluator::evaluate(&*load_value_net(path)?, &state.inner);
+    Ok((est.scores, est.wins))
+}
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyState>()?;
@@ -426,8 +502,10 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(format_cards, m)?)?;
     m.add_function(wrap_pyfunction!(classify_cards, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
+    m.add_function(wrap_pyfunction!(value_estimate, m)?)?;
     m.add_class::<vecenv::VecEnv>()?;
     m.add_function(wrap_pyfunction!(vecenv::encode, m)?)?;
+    m.add_function(wrap_pyfunction!(vecenv::encode_full, m)?)?;
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     Ok(())
 }

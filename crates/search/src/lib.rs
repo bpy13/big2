@@ -8,6 +8,8 @@
 //!   (Cowling, Powley & Whitehouse, 2012). The main solver.
 //! * [`pimc`] — flat Monte Carlo over determinizations ("perfect-information
 //!   Monte Carlo"). A simpler baseline.
+//! * [`belief`] — opponent-aware determinization: weights sampled deals by how
+//!   well they explain the opponents' actions.
 //! * [`endgame`] — exact max^n search of a fully known position, used inside
 //!   ISMCTS once few cards remain.
 //!
@@ -17,10 +19,12 @@
 //! **estimates** with sampling error, not game-theoretic values.
 
 pub mod analysis;
+pub mod belief;
 pub mod endgame;
 pub mod ismcts;
 pub mod pimc;
 
 pub use analysis::{Analysis, MoveStats, Objective};
-pub use ismcts::{ismcts, IsmctsConfig};
+pub use belief::{Belief, BeliefConfig, PolicyModel, Sampler, UniformSampler};
+pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
 pub use pimc::{pimc, PimcConfig};

@@ -29,6 +29,7 @@ pub mod features;
 pub mod movegen;
 pub mod rules;
 pub mod state;
+pub mod value;
 
 pub use combo::{classify, Combo, Kind};
 pub use rules::{FlushOrder, PassRule, RuleSet, Scoring, Straights};

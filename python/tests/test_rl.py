@@ -254,3 +254,47 @@ def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path, device: str) -> Non
     agent = make_agent(f"dmc:checkpoint={tmp_path / 'latest.pt'}")
     s = Rules().new_deal(seed=2)
     assert agent.act(s) in s.legal_actions()
+
+
+def test_value_network_trains_exports_and_guides_search(tmp_path: Path) -> None:
+    from poker._core import analyze, value_estimate
+    from poker.rl.value import ValueConfig
+    from poker.rl.value import train as value_train
+
+    out = tmp_path / "v.pknn"
+    cfg = ValueConfig(
+        policy=str(Path(__file__).parents[2] / "models" / "big2-distilled.pt"),
+        out=str(out),
+        run_dir=str(tmp_path / "run"),
+        envs=16,
+        games_per_round=16,
+        hidden=16,
+        max_minutes=0.05,
+    )
+    if not Path(cfg.policy).exists():
+        pytest.skip("models/big2-distilled.pt not present")
+    value_train(cfg, log=lambda r: None)
+    assert out.exists()
+    s = Rules().new_deal(seed=8)
+    scores, wins = value_estimate(s, str(out))
+    assert abs(sum(scores)) < 1e-3 and abs(sum(wins) - 1) < 1e-5
+    for weight in (0.0, 0.5):
+        r = analyze(s, iterations=200, value=str(out), value_rollout_weight=weight)
+        assert sum(m["visits"] for m in r["moves"]) == 200
+    with pytest.raises(ValueError, match="pknn"):
+        analyze(s, iterations=10, value=str(tmp_path / "missing.pknn"))
+
+
+def test_belief_search_runs_and_reports_ess() -> None:
+    from poker._core import analyze
+
+    s = Rules().new_deal(seed=6)
+    for _ in range(14):
+        s.apply(s.greedy_action())
+    r = analyze(s, iterations=300, belief="greedy", belief_candidates=64)
+    assert r["belief_ess"] is not None and 0 < r["belief_ess"] <= 64
+    assert analyze(s, iterations=50)["belief_ess"] is None
+    with pytest.raises(ValueError, match="belief"):
+        analyze(s, iterations=10, belief="psychic")
+    agent = make_agent("ismcts:iterations=100,belief=greedy,belief_candidates=32", seed=1)
+    assert agent.act(s) in s.legal_actions()

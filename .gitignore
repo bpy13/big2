@@ -33,3 +33,6 @@ web/playwright-report/
 # Trained models: only the one the web UI uses is committed (see docs/rl.md to retrain others)
 /models/*
 !/models/big2-distilled.pt
+
+# Frozen code snapshots that long training jobs run from
+/.worktrees/

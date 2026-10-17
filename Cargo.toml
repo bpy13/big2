@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/cards", "crates/games", "crates/big2", "crates/search", "crates/pybind"]
+members = ["crates/cards", "crates/games", "crates/nn", "crates/big2", "crates/search", "crates/pybind"]
 
 [workspace.package]
 version = "0.1.0"
@@ -9,6 +9,7 @@ edition = "2021"
 [workspace.dependencies]
 poker-cards = { path = "crates/cards" }
 poker-games = { path = "crates/games" }
+poker-nn = { path = "crates/nn" }
 poker-big2 = { path = "crates/big2" }
 poker-search = { path = "crates/search" }
 rand = { version = "0.8", features = ["small_rng"] }

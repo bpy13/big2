@@ -25,10 +25,18 @@
 //! The UCB1 exploration term uses the *availability* count (how often the action
 //! was legal when its parent was visited) instead of the parent's visit count,
 //! as in the paper.
+//!
+//! Two parts can be swapped through [`ismcts_with`]:
+//!
+//! * the **sampler** of step 1 — uniform by default, or opponent-aware
+//!   ([`crate::belief::Belief`]);
+//! * the **leaf evaluation** of step 4 — a rollout by default, or a [`Leaf`]
+//!   evaluator (e.g. a learned value network), optionally mixed with a rollout.
 
 use crate::analysis::{Analysis, MoveStats, Objective, Sums};
+use crate::belief::{Sampler, UniformSampler};
 use crate::endgame::Endgame;
-use poker_games::{play_out, Outcome, Player, Policy, Transposable};
+use poker_games::{play_out, Estimate, Evaluator, Game, Outcome, Player, Policy, Transposable};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
@@ -71,6 +79,23 @@ impl Default for IsmctsConfig {
             endgame_threshold: 0,
             endgame_max_nodes: 20_000,
         }
+    }
+}
+
+/// Evaluates the position at the end of each simulation instead of (or as well
+/// as) a rollout: `value = rollout_weight · rollout + (1 − rollout_weight) · evaluator`.
+/// With `rollout_weight = 0` no rollout is played.
+pub struct Leaf<'a, E> {
+    pub evaluator: &'a E,
+    pub rollout_weight: f64,
+}
+
+/// Placeholder evaluator type for searches without one (see [`ismcts`]).
+pub struct NoEvaluator;
+
+impl<G: Game> Evaluator<G> for NoEvaluator {
+    fn evaluate(&self, _state: &G) -> Estimate {
+        unreachable!("NoEvaluator is never called")
     }
 }
 
@@ -123,6 +148,32 @@ where
     G: Transposable,
     P: Policy<G>,
 {
+    ismcts_with::<G, P, UniformSampler, NoEvaluator>(
+        state,
+        observer,
+        cfg,
+        rollout,
+        &UniformSampler,
+        None,
+    )
+}
+
+/// [`ismcts`] with a custom determinization `sampler` and, optionally, a `leaf`
+/// evaluator in place of (or mixed with) rollouts.
+pub fn ismcts_with<G, P, S, E>(
+    state: &G,
+    observer: Player,
+    cfg: &IsmctsConfig,
+    rollout: &P,
+    sampler: &S,
+    leaf: Option<&Leaf<'_, E>>,
+) -> Analysis<G::Action>
+where
+    G: Transposable,
+    P: Policy<G>,
+    S: Sampler<G>,
+    E: Evaluator<G>,
+{
     assert_eq!(
         state.current_player(),
         Some(observer),
@@ -141,7 +192,13 @@ where
                 cfg.seed
                     .wrapping_add((t as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)),
             );
-            search_tree(state, observer, cfg, rollout, iters, deadline, &mut rng)
+            let ctx = Ctx {
+                cfg,
+                rollout,
+                sampler,
+                leaf,
+            };
+            search_tree(state, observer, &ctx, iters, deadline, &mut rng)
         })
         .collect();
 
@@ -178,12 +235,19 @@ where
     }
 }
 
+/// What one search thread works with.
+struct Ctx<'a, 'l, P, S, E> {
+    cfg: &'a IsmctsConfig,
+    rollout: &'a P,
+    sampler: &'a S,
+    leaf: Option<&'a Leaf<'l, E>>,
+}
+
 /// Runs one tree for `iterations` (or until `deadline`) and returns root-child sums.
-fn search_tree<G, P>(
+fn search_tree<G, P, S, E>(
     root: &G,
     observer: Player,
-    cfg: &IsmctsConfig,
-    rollout: &P,
+    ctx: &Ctx<'_, '_, P, S, E>,
     iterations: u64,
     deadline: Option<Instant>,
     rng: &mut SmallRng,
@@ -191,7 +255,10 @@ fn search_tree<G, P>(
 where
     G: Transposable,
     P: Policy<G>,
+    S: Sampler<G>,
+    E: Evaluator<G>,
 {
+    let cfg = ctx.cfg;
     let mut tree: Vec<Node<G::Action>> = vec![Node::new(None, observer)];
     let mut endgame = Endgame::<G>::new(cfg.objective);
     let mut legal = Vec::new();
@@ -204,7 +271,7 @@ where
         if done.is_multiple_of(64) && deadline.is_some_and(|d| Instant::now() >= d) {
             break;
         }
-        let mut s = root.determinize(observer, rng);
+        let mut s = ctx.sampler.sample(root, observer, rng);
         let mut node = 0usize;
         path.clear();
 
@@ -247,15 +314,16 @@ where
             node = best;
         }
 
-        // Simulation.
-        let outcome = simulate(&mut s, cfg, rollout, &mut endgame, rng);
+        // Simulation (or evaluation).
+        let value = evaluate_leaf(&mut s, ctx, &mut endgame, rng);
 
         // Backpropagation.
         for &n in &path {
             let node = &mut tree[n];
             node.visits += 1;
-            node.utility += cfg.objective.utility(root, &outcome, node.player);
-            node.sums.add(&outcome, node.player);
+            node.utility += cfg.objective.utility_estimate(root, &value, node.player);
+            node.sums
+                .add_value(value.scores[node.player], value.wins[node.player]);
         }
         done += 1;
     }
@@ -272,6 +340,43 @@ where
 fn ucb<A>(n: &Node<A>, c: f64) -> f64 {
     let v = n.visits as f64;
     n.utility / v + c * ((n.avail as f64).ln() / v).sqrt()
+}
+
+/// The value of a simulation's last position: the result if the game is over or
+/// solved exactly, else the leaf evaluator's estimate, mixed with a rollout.
+fn evaluate_leaf<G, P, S, E>(
+    s: &mut G,
+    ctx: &Ctx<'_, '_, P, S, E>,
+    endgame: &mut Endgame<G>,
+    rng: &mut SmallRng,
+) -> Estimate
+where
+    G: Transposable,
+    P: Policy<G>,
+    E: Evaluator<G>,
+{
+    let Some(leaf) = ctx.leaf else {
+        return Estimate::from(&simulate(s, ctx.cfg, ctx.rollout, endgame, rng));
+    };
+    if let Some(o) = s.outcome() {
+        return Estimate::from(&o);
+    }
+    let est = leaf.evaluator.evaluate(s);
+    let w = leaf.rollout_weight;
+    if w <= 0.0 {
+        return est;
+    }
+    let played = Estimate::from(&simulate(s, ctx.cfg, ctx.rollout, endgame, rng));
+    let mix = |a: &[f64], b: &[f64]| -> Vec<f64> {
+        a.iter()
+            .zip(b)
+            .map(|(x, y)| w * x + (1.0 - w) * y)
+            .collect()
+    };
+    Estimate {
+        scores: mix(&played.scores, &est.scores),
+        wins: mix(&played.wins, &est.wins),
+    }
 }
 
 /// Finishes a determinized game: exactly if it is small enough, else by rollout.
