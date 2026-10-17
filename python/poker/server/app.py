@@ -36,7 +36,7 @@ from pydantic import BaseModel, Field
 from poker.agents import make_agent
 from poker.games.big2 import Rules, cards
 from poker.server import models
-from poker.server.session import GameSession, difficulties, rl_available
+from poker.server.session import DIFFICULTIES, GameSession, difficulties
 
 MAX_SESSIONS = 200
 GAME_LOG_DIR = Path(os.environ.get("POKER_GAME_LOG_DIR", "runs/games"))
@@ -49,7 +49,7 @@ RULE_OPTIONS: dict[str, list[Any]] = {
     "flush_order": ["rank_first", "suit_first"],
     "pass_rule": ["may_reenter", "locked_out"],
     "scoring": ["tiered", "original", "win_loss"],
-    "last_card_duty": [False, True],
+    "last_card_duty": [True, False],
 }
 
 app = FastAPI(
@@ -63,7 +63,7 @@ class RulesIn(BaseModel):
     flush_order: str = "rank_first"
     pass_rule: str = "may_reenter"
     scoring: str = "tiered"
-    last_card_duty: bool = False
+    last_card_duty: bool = True
 
 
 class NewGame(BaseModel):
@@ -111,24 +111,17 @@ def config() -> dict[str, Any]:
         "difficulties": difficulties(),
         "rules": RULE_OPTIONS,
         "defaults": Rules().kwargs(),
-        "models": [models.describe(m) for m in models.available()],
+        "models": [models.describe(m) for m in [*models.available(), models.GREEDY]],
     }
 
 
 @app.post("/api/games")
 def new_game(body: NewGame) -> dict[str, Any]:
     try:
-        model = models.get(body.model) if body.model else None
-    except ValueError as e:
-        raise HTTPException(422, str(e)) from e
-    spec = body.bots or difficulties(model).get(body.difficulty or "hard")
-    if spec is None:
-        raise HTTPException(422, f"unknown difficulty {body.difficulty!r}")
-    try:
         rules = Rules(**body.rules.model_dump())
         rules.new_deal(0)  # validates rule names
-        if spec.startswith("dmc") and not rl_available(rules):
-            raise ValueError("the RL bots were trained on the default rules only")
+        model = models.get(body.model, rules) if body.model else None
+        spec = body.bots or _bot_spec(body.difficulty or "hard", rules, model)
         make_agent(spec)
     except ValueError as e:
         raise HTTPException(422, str(e)) from e
@@ -138,12 +131,25 @@ def new_game(body: NewGame) -> dict[str, Any]:
         seat=body.seat,
         bot_spec=spec,
         seed=seed,
-        model=model.id if model and rl_available(rules) else None,
+        model=model.id if model else None,
     )
     _sessions[s.id] = s
     while len(_sessions) > MAX_SESSIONS:
         _sessions.popitem(last=False)
     return s.view()
+
+
+def _bot_spec(difficulty: str, rules: Rules, model: models.ModelInfo | None) -> str:
+    """The agent spec for a difficulty preset; the RL presets use ``model`` if it is a
+    network, else the default network for ``rules``."""
+    if difficulty in ("rl", "rl_search"):
+        net = model if model is not None and model.kind != "bot" else models.default_model(rules)
+        if net is None:
+            raise ValueError("no network was trained for these rules")
+        return difficulties(net)[difficulty]
+    if difficulty not in DIFFICULTIES:
+        raise ValueError(f"unknown difficulty {difficulty!r}")
+    return DIFFICULTIES[difficulty]
 
 
 @app.get("/api/games/{game_id}")

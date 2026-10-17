@@ -34,6 +34,7 @@ web/playwright-report/
 /models/*
 !/models/big2-distilled.pt
 !/models/big2-distilled-10h.pt
+!/models/big2-distilled-duty.pt
 
 # Frozen code snapshots that long training jobs run from
 /.worktrees/

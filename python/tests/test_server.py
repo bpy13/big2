@@ -116,7 +116,11 @@ def test_rl_opponents_and_network_hints(
     c = client.get("/api/config").json()
     assert {"rl", "rl_search"} <= set(c["difficulties"])
     assert "distilled-v1" in {m["id"] for m in c["models"]}
-    v = run_bots(client, new_game(client, difficulty="rl", bots=None, model="distilled-v1"))
+    no_duty = {"last_card_duty": False}  # the rules distilled-v1 was trained under
+    v = run_bots(
+        client,
+        new_game(client, difficulty="rl", bots=None, model="distilled-v1", rules=no_duty),
+    )
     assert v["model"] == "distilled-v1"
     a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 300}).json()
     net = a["network"]
@@ -129,8 +133,10 @@ def test_rl_opponents_and_network_hints(
     assert pick["cards"] == net["moves"][0]["cards"]
     assert pick["solver_rank"] >= 1 and pick["solver"]["cards"] == pick["cards"]
     assert pick["loss"] >= 0 and (pick["solver_rank"] > 1 or pick["loss"] == 0)
-    # The network was trained on the default rules only.
+    # Networks are offered only under the rules they were trained for.
     r = client.post("/api/games", json={"difficulty": "rl", "rules": {"scoring": "original"}})
+    assert r.status_code == 422
+    r = client.post("/api/games", json={"model": "distilled-v1"})  # default rules: duty on
     assert r.status_code == 422
 
 
@@ -151,17 +157,18 @@ def test_switching_the_hint_model(
     monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
     monkeypatch.setattr("poker.rl.agent._CACHE", {})
     listed = client.get("/api/config").json()["models"]
-    assert [m["id"] for m in listed] == ["distilled-10h", "ppo-10h"]
-    assert not any(m["loaded"] for m in listed)
+    assert [m["id"] for m in listed] == ["distilled-10h", "ppo-10h", "greedy"]
+    assert not any(m["loaded"] for m in listed if m["kind"] != "bot")
 
-    v = run_bots(client, new_game(client))  # greedy bots: nothing loaded
-    assert v["model"] == "distilled-10h"  # the default
-    assert not any(m["loaded"] for m in client.get("/api/config").json()["models"])
+    # Greedy bots under the networks' rules: nothing is loaded yet.
+    v = run_bots(client, new_game(client, rules={"last_card_duty": False}))
+    assert v["model"] == "distilled-10h"  # the default for these rules
+    assert not any(m["loaded"] for m in client.get("/api/config").json()["models"][:2])
     r = client.post(f"/api/games/{v['id']}/model", json={"model": "ppo-10h"})
     assert r.status_code == 200 and r.json()["loaded"]
     assert client.get(f"/api/games/{v['id']}").json()["model"] == "ppo-10h"
     loaded = {m["id"]: m["loaded"] for m in client.get("/api/config").json()["models"]}
-    assert loaded == {"distilled-10h": False, "ppo-10h": True}
+    assert loaded == {"distilled-10h": False, "ppo-10h": True, "greedy": True}
     a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 200}).json()
     assert a["network"]["model"]["id"] == "ppo-10h"
     bad = client.post(f"/api/games/{v['id']}/model", json={"model": "nope"})
@@ -177,10 +184,25 @@ def test_without_a_model_rl_is_not_offered(
     monkeypatch.setattr(models, "MODELS_DIR", tmp_path)
     monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
     c = client.get("/api/config").json()
-    assert "rl" not in c["difficulties"] and c["models"] == []
+    assert "rl" not in c["difficulties"] and [m["id"] for m in c["models"]] == ["greedy"]
     v = run_bots(client, new_game(client))
     assert v["model"] is None
     assert (
         client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 200}).json()["network"]
         is None
     )
+    assert client.post("/api/games", json={"difficulty": "rl"}).status_code == 422
+
+
+def test_greedy_bot_in_the_hint(client: TestClient) -> None:
+    """The greedy bot needs no network and works under any rules."""
+    v = run_bots(client, new_game(client, rules={"scoring": "original"}))
+    r = client.post(f"/api/games/{v['id']}/model", json={"model": "greedy"})
+    assert r.status_code == 200 and r.json()["kind"] == "bot"
+    a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 300}).json()
+    net = a["network"]
+    assert net["model"]["id"] == "greedy" and len(net["moves"]) == 1
+    move = net["moves"][0]
+    assert move["mean_score"] is None and move["win_rate"] is None and move["prob"] is None
+    assert tuple(move["cards"]) in {tuple(m) for m in v["legal"]}
+    assert net["pick"]["solver_rank"] >= 1
