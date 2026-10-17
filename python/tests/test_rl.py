@@ -13,9 +13,17 @@ from poker._core import Big2State, Big2VecEnv, encode  # noqa: E402
 from poker.agents import make_agent  # noqa: E402
 from poker.eval import play_game  # noqa: E402
 from poker.games.big2 import Rules  # noqa: E402
+from poker.rl.device import actor_device, resolve_device  # noqa: E402
 from poker.rl.dmc import TrainConfig, choose, train  # noqa: E402
 from poker.rl.model import ACTION_LEN, STATE_LEN, QNet  # noqa: E402
 from poker.rl.search import rollout_search  # noqa: E402
+
+# Every device this machine can train on; the trainers are tested on each.
+DEVICES = ["cpu"]
+if torch.cuda.is_available():
+    DEVICES.append("cuda")
+if torch.backends.mps.is_available():
+    DEVICES.append("mps")
 
 
 def random_rollout(
@@ -143,12 +151,41 @@ def test_rollout_search_reports_candidates(checkpoint: Path) -> None:
     assert set(map(int, s.legal_actions())) >= {m["cards"] for m in moves}
 
 
+def test_resolve_device() -> None:
+    assert resolve_device("auto") == ("cuda" if torch.cuda.is_available() else "cpu")
+    assert resolve_device("cpu") == "cpu"
+    with pytest.raises(ValueError, match="unknown device"):
+        resolve_device("tpu")
+    if not torch.cuda.is_available():
+        with pytest.raises(ValueError, match="CUDA"):
+            resolve_device("cuda")
+    assert actor_device("cuda") == "cuda" and actor_device("mps") == "cpu"
+
+
+@pytest.mark.parametrize("device", [d for d in DEVICES if d != "cpu"])
+def test_dmc_trains_on_device(tmp_path: Path, device: str) -> None:
+    cfg = TrainConfig(
+        run_dir=str(tmp_path),
+        envs=16,
+        games_per_iter=16,
+        max_iters=1,
+        eval_every=1,
+        eval_deals=4,
+        device=device,
+    )
+    train(cfg, log=lambda r: None)
+    ckpt = torch.load(tmp_path / "latest.pt", weights_only=False)
+    assert ckpt["train_config"]["device"] == device
+    assert all(v.device.type == "cpu" for v in ckpt["model"].values())
+
+
 def test_rl_specs_need_a_checkpoint() -> None:
     with pytest.raises(ValueError, match="checkpoint"):
         make_agent("dmc")
 
 
-def test_distillation_generates_and_trains(tmp_path: Path) -> None:
+@pytest.mark.parametrize("device", DEVICES)
+def test_distillation_generates_and_trains(tmp_path: Path, device: str) -> None:
     from poker.rl import distill
 
     data = tmp_path / "data"
@@ -164,6 +201,7 @@ def test_distillation_generates_and_trains(tmp_path: Path) -> None:
         eval_every_minutes=0.02,
         eval_deals=4,
         batch_size=16,
+        device=device,
     )
     run = distill.train(cfg, log=lambda r: None)
     assert (run / "latest.pt").exists()
@@ -171,7 +209,8 @@ def test_distillation_generates_and_trains(tmp_path: Path) -> None:
     assert agent.act(Rules().new_deal(seed=1)) in Rules().new_deal(seed=1).legal_actions()
 
 
-def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path) -> None:
+@pytest.mark.parametrize("device", DEVICES)
+def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path, device: str) -> None:
     from poker.rl.ppo import PPOConfig, segment_log_softmax
     from poker.rl.ppo import train as ppo_train
 
@@ -188,6 +227,7 @@ def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path) -> None:
         max_minutes=0.05,
         eval_every=1,
         eval_deals=4,
+        device=device,
     )
     ppo_train(cfg, log=lambda r: None)
     agent = make_agent(f"dmc:checkpoint={tmp_path / 'latest.pt'}")

@@ -26,7 +26,7 @@ import json
 import math
 import time
 from collections import deque
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +35,7 @@ import torch
 from torch import nn
 
 from poker._core import Big2VecEnv
+from poker.rl.device import actor_device, resolve_device
 from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
 
 
@@ -54,7 +55,7 @@ class TrainConfig:
     max_iters: int = 1_000_000
     max_minutes: float = 60.0
     seed: int = 0
-    device: str = "cpu"
+    device: str = "auto"  # see poker.rl.device
     rules: dict[str, Any] = field(default_factory=dict)
     net: NetConfig = field(default_factory=NetConfig)
 
@@ -73,7 +74,13 @@ class Batch:
 
 
 def _to_float(x: np.ndarray, device: str) -> torch.Tensor:
-    return torch.from_numpy(np.asarray(x, dtype=np.float32)).to(device)
+    """Array → float32 tensor on ``device``. Integer arrays (the 0/1 features) are
+    converted after the copy, so they cross to a GPU as uint8 (4× less data)."""
+    x = np.asarray(x)
+    if x.dtype.kind == "f":
+        x = x.astype(np.float32, copy=False)
+    t = torch.from_numpy(x if x.flags.writeable else x.copy())
+    return t.to(device).float()
 
 
 @torch.no_grad()
@@ -230,6 +237,7 @@ def train(
     ``resume`` continues a run (weights, optimizer, counters); ``init`` only copies
     weights from a checkpoint (e.g. a distilled network) and starts a fresh run.
     """
+    cfg = replace(cfg, device=resolve_device(cfg.device))
     run = Path(cfg.run_dir)
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.json").write_text(json.dumps(asdict(cfg), indent=2))
@@ -250,8 +258,8 @@ def train(
         start_iter, total_games, total_samples = info["iter"], info["games"], info["samples"]
         best = info.get("best_eval", -math.inf)
 
-    # Actors run on CPU: small batches are faster there than on MPS.
-    actor = QNet(cfg.net)
+    adev = actor_device(cfg.device)
+    actor = QNet(cfg.net).to(adev)
     env = Big2VecEnv(cfg.envs, seed=cfg.seed, **cfg.rules)
     replay: deque[Batch] = deque(maxlen=cfg.replay_iters)
     t0 = time.time()
@@ -259,9 +267,9 @@ def train(
     with (run / "log.jsonl").open("a") as logf:
         while it < cfg.max_iters and (time.time() - t0) / 60 < cfg.max_minutes:
             it += 1
-            actor.load_state_dict({k: v.cpu() for k, v in net.state_dict().items()})
+            actor.load_state_dict(net.state_dict())
             tc = time.time()
-            batch, cstats = collect(actor, env, cfg.games_per_iter, cfg.epsilon, rng)
+            batch, cstats = collect(actor, env, cfg.games_per_iter, cfg.epsilon, rng, adev)
             collect_s = time.time() - tc
             replay.append(batch)
             data = Batch(
@@ -286,10 +294,10 @@ def train(
                 **losses,
             }
             if it % cfg.eval_every == 0:
-                actor.load_state_dict({k: v.cpu() for k, v in net.state_dict().items()})
+                actor.load_state_dict(net.state_dict())
                 rec.update(
                     evaluate_vs_greedy(
-                        actor, cfg.eval_deals, seed=10_000 + cfg.seed, rules=cfg.rules
+                        actor, cfg.eval_deals, seed=10_000 + cfg.seed, rules=cfg.rules, device=adev
                     )
                 )
             info = {

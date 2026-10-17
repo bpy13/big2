@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 import math
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -33,6 +33,7 @@ import torch
 from torch import nn
 
 from poker._core import Big2VecEnv
+from poker.rl.device import actor_device, resolve_device
 from poker.rl.dmc import _to_float, evaluate_vs_greedy
 from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig
 
@@ -104,6 +105,7 @@ class PPOConfig:
     eval_deals: int = 256
     max_minutes: float = 60.0
     seed: int = 0
+    device: str = "auto"  # see poker.rl.device
     net: NetConfig = field(default_factory=NetConfig)
 
 
@@ -118,7 +120,13 @@ class Rollout:
 
 
 @torch.no_grad()
-def collect(net: PolicyValueNet, env: Big2VecEnv, games: int, rng: np.random.Generator) -> Rollout:
+def collect(
+    net: PolicyValueNet,
+    env: Big2VecEnv,
+    games: int,
+    rng: np.random.Generator,
+    device: str = "cpu",
+) -> Rollout:
     net.eval()
     traj: dict[int, list[tuple[np.ndarray, np.ndarray, int, float, int]]] = {}
     st_rows: list[np.ndarray] = []
@@ -134,11 +142,9 @@ def collect(net: PolicyValueNet, env: Big2VecEnv, games: int, rng: np.random.Gen
         counts = np.asarray(counts_l, dtype=np.int64)
         states = np.frombuffer(st, dtype=np.uint8).reshape(len(ids), STATE_LEN)
         actions = np.frombuffer(ac, dtype=np.uint8).reshape(-1, ACTION_LEN)
-        index = np.repeat(np.arange(len(ids)), counts)
-        logits, _ = net(
-            _to_float(states, "cpu"), _to_float(actions, "cpu"), torch.from_numpy(index)
-        )
-        logp = segment_log_softmax(logits, torch.from_numpy(index), len(ids)).numpy()
+        index = torch.from_numpy(np.repeat(np.arange(len(ids)), counts)).to(device)
+        logits, _ = net(_to_float(states, device), _to_float(actions, device), index)
+        logp = segment_log_softmax(logits, index, len(ids)).cpu().numpy()
         starts = np.concatenate([[0], np.cumsum(counts)[:-1]])
         choices = np.empty(len(ids), dtype=np.int64)
         for k in range(len(ids)):
@@ -183,13 +189,21 @@ def update(
     rng: np.random.Generator,
 ) -> dict[str, float]:
     net.train()
+    dev = cfg.device
     d = len(ro.states)
     lo = np.searchsorted(ro.owner, np.arange(d), side="left")
     hi = np.searchsorted(ro.owner, np.arange(d), side="right")
     with torch.no_grad():
-        values = torch.cat(
-            [net.state_value(_to_float(ro.states[i : i + 8192], "cpu")) for i in range(0, d, 8192)]
-        ).numpy()
+        values = (
+            torch.cat(
+                [
+                    net.state_value(_to_float(ro.states[i : i + 8192], dev))
+                    for i in range(0, d, 8192)
+                ]
+            )
+            .cpu()
+            .numpy()
+        )
     adv = ro.ret - values
     adv = (adv - adv.mean()) / (adv.std() + 1e-8)
     stats = {"loss_policy": 0.0, "loss_value": 0.0, "entropy": 0.0, "clip_frac": 0.0}
@@ -202,18 +216,19 @@ def update(
             chosen_local = np.concatenate([[0], np.cumsum(hi[dec] - lo[dec])[:-1]]) + (
                 ro.chosen[dec] - lo[dec]
             )
-            seg_t = torch.from_numpy(seg)
+            seg_t = torch.from_numpy(seg).to(dev)
             logits, value = net(
-                _to_float(ro.states[dec], "cpu"), _to_float(ro.actions[rows], "cpu"), seg_t
+                _to_float(ro.states[dec], dev), _to_float(ro.actions[rows], dev), seg_t
             )
             logp_all = segment_log_softmax(logits, seg_t, len(dec))
-            logp = logp_all[torch.from_numpy(chosen_local)]
-            ratio = (logp - torch.from_numpy(ro.logp[dec])).exp()
-            a = torch.from_numpy(adv[dec]).float()
+            logp = logp_all[torch.from_numpy(chosen_local).to(dev)]
+            ratio = (logp - _to_float(ro.logp[dec], dev)).exp()
+            a = _to_float(adv[dec], dev)
             pg = -torch.min(ratio * a, ratio.clamp(1 - cfg.clip, 1 + cfg.clip) * a).mean()
-            v = net.state_value(_to_float(ro.states[dec], "cpu"))
-            vl = ((v - torch.from_numpy(ro.ret[dec])) ** 2).mean()
-            ent = -torch.zeros(len(dec)).index_add(0, seg_t, logp_all.exp() * logp_all).mean()
+            v = net.state_value(_to_float(ro.states[dec], dev))
+            vl = ((v - _to_float(ro.ret[dec], dev)) ** 2).mean()
+            ent = -torch.zeros(len(dec), device=dev).index_add(0, seg_t, logp_all.exp() * logp_all)
+            ent = ent.mean()
             loss: torch.Tensor = pg + cfg.value_weight * vl - cfg.entropy_weight * ent
             opt.zero_grad()
             torch.autograd.backward(loss)
@@ -229,20 +244,25 @@ def update(
 
 
 def train(cfg: PPOConfig, log: Any = print) -> Path:
+    """Runs PPO self-play for ``max_minutes``; returns the run directory."""
+    cfg = replace(cfg, device=resolve_device(cfg.device))
     run = Path(cfg.run_dir)
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.json").write_text(json.dumps(asdict(cfg), indent=2))
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
-    net = PolicyValueNet(cfg.net)
+    net = PolicyValueNet(cfg.net).to(cfg.device)
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr)
+    adev = actor_device(cfg.device)
+    actor = PolicyValueNet(cfg.net).to(adev)
     env = Big2VecEnv(cfg.envs, seed=cfg.seed)
     t0, it, games, best = time.time(), 0, 0, -math.inf
     with (run / "log.jsonl").open("a") as logf:
         while (time.time() - t0) / 60 < cfg.max_minutes:
             it += 1
             tc = time.time()
-            ro = collect(net, env, cfg.games_per_iter, rng)
+            actor.load_state_dict(net.state_dict())
+            ro = collect(actor, env, cfg.games_per_iter, rng, adev)
             collect_s = time.time() - tc
             games += cfg.games_per_iter
             stats = update(net, opt, ro, cfg, rng)
@@ -255,10 +275,11 @@ def train(cfg: PPOConfig, log: Any = print) -> Path:
                 **stats,
             }
             if it % cfg.eval_every == 0:
-                rec.update(evaluate_vs_greedy(net, cfg.eval_deals, seed=10_000))
+                actor.load_state_dict(net.state_dict())
+                rec.update(evaluate_vs_greedy(actor, cfg.eval_deals, seed=10_000, device=adev))
                 payload = {
                     "arch": "ppo",
-                    "model": net.state_dict(),
+                    "model": {k: v.detach().cpu() for k, v in net.state_dict().items()},
                     "net_config": net.config_dict(),
                     "train_config": asdict(cfg),
                     "info": rec,

@@ -29,7 +29,7 @@ import random
 import time
 import zipfile
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +39,7 @@ from torch import nn
 
 from poker._core import analyze, encode
 from poker.games.big2 import Rules
+from poker.rl.device import actor_device, resolve_device
 from poker.rl.dmc import TrainConfig, _to_float, evaluate_vs_greedy, save_checkpoint
 from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
 
@@ -104,7 +105,7 @@ def _generate_worker(
             win=np.asarray(win, dtype=np.float32),
             visits=np.asarray(visits, dtype=np.int32),
         )
-        tmp.rename(final)
+        tmp.replace(final)
         shard += 1
     return decisions
 
@@ -149,6 +150,7 @@ class DistillConfig:
     init: str | None = None  # start from these weights
     max_minutes: float = 60.0
     seed: int = 0
+    device: str = "auto"  # see poker.rl.device
     net: NetConfig = field(default_factory=NetConfig)
 
 
@@ -214,21 +216,25 @@ class _Data:
 
 def train(cfg: DistillConfig, log: Any = print) -> Path:
     """Trains on the data in ``cfg.data_dir`` (picking up new shards as they appear)."""
+    cfg = replace(cfg, device=resolve_device(cfg.device))
+    dev = cfg.device
     run = Path(cfg.run_dir)
     run.mkdir(parents=True, exist_ok=True)
     (run / "config.json").write_text(json.dumps(asdict(cfg), indent=2))
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
-    net = QNet(cfg.net)
+    net = QNet(cfg.net).to(dev)
     if cfg.init:
-        net.load_state_dict(torch.load(cfg.init, weights_only=False)["model"])
+        net.load_state_dict(torch.load(cfg.init, map_location=dev, weights_only=False)["model"])
+    adev = actor_device(dev)
+    actor = QNet(cfg.net).to(adev)  # plays the evaluation games
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr)
     data = _Data()
     t0 = time.time()
     last_eval = t0
     steps, best = 0, -math.inf
     # Checkpoints use the DMC format so DMCAgent can load them.
-    ckpt_cfg = TrainConfig(run_dir=cfg.run_dir, net=cfg.net)
+    ckpt_cfg = TrainConfig(run_dir=cfg.run_dir, device=dev, net=cfg.net)
     while data.refresh(cfg.data_dir, cfg.max_decisions) == 0 and data.decisions() == 0:
         if time.time() - t0 > 60 * cfg.max_minutes:
             raise RuntimeError(f"no data appeared in {cfg.data_dir}")
@@ -239,13 +245,13 @@ def train(cfg: DistillConfig, log: Any = print) -> Path:
             if steps % 200 == 0:
                 data.refresh(cfg.data_dir, cfg.max_decisions)
             st, ac, idx, sc, wn, vs = data.sample(cfg.batch_size, rng)
-            w = torch.from_numpy(np.minimum(vs, cfg.visit_cap) / cfg.visit_cap).float()
+            w = _to_float(np.minimum(vs, cfg.visit_cap) / cfg.visit_cap, dev)
             score, win_logit = net(
-                _to_float(st, "cpu"), _to_float(ac, "cpu"), torch.from_numpy(idx).long()
+                _to_float(st, dev), _to_float(ac, dev), torch.from_numpy(idx).long().to(dev)
             )
-            l_s = (w * (score - torch.from_numpy(sc / SCORE_SCALE)) ** 2).sum() / w.sum()
+            l_s = (w * (score - _to_float(sc / SCORE_SCALE, dev)) ** 2).sum() / w.sum()
             bce = nn.functional.binary_cross_entropy_with_logits(
-                win_logit, torch.from_numpy(wn), reduction="none"
+                win_logit, _to_float(wn, dev), reduction="none"
             )
             l_w = (w * bce).sum() / w.sum()
             loss = l_s + cfg.win_weight * l_w
@@ -257,16 +263,16 @@ def train(cfg: DistillConfig, log: Any = print) -> Path:
             steps += 1
             if time.time() - last_eval > 60 * cfg.eval_every_minutes:
                 last_eval = time.time()
-                net.eval()
+                actor.load_state_dict(net.state_dict())
+                actor.eval()
                 rec: dict[str, Any] = {
                     "step": steps,
                     "minutes": (time.time() - t0) / 60,
                     "decisions": data.decisions(),
                     "loss_score": float(np.mean([x[0] for x in losses])),
                     "loss_win": float(np.mean([x[1] for x in losses])),
-                    **evaluate_vs_greedy(net, cfg.eval_deals, seed=10_000),
+                    **evaluate_vs_greedy(actor, cfg.eval_deals, seed=10_000, device=adev),
                 }
-                net.train()
                 losses.clear()
                 info = {
                     "iter": steps,
