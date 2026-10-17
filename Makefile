@@ -1,9 +1,17 @@
 # Run inside the `poker` conda env: `conda activate poker`.
-.PHONY: dev test test-rust test-python test-web test-e2e lint fmt bench docs web serve web-dev
+.PHONY: dev torch-cuda test test-rust test-python test-web test-e2e lint fmt bench docs web serve web-dev
 
 dev:            ## Build the Rust extension, install the Python package (editable) and UI deps
 	pip install -e ".[dev,rl]"
 	npm install --prefix web
+
+# PyTorch's CUDA build for NVIDIA GPUs. On Windows, plain `pip install torch` gives a
+# CPU-only build, so run this before `make dev`. Pick the CUDA tag that pytorch.org's
+# install selector currently lists (e.g. `make torch-cuda CUDA=cu130`).
+CUDA ?= cu128
+torch-cuda:     ## Install PyTorch with NVIDIA GPU support
+	pip install torch --index-url https://download.pytorch.org/whl/$(CUDA)
+	python -c "import torch; print('CUDA available:', torch.cuda.is_available())"
 
 test: test-rust test-python test-web
 
