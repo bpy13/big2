@@ -106,6 +106,7 @@ class PPOConfig:
     max_minutes: float = 60.0
     seed: int = 0
     device: str = "auto"  # see poker.rl.device
+    rules: dict[str, Any] = field(default_factory=dict)  # Rules keyword arguments
     net: NetConfig = field(default_factory=NetConfig)
 
 
@@ -267,7 +268,7 @@ def train(cfg: PPOConfig, log: Any = print, resume: str | None = None) -> Path:
         it, games = ckpt["info"]["iter"], ckpt["info"]["games"]
         best = best_eval_so_far(ckpt, Path(resume).parent / "best.pt")
     # Offset by the iteration so a resumed run does not replay the same deals.
-    env = Big2VecEnv(cfg.envs, seed=cfg.seed + it)
+    env = Big2VecEnv(cfg.envs, seed=cfg.seed + it, **cfg.rules)
     with (run / "log.jsonl").open("a") as logf:
         while (time.time() - t0) / 60 < cfg.max_minutes:
             it += 1
@@ -287,7 +288,11 @@ def train(cfg: PPOConfig, log: Any = print, resume: str | None = None) -> Path:
             }
             if it % cfg.eval_every == 0:
                 actor.load_state_dict(net.state_dict())
-                rec.update(evaluate_vs_greedy(actor, cfg.eval_deals, seed=10_000, device=adev))
+                rec.update(
+                    evaluate_vs_greedy(
+                        actor, cfg.eval_deals, seed=10_000, rules=cfg.rules, device=adev
+                    )
+                )
                 payload = {
                     "arch": "ppo",
                     "model": {k: v.detach().cpu() for k, v in net.state_dict().items()},
