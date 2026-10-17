@@ -38,6 +38,9 @@ Straights = Annotated[str, typer.Option(help="with_low_twos | no_twos")]
 FlushOrder = Annotated[str, typer.Option(help="rank_first | suit_first")]
 PassRule = Annotated[str, typer.Option(help="may_reenter | locked_out")]
 Scoring = Annotated[str, typer.Option(help="tiered | original | win_loss")]
+#: The project's default rules (docs/rules/big2.md), for option defaults.
+DEFAULT_RULES = Rules()
+
 LastCardDuty = Annotated[
     bool, typer.Option(help="Force highest single when the next player has 1 card.")
 ]
@@ -98,7 +101,7 @@ def analyze(
     flush_order: FlushOrder = "rank_first",
     pass_rule: PassRule = "may_reenter",
     scoring: Scoring = "tiered",
-    last_card_duty: LastCardDuty = False,
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Recommend moves for a position, seen from one seat."""
     rules = _rules(straights, flush_order, pass_rule, scoring, last_card_duty)
@@ -161,7 +164,7 @@ def play(
     flush_order: FlushOrder = "rank_first",
     pass_rule: PassRule = "may_reenter",
     scoring: Scoring = "tiered",
-    last_card_duty: LastCardDuty = False,
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Play a deal against three bots in the terminal.
 
@@ -225,7 +228,7 @@ def tournament(
     flush_order: FlushOrder = "rank_first",
     pass_rule: PassRule = "may_reenter",
     scoring: Scoring = "tiered",
-    last_card_duty: LastCardDuty = False,
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Duplicate tournament between four agents."""
     if len(lineup) != 4:
@@ -381,11 +384,13 @@ def rl_distill_gen(
     workers: int = 4,
     minutes: float = 60.0,
     iterations: Annotated[int, typer.Option(help="Solver simulations per decision.")] = 1000,
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Generate solver-labelled training data for search distillation."""
     from poker.rl.distill import generate
 
-    n = generate(out_dir, workers=workers, minutes=minutes, iterations=iterations)
+    rules = Rules(last_card_duty=last_card_duty)
+    n = generate(out_dir, workers=workers, minutes=minutes, iterations=iterations, rules=rules)
     console.print(f"{n:,} decisions written to {out_dir}")
 
 
@@ -402,6 +407,9 @@ def rl_distill_train(
     ] = 600_000,
     device: Device = "auto",
     threads: Threads = 0,
+    last_card_duty: Annotated[
+        bool, typer.Option(help="Rules of the data, for the evaluation games.")
+    ] = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Train a Q-network on solver-labelled data (picks up new shards as they appear)."""
     from poker.rl.distill import DistillConfig, train
@@ -422,6 +430,7 @@ def rl_distill_train(
         resume=resume,
         max_decisions=max_decisions,
         device=device,
+        rules=Rules(last_card_duty=last_card_duty).kwargs(),
     )
     _set_threads(threads)
     _show_device(device)
