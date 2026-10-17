@@ -489,6 +489,49 @@ fn analyze<'py>(
     Ok(d)
 }
 
+/// Hidden-card samples as the search would draw them: `n` deals (each a list of
+/// four hand masks) for the player to act, uniform (`belief=None`) or weighted by
+/// the opponent model (`belief="greedy"`). For studying belief models.
+#[pyfunction]
+#[pyo3(signature = (state, n, *, belief=None, candidates=256, epsilon=0.2, min_ess=0.25, seed=0))]
+#[allow(clippy::too_many_arguments)]
+fn sample_deals(
+    state: &PyState,
+    n: usize,
+    belief: Option<&str>,
+    candidates: usize,
+    epsilon: f64,
+    min_ess: f64,
+    seed: u64,
+) -> PyResult<Vec<[u64; 4]>> {
+    let s = &state.inner;
+    let player = s
+        .current_player()
+        .ok_or_else(|| value_error("the deal is over"))?;
+    let mut rng = SmallRng::seed_from_u64(seed);
+    let weighted = match belief {
+        None => None,
+        Some("greedy") => {
+            let model = PolicyModel {
+                policy: Greedy { epsilon: 0.0 },
+                epsilon,
+            };
+            let cfg = BeliefConfig {
+                candidates,
+                min_ess,
+            };
+            Belief::new(s, player, &model, &cfg, &mut rng)
+        }
+        Some(other) => return Err(value_error(format!("unknown belief model {other:?}"))),
+    };
+    Ok((0..n)
+        .map(|_| match &weighted {
+            Some(b) => b.draw(&mut rng).hands(),
+            None => s.determinize(player, &mut rng).hands(),
+        })
+        .collect())
+}
+
 /// A value network's estimate for the position (all hands visible to it):
 /// `(scores, win_probabilities)` per absolute seat.
 #[pyfunction]
@@ -508,6 +551,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(classify_cards, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
     m.add_function(wrap_pyfunction!(value_estimate, m)?)?;
+    m.add_function(wrap_pyfunction!(sample_deals, m)?)?;
     m.add_class::<vecenv::VecEnv>()?;
     m.add_function(wrap_pyfunction!(vecenv::encode, m)?)?;
     m.add_function(wrap_pyfunction!(vecenv::encode_full, m)?)?;
