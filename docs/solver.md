@@ -176,7 +176,11 @@ everyone plays like the distilled network, from the full sampled deal, in one
 call to a small MLP evaluated in Rust (`crates/nn`, no Python involved).
 `value_rollout_weight` mixes the two: 0 = network only, 1 = rollout only.
 
-Results: [study-results/search-methods.md](study-results/search-methods.md).
+Results ([study-results/search-methods.md](study-results/search-methods.md)):
+neither beats plain ISMCTS. Opponent-aware sampling ties it; the value network
+ties it mixed with rollouts and loses ~1 point per game alone. A cheating
+search that sees the true deal wins by ~3 points, but the opponents' actions
+reveal little about their cards.
 
 ## References
 
