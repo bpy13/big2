@@ -1,4 +1,5 @@
-import type { Analysis, Card, MoveStats, NetworkMove } from '../api'
+import { useState, type CSSProperties } from 'react'
+import type { Analysis, Card, ModelInfo, MoveStats, NetworkMove, NetworkView } from '../api'
 import { cardsText, KIND_LABEL } from '../cards'
 
 export type StudyMode = 'off' | 'live' | 'quiz'
@@ -7,6 +8,8 @@ export interface Verdict {
   played: Card[]
   best: MoveStats
   playedStats: MoveStats | undefined
+  /** The network's first choice, if a network gave a hint. */
+  network: { label: string; cards: Card[] } | null
 }
 
 interface Props {
@@ -19,6 +22,10 @@ interface Props {
   yourTurn: boolean
   onPick: (cards: Card[]) => void
   verdict: Verdict | null
+  /** Networks to choose from, and the one this game's hint uses. */
+  models: ModelInfo[]
+  model: string | null
+  onLoadModel: (id: string) => Promise<void>
 }
 
 function pct(x: number) {
@@ -98,20 +105,24 @@ export function StudyPanel(p: Props) {
             </span>
           </div>
 
+          {p.model && p.models.length > 0 && (
+            <ModelPicker key={p.model} models={p.models} current={p.model} onLoad={p.onLoadModel} />
+          )}
+
           {p.verdict && <VerdictBox v={p.verdict} />}
 
           {p.yourTurn && p.mode === 'live' && (
             <>
               {p.loading && !p.analysis && <p className="muted">Thinking…</p>}
-              {p.analysis && (
+              {p.analysis && !p.analysis.network && (
                 <div className="moves">
                   {p.analysis.moves.map((m, i) => (
                     <MoveRow key={m.cards.join()} m={m} i={i} onPick={() => p.onPick(m.cards)} />
                   ))}
                 </div>
               )}
-              {p.analysis?.network && p.analysis.network.length > 0 && (
-                <NetworkPick net={p.analysis.network[0]} solverBest={p.analysis.moves[0]} onPick={p.onPick} />
+              {p.analysis?.network && (
+                <Compare solver={p.analysis.moves} net={p.analysis.network} objective={p.analysis.objective} onPick={p.onPick} />
               )}
               {p.analysis && (
                 <p className="small-print">
@@ -119,6 +130,8 @@ export function StudyPanel(p: Props) {
                   Ranked by {p.analysis.objective === 'score' ? 'expected score' : 'win rate'}; click a move to
                   select it. ± is a 95% interval from simulation noise only — the solver assumes opponents
                   play like its rollout bot.
+                  {p.analysis.network &&
+                    ' The network\'s numbers are its own predictions from one forward pass (no interval); the same move has the same colour in both columns.'}
                 </p>
               )}
             </>
@@ -133,18 +146,155 @@ export function StudyPanel(p: Props) {
   )
 }
 
-/** The RL network's choice, shown under the solver's for comparison. */
-function NetworkPick(props: { net: NetworkMove; solverBest: MoveStats | undefined; onPick: (c: Card[]) => void }) {
-  const { net, solverBest } = props
-  const agrees = solverBest !== undefined && net.cards.join() === solverBest.cards.join()
+/** Picks the hint's network. Choosing one only stages it; "Load" loads it on the server. */
+function ModelPicker(props: { models: ModelInfo[]; current: string; onLoad: (id: string) => Promise<void> }) {
+  const [chosen, setChosen] = useState(props.current)
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const staged = props.models.find((m) => m.id === chosen)
+  const pending = chosen !== props.current
   return (
-    <div className="verdict" data-testid="network-pick" style={{ marginTop: 10 }}>
-      <b>RL network</b> would play{' '}
-      <button type="button" className="linklike" onClick={() => props.onPick(net.cards)}>
-        {cardsText(net.cards)}
-      </button>{' '}
-      (predicts {signed(net.mean_score)}, win {pct(net.win_rate)})
-      {agrees ? ' — same as the solver.' : ' — the solver disagrees.'}
+    <div className="model-picker">
+      <label htmlFor="hint-model" className="muted">
+        Network
+      </label>
+      <select
+        id="hint-model"
+        value={chosen}
+        disabled={state === 'loading'}
+        onChange={(e) => {
+          setChosen(e.target.value)
+          setState('idle')
+        }}
+      >
+        {props.models.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+      {pending && (
+        <button
+          type="button"
+          className="primary"
+          disabled={state === 'loading'}
+          onClick={async () => {
+            setState('loading')
+            try {
+              await props.onLoad(chosen)
+              setState('idle')
+            } catch {
+              setState('error')
+            }
+          }}
+        >
+          {state === 'loading' ? 'Loading…' : staged?.loaded ? 'Use' : 'Load'}
+        </button>
+      )}
+      {staged && <span className="help">{staged.note}{state === 'error' && ' — could not load it.'}</span>}
+    </div>
+  )
+}
+
+/** One stable colour per distinct move, so the same move matches across the columns. */
+function moveColours(solver: MoveStats[], net: NetworkMove[]): Map<string, number> {
+  const colours = new Map<string, number>()
+  for (const m of [...solver, ...net]) {
+    const k = m.cards.join()
+    if (!colours.has(k)) colours.set(k, colours.size)
+  }
+  return colours
+}
+
+function moveLabel(m: { cards: Card[]; kind: string }) {
+  return (
+    <span className="what">
+      {cardsText(m.cards)} {m.kind !== 'pass' && <span className="kind">{KIND_LABEL[m.kind] ?? m.kind}</span>}
+    </span>
+  )
+}
+
+/** The solver's and the network's top moves side by side, with a verdict on whether they agree. */
+function Compare(props: {
+  solver: MoveStats[]
+  net: NetworkView
+  objective: 'score' | 'win'
+  onPick: (c: Card[]) => void
+}) {
+  const { solver, net } = props
+  const colours = moveColours(solver, net.moves)
+  const colour = (cards: Card[]) => ({ '--mc': `var(--m${(colours.get(cards.join()) ?? 0) % 6})` }) as CSSProperties
+  const pick = net.pick
+  const agrees = pick.solver_rank === 1
+  return (
+    <div data-testid="compare">
+      <div className="compare">
+        <div className="col">
+          <h3>Solver</h3>
+          {solver.map((m, i) => (
+            <button
+              key={m.cards.join()}
+              type="button"
+              className="cmp-move"
+              style={colour(m.cards)}
+              onClick={() => props.onPick(m.cards)}
+              data-testid="study-move"
+              title={`Win ${pct(m.win_rate)} ±${pct(m.win_ci95)} · score ${signed(m.mean_score)} ±${m.score_ci95.toFixed(1)} · ${pct(m.share)} of simulations`}
+            >
+              <span className="rank">{i + 1}</span>
+              {moveLabel(m)}
+              <span className="nums">
+                win {pct(m.win_rate)} · {signed(m.mean_score)}
+              </span>
+            </button>
+          ))}
+        </div>
+        <div className="col">
+          <h3 title={net.model.note}>{net.model.label}</h3>
+          {net.moves.map((m, i) => (
+            <button
+              key={m.cards.join()}
+              type="button"
+              className="cmp-move"
+              style={colour(m.cards)}
+              onClick={() => props.onPick(m.cards)}
+              data-testid="network-move"
+            >
+              <span className="rank">{i + 1}</span>
+              {moveLabel(m)}
+              <span className="nums">
+                {m.prob !== null
+                  ? `probability ${pct(m.prob)}`
+                  : `win ${pct(m.win_rate ?? 0)} · ${signed(m.mean_score ?? 0)}`}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={`verdict${agrees ? '' : ' off'}`} data-testid="network-pick" style={{ marginTop: 10 }}>
+        {agrees ? (
+          <>
+            <b>Agree</b> — both pick {cardsText(pick.cards)}.
+          </>
+        ) : (
+          <>
+            <b>Disagree</b> — the solver ranks the network's pick{' '}
+            <button type="button" className="linklike" onClick={() => props.onPick(pick.cards)}>
+              {cardsText(pick.cards)}
+            </button>{' '}
+            {pick.solver_rank !== null && pick.loss !== null ? (
+              <>
+                #{pick.solver_rank},{' '}
+                {props.objective === 'score'
+                  ? `${pick.loss.toFixed(1)} points per game worse than its best`
+                  : `${(100 * pick.loss).toFixed(1)} percentage points less likely to win`}
+                {pick.solver && ` (±${props.objective === 'score' ? pick.solver.score_ci95.toFixed(1) : pct(pick.solver.win_ci95)})`}.
+              </>
+            ) : (
+              'outside its list.'
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -164,6 +314,18 @@ function VerdictBox({ v }: { v: Verdict }) {
           {loss !== null && ` — about ${loss.toFixed(1)} points`}).
         </>
       )}
+      {v.network && (
+        <>
+          {' '}
+          {sameMove(v.network.cards, v.played)
+            ? `The network (${v.network.label}) would have played the same.`
+            : `The network (${v.network.label}) would have played ${cardsText(v.network.cards)}.`}
+        </>
+      )}
     </div>
   )
+}
+
+function sameMove(a: Card[], b: Card[]) {
+  return a.length === b.length && a.every((c) => b.includes(c))
 }

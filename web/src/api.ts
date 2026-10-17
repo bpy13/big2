@@ -23,6 +23,8 @@ export interface GameView {
   rules: Rules
   bots: string
   seed: number
+  /** The network used for the hint (a model id), or null if none applies. */
+  model: string | null
   hand: Card[]
   hand_sizes: number[]
   current_player: number | null
@@ -53,11 +55,37 @@ export interface MoveStats {
   share: number
 }
 
+/** A trained network the server can use (see python/poker/server/models.py). */
+export interface ModelInfo {
+  id: string
+  label: string
+  note: string
+  /** "q": predicts score and win chance per move; "policy" (PPO): a probability per move. */
+  kind: 'q' | 'policy'
+  loaded: boolean
+}
+
 export interface NetworkMove {
   cards: Card[]
   kind: string
-  mean_score: number
-  win_rate: number
+  /** Null for a policy network. */
+  mean_score: number | null
+  win_rate: number | null
+  /** Policy networks only. */
+  prob: number | null
+}
+
+export interface NetworkView {
+  model: ModelInfo
+  moves: NetworkMove[]
+  /** The network's first choice, as the solver rates it. */
+  pick: {
+    cards: Card[]
+    solver_rank: number | null
+    solver: MoveStats | null
+    /** How much worse than the solver's best: points (objective "score") or win probability ("win"). */
+    loss: number | null
+  }
 }
 
 export interface Analysis {
@@ -65,8 +93,8 @@ export interface Analysis {
   seconds: number
   objective: 'score' | 'win'
   moves: MoveStats[]
-  /** The trained RL network's own top moves (null if no checkpoint or non-default rules). */
-  network: NetworkMove[] | null
+  /** The hint network's view (null if there is no network or the rules are not the default). */
+  network: NetworkView | null
 }
 
 export interface ReviewItem {
@@ -85,6 +113,8 @@ export interface Config {
   difficulties: Record<string, string>
   rules: Record<keyof Rules, (string | boolean)[]>
   defaults: Rules
+  /** Available networks, default first. */
+  models: ModelInfo[]
 }
 
 export class ApiError extends Error {
@@ -116,12 +146,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 export const api = {
   config: () => request<Config>('GET', '/config'),
-  newGame: (opts: { difficulty?: string; bots?: string; rules?: Partial<Rules>; seed?: number }) =>
+  newGame: (opts: { difficulty?: string; bots?: string; rules?: Partial<Rules>; seed?: number; model?: string }) =>
     request<GameView>('POST', '/games', opts),
   game: (id: string) => request<GameView>('GET', `/games/${id}`),
   play: (id: string, cards: Card[]) => request<GameView>('POST', `/games/${id}/play`, { cards }),
   step: (id: string) => request<{ move: ActionView | null; view: GameView }>('POST', `/games/${id}/step`),
   analyze: (id: string, opts: { iterations?: number; objective?: 'score' | 'win'; top?: number } = {}) =>
     request<Analysis>('POST', `/games/${id}/analyze`, opts),
+  /** Loads a network and uses it for this game's hint. */
+  setModel: (id: string, model: string) => request<ModelInfo>('POST', `/games/${id}/model`, { model }),
   review: (id: string) => request<ReviewItem[]>('GET', `/games/${id}/review`),
 }

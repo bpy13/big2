@@ -43,7 +43,8 @@ test('play a full deal against easy bots, with hints and the post-game review', 
   await expect(moves.first()).toBeVisible({ timeout: 30_000 })
   expect(await moves.count()).toBeLessThanOrEqual(3)
   await moves.first().click()
-  await page.getByRole('button', { name: 'Clear' }).click()
+  const clear = page.getByRole('button', { name: 'Clear' })
+  if (await clear.isEnabled()) await clear.click() // a "pass" hint selects no cards
 
   await playOut(page)
 
@@ -76,4 +77,31 @@ test('quiz mode hides the solver until you move, then shows a verdict', async ({
     await page.getByRole('button', { name: 'Play', exact: true }).click()
   }
   await expect(page.getByTestId('verdict')).toContainText('You played')
+})
+
+test('hints compare the solver with a network, and another network loads only when confirmed', async ({ page }) => {
+  const config = await (await page.request.get('/api/config')).json()
+  test.skip(config.models.length < 2, 'needs two trained networks in models/')
+  const [first, second] = config.models as { id: string; label: string }[]
+
+  await page.goto('/?botDelay=0')
+  await page.getByLabel('Opponents').selectOption('easy')
+  await page.getByLabel('Network').selectOption(first.id)
+  await page.getByRole('button', { name: 'Deal' }).click()
+
+  // Side by side: the solver's moves, the network's moves, and an agree/disagree verdict.
+  const compare = page.getByTestId('compare')
+  await expect(compare).toBeVisible({ timeout: 30_000 })
+  await expect(compare.getByRole('heading', { name: first.label })).toBeVisible()
+  expect(await compare.getByTestId('study-move').count()).toBeGreaterThan(0)
+  expect(await compare.getByTestId('network-move').count()).toBeGreaterThan(0)
+  await expect(page.getByTestId('network-pick')).toHaveText(/Agree|Disagree/)
+
+  // Choosing another network only stages it; the hint changes after "Load".
+  const picker = page.getByRole('combobox', { name: 'Network' })
+  await picker.selectOption(second.id)
+  await expect(compare.getByRole('heading', { name: first.label })).toBeVisible()
+  await page.getByRole('button', { name: /^(Load|Use)$/ }).click()
+  await expect(compare.getByRole('heading', { name: second.label })).toBeVisible({ timeout: 30_000 })
+  await page.screenshot({ path: 'test-results/compare.png' })
 })
