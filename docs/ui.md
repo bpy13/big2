@@ -26,6 +26,8 @@ Add `?botDelay=0` to the URL to make bots move instantly (default 700 ms per mov
 * Keys (also in the buttons' tooltips): **Enter** play · **P** pass · **Esc** clear (or close a dialog; **Results** reopens the deal summary).
 * **New game** chooses the opponents and every rule variant from
   [rules/big2.md](rules/big2.md).
+* After a deal, **Continue** deals the next one with the same opponents, rules and
+  network; **New game** (top right) changes them.
 
 | Opponents | Bot |
 |---|---|

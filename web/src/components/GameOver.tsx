@@ -10,12 +10,13 @@ const MISTAKE_THRESHOLD = 1.0
 interface Props {
   view: GameView
   names: string[]
-  onNewGame: () => void
+  /** Deals the next game with the same settings. */
+  onContinue: () => void
   onClose: () => void
 }
 
 /** End-of-deal results, every hand revealed, and the post-game review. */
-export function GameOver({ view, names, onNewGame, onClose }: Props) {
+export function GameOver({ view, names, onContinue, onClose }: Props) {
   const [review, setReview] = useState<ReviewItem[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,8 +88,8 @@ export function GameOver({ view, names, onNewGame, onClose }: Props) {
           <button type="button" onClick={onClose}>
             Look at the table
           </button>
-          <button type="button" className="primary" onClick={onNewGame}>
-            New game
+          <button type="button" className="primary" onClick={onContinue} title="Next deal, same opponents and rules">
+            Continue
           </button>
         </div>
       </div>

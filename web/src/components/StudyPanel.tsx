@@ -129,16 +129,6 @@ export function StudyPanel(p: Props) {
           )}
           {!p.yourTurn && !p.verdict && <p className="muted">Waiting for your turn…</p>}
           {p.verdict && <VerdictBox v={p.verdict} />}
-          {p.yourTurn && p.mode === 'live' && p.analysis && (
-            <p className="small-print">
-              {p.analysis.simulations.toLocaleString()} simulated games in {p.analysis.seconds.toFixed(2)}s.
-              Ranked by {p.analysis.objective === 'score' ? 'expected score' : 'win rate'}; click a move to
-              select it. ± is a 95% interval from simulation noise only — the solver assumes opponents
-              play like its rollout bot.
-              {p.analysis.network &&
-                ' The network\'s numbers are its own predictions from one forward pass (no interval); the same move has the same colour in both columns.'}
-            </p>
-          )}
         </>
       )}
     </section>

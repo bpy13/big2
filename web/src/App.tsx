@@ -342,7 +342,7 @@ export default function App() {
         />
       )}
       {dialog === 'result' && view?.over && (
-        <GameOver view={view} names={names} onNewGame={() => setDialog('new')} onClose={() => setDialog(null)} />
+        <GameOver view={view} names={names} onContinue={() => startGame(defaults)} onClose={() => setDialog(null)} />
       )}
     </div>
   )
