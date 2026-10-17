@@ -116,14 +116,18 @@ select {
 
 /* ---------- Layout ---------- */
 
+/* Desktop: the page fits the window. The table keeps its size whatever the side
+   panels hold; only the study panel scrolls when it is too long. */
 .app {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
   max-width: 1400px;
   margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .topbar {
@@ -150,6 +154,15 @@ select {
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  min-height: 0;
+}
+.side > .panel {
+  flex: none;
+}
+.side > .panel.study {
+  flex: 0 1 auto;
+  min-height: 120px;
+  overflow-y: auto;
 }
 
 .panel {
@@ -171,13 +184,33 @@ select {
 }
 
 @media (max-width: 960px) {
+  /* Narrow screens: table above the panels, and the page scrolls as usual. */
   .app {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
     padding: 12px;
+    height: auto;
+  }
+  .table {
+    min-height: 600px;
+  }
+  .side > .panel.study {
+    overflow-y: visible;
   }
   :root {
     --card-w: 52px;
     --card-h: 76px;
+  }
+}
+/* Short desktop windows: smaller cards, so the whole table fits without scrolling. */
+@media (min-width: 961px) and (max-height: 780px) {
+  :root {
+    --card-w: 52px;
+    --card-h: 76px;
+  }
+  .table {
+    padding: 10px 16px;
+    gap: 8px;
   }
 }
 @media (max-width: 520px) {
@@ -215,7 +248,8 @@ select {
   border-radius: 28px;
   background: radial-gradient(ellipse at center, var(--felt-1), var(--felt-2) 75%);
   border: 10px solid var(--felt-edge);
-  min-height: 600px;
+  min-height: 0;
+  overflow: auto; /* only if the window is too short for the table */
   display: grid;
   grid-template-areas:
     '.    top   .'
