@@ -6,6 +6,7 @@ three runs (plus distillation data generation) sharing the 8 cores
 `poker rl distill-train --resume …` (see [rl.md](../rl.md));
 `python experiments/long_training.py --deals 200 --workers 7`
 (raw JSON in `runs/long_training/`).
+**Rules:** the defaults of the time, i.e. last-card duty **off** (the default is on since 2026-10-18).
 
 Each Phase 3 network ([phase3-rl.md](phase3-rl.md)) was trained for another 10
 hours from its checkpoint, then played 200 duplicate deals (A B A B, seats

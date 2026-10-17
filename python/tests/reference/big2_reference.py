@@ -127,7 +127,7 @@ class RefGame:
     flush_order: str = "rank_first"
     pass_rule: str = "may_reenter"
     scoring: str = "tiered"
-    last_card_duty: bool = False
+    last_card_duty: bool = True
     current: int = 0
     current_play: Combo | None = None
     holder: int | None = None

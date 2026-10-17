@@ -5,6 +5,7 @@ training jobs (times are inflated and only comparable within a row)
 **Reproduce:** `python experiments/search_methods.py --variants belief belief-soft value value-mix belief+value oracle --deals 200 --workers 2`,
 `... --vs-greedy --variants belief --deals 300`, `... --belief-accuracy --positions 100`
 (raw JSON in `runs/search_methods*/`).
+**Rules:** the defaults of the time, i.e. last-card duty **off** (the default is on since 2026-10-18).
 
 ## Summary
 

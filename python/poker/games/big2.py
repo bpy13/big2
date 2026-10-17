@@ -44,7 +44,7 @@ class Rules:
     flush_order: str = "rank_first"
     pass_rule: str = "may_reenter"
     scoring: str = "tiered"
-    last_card_duty: bool = False
+    last_card_duty: bool = True
 
     def kwargs(self) -> dict[str, Any]:
         """Keyword arguments for ``Big2State`` constructors."""
