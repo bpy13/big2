@@ -64,15 +64,27 @@ impl Scoring {
 
 /// The full set of rule variants for a game. `RuleSet::default()` is the
 /// project's default table rules.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RuleSet {
     pub straights: Straights,
     pub flush_order: FlushOrder,
     pub pass_rule: PassRule,
     pub scoring: Scoring,
     /// When the next player holds one card, any single played must be the
-    /// player's highest card (rules §5).
+    /// player's highest card (rules §5). On by default.
     pub last_card_duty: bool,
+}
+
+impl Default for RuleSet {
+    fn default() -> Self {
+        RuleSet {
+            straights: Straights::default(),
+            flush_order: FlushOrder::default(),
+            pass_rule: PassRule::default(),
+            scoring: Scoring::default(),
+            last_card_duty: true,
+        }
+    }
 }
 
 /// Error for an unknown rule-variant name.
@@ -117,6 +129,16 @@ names!(Scoring { Tiered => "tiered", Original => "original", WinLoss => "win_los
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn defaults_match_rules_doc() {
+        let r = RuleSet::default();
+        assert_eq!(r.straights, Straights::WithLowTwos);
+        assert_eq!(r.flush_order, FlushOrder::RankFirst);
+        assert_eq!(r.pass_rule, PassRule::MayReenter);
+        assert_eq!(r.scoring, Scoring::Tiered);
+        assert!(r.last_card_duty);
+    }
 
     #[test]
     fn penalty_tables_match_rules_doc() {

@@ -4,6 +4,7 @@
 **Reproduce:** `python experiments/phase1_solver.py --deals 100 --workers 7`
 (raw JSON in `runs/phase1/`) and
 `cargo run --release -p poker-search --example arena -- <deals> <iters> <c> [endgame] [nodes]`.
+**Rules:** the defaults of the time, i.e. last-card duty **off** (the default is on since 2026-10-18).
 
 All tables use **duplicate deals**: each deal is played four times with the lineup
 rotated, so every agent plays every hand. Confidence intervals (95%) are over

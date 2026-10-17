@@ -123,9 +123,13 @@ Any play of a higher category beats any play of a lower one. Within one category
 > * `locked_out` — once a player passes, they skip every remaining turn of that
 >   trick. The trick ends when every other player is locked out.
 
-> Variant `last_card_duty` (default: **off**): when the **next** player holds exactly
+> Variant `last_card_duty` (default: **on**): when the **next** player holds exactly
 > one card, any single the current player plays must be their highest card. Pairs,
 > triples, five-card plays and passing are unaffected.
+>
+> The default changed from off to on on 2026-10-18. Results measured before then
+> (Phase 1 and Phase 3 in `docs/study-results/`) and the networks trained before
+> then use duty **off**.
 
 ## 6. End of the deal
 

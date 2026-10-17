@@ -147,7 +147,10 @@ fn last_card_duty_forces_highest_single() {
     assert_eq!(singles[0].cards(), parse_mask("Ad").unwrap());
 
     // Without the variant, any single may be led.
-    let mut free = simple_deal(RuleSet::default());
+    let mut free = simple_deal(RuleSet {
+        last_card_duty: false,
+        ..RuleSet::default()
+    });
     for t in s.history() {
         free.apply(free.action_for_cards(t.action.cards()).unwrap());
     }

@@ -4,6 +4,7 @@
 **Reproduce:** training commands in [rl.md](../rl.md);
 `python experiments/phase3_rl.py round-robin --deals 100 --workers 7` and
 `python experiments/phase3_rl.py agreement --positions 300` (raw JSON in `runs/phase3/`).
+**Rules:** the defaults of the time, i.e. last-card duty **off** (the default is on since 2026-10-18).
 
 > **Update:** after 10 more hours of training, the DMC and distilled networks tie
 > the solver; see [long-training.md](long-training.md).

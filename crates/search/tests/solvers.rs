@@ -53,14 +53,13 @@ fn endgame_respects_the_node_budget() {
 #[test]
 fn endgame_finds_a_forced_win() {
     // P0 leads with 2s + 3d. Leading 2s first (unbeatable) then 3d wins; leading 3d
-    // first lets P1 (holding one card, 4d) go out.
-    let s = State::from_position(
-        RuleSet::default(),
-        hands(["3d 2s", "4d", "5d 5c", "6d 6c"]),
-        0,
-        None,
-    )
-    .unwrap();
+    // first lets P1 (holding one card, 4d) go out. (Without last-card duty: with it,
+    // only 2s may be led.)
+    let rules = RuleSet {
+        last_card_duty: false,
+        ..RuleSet::default()
+    };
+    let s = State::from_position(rules, hands(["3d 2s", "4d", "5d 5c", "6d 6c"]), 0, None).unwrap();
     let mut solver = Endgame::<State>::new(Objective::Win);
     let o = solver.solve(&s, u64::MAX).unwrap();
     assert_eq!(o.winner, Some(0));
