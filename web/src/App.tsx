@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { api, type ActionView, type Analysis, type Card, type Config, type GameView } from './api'
+import { api, fits, type ActionView, type Analysis, type Card, type Config, type GameView } from './api'
 import { cardsText, completions, matchLegal, type SortMode } from './cards'
 import { Played } from './components/Card'
 import { GameOver } from './components/GameOver'
@@ -322,7 +322,7 @@ export default function App() {
           yourTurn={!!view?.your_turn && !forcedPass}
           onPick={(cards) => setSelected(cards)}
           verdict={verdict}
-          models={config.models}
+          models={view ? config.models.filter((m) => fits(m, view.rules)) : []}
           model={view?.model ?? null}
           onLoadModel={loadModel}
         />

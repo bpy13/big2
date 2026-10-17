@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Config, Rules } from '../api'
+import { fits, type Config, type Rules } from '../api'
 import { useEscape } from '../useEscape'
 
 const DIFFICULTY_HELP: Record<string, string> = {
@@ -7,8 +7,8 @@ const DIFFICULTY_HELP: Record<string, string> = {
   medium: 'Solver with 300 simulations per move.',
   hard: 'Solver with 2,000 simulations per move.',
   expert: 'Solver with 10,000 simulations per move (4 threads).',
-  rl: 'The chosen network, one forward pass per move. Default rules only.',
-  rl_search: 'RL network + search: plays out sampled deals with the network for its top moves. Default rules only.',
+  rl: 'The chosen network, one forward pass per move. Only for rules a network was trained for.',
+  rl_search: 'RL network + search: plays out sampled deals with the network for its top moves. Only for rules a network was trained for.',
 }
 
 const DIFFICULTY_LABEL: Record<string, string> = {
@@ -61,9 +61,13 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
   const [difficulty, setDifficulty] = useState(initial.difficulty)
   const [rules, setRules] = useState<Rules>(initial.rules)
   useEscape(onCancel)
-  const known = config.models.some((m) => m.id === initial.model)
-  const [model, setModel] = useState(known ? initial.model : config.models[0]?.id)
-  const chosenModel = config.models.find((m) => m.id === model)
+  // Networks trained for the chosen rules (default first), then the greedy bot.
+  const fitting = config.models.filter((m) => fits(m, rules))
+  const networks = fitting.filter((m) => m.kind !== 'bot')
+  const [picked, setModel] = useState(initial.model)
+  const model = fitting.some((m) => m.id === picked) ? picked : fitting[0]?.id
+  const chosenModel = fitting.find((m) => m.id === model)
+  const needsNetwork = (difficulty === 'rl' || difficulty === 'rl_search') && networks.length === 0
   return (
     <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="new-game-title">
       <div className="dialog">
@@ -78,20 +82,24 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
             ))}
           </select>
           <span className="help">{DIFFICULTY_HELP[difficulty] ?? config.difficulties[difficulty]}</span>
-          {config.models.length > 0 && (
+          {fitting.length > 0 && (
             <>
               <label htmlFor="model">Network</label>
               <select id="model" value={model} onChange={(e) => setModel(e.target.value)}>
-                {config.models.map((m, i) => (
+                {fitting.map((m, i) => (
                   <option key={m.id} value={m.id}>
                     {m.label}
-                    {i === 0 ? ' (default)' : ''}
+                    {i === 0 && m.kind !== 'bot' ? ' (default)' : ''}
                   </option>
                 ))}
               </select>
               <span className="help">
-                For the RL bots and the study-mode hint. {chosenModel?.note}
+                {chosenModel?.kind === 'bot'
+                  ? 'Compared with the solver in the study-mode hint (RL bots use the default network). '
+                  : 'For the RL bots and the study-mode hint. '}
+                {chosenModel?.note}
                 {chosenModel && !chosenModel.loaded && ' Loaded when you deal.'}
+                {networks.length === 0 && ' No network was trained for these rules.'}
               </span>
             </>
           )}
@@ -112,7 +120,13 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
               Cancel
             </button>
           )}
-          <button type="button" className="primary" onClick={() => onStart({ difficulty, rules, model })}>
+          {needsNetwork && <span className="error">No network was trained for these rules.</span>}
+          <button
+            type="button"
+            className="primary"
+            disabled={needsNetwork}
+            onClick={() => onStart({ difficulty, rules, model })}
+          >
             Deal
           </button>
         </div>
