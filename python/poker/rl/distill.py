@@ -171,12 +171,17 @@ class _Data:
         self.parts: list[dict[str, np.ndarray]] = []
 
     def refresh(self, data_dir: str, max_decisions: int) -> int:
-        # Oldest first (by write time), so trimming below drops the oldest data.
-        new = [
-            str(p)
-            for p in sorted(Path(data_dir).glob("*.npz"), key=lambda p: p.stat().st_mtime)
-            if str(p) not in self.files and not p.name.endswith(".tmp.npz")
-        ]
+        # Oldest first (by write time), so trimming below drops the oldest data. A
+        # generator may rename or replace a file between listing and stat: skip it.
+        stamped = []
+        for p in Path(data_dir).glob("*.npz"):
+            if str(p) in self.files or p.name.endswith(".tmp.npz"):
+                continue
+            try:
+                stamped.append((p.stat().st_mtime, str(p)))
+            except FileNotFoundError:
+                continue
+        new = [f for _, f in sorted(stamped)]
         for f in new:
             try:
                 with np.load(f) as z:

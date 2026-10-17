@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from dataclasses import replace
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -298,3 +299,28 @@ def test_belief_search_runs_and_reports_ess() -> None:
         analyze(s, iterations=10, belief="psychic")
     agent = make_agent("ismcts:iterations=100,belief=greedy,belief_candidates=32", seed=1)
     assert agent.act(s) in s.legal_actions()
+
+
+def test_distill_data_skips_files_renamed_while_listing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A generator renames ``*.tmp.npz`` to ``*.npz`` while the trainer lists the
+    directory; a file that vanishes between listing and stat is retried later."""
+    from poker.rl.distill import _Data
+
+    owner = np.array([0, 0, 1], dtype=np.int64)
+    np.savez(tmp_path / "a.npz", states=np.zeros((2, 3)), owner=owner)
+    np.savez(tmp_path / "b.npz", states=np.zeros((2, 3)), owner=owner)
+    real_stat = Path.stat
+
+    def flaky_stat(self: Path, **kw: Any) -> Any:
+        if self.name == "b.npz":
+            raise FileNotFoundError(self)
+        return real_stat(self, **kw)
+
+    data = _Data()
+    with monkeypatch.context() as m:
+        m.setattr(Path, "stat", flaky_stat)
+        assert data.refresh(str(tmp_path), 10**6) == 1
+    assert data.refresh(str(tmp_path), 10**6) == 1  # picked up next time
+    assert data.decisions() == 4
