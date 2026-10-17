@@ -143,7 +143,7 @@ export default function App() {
             played: cards,
             best: currentAnalysis.moves[0],
             playedStats,
-            network: net && net.moves.length > 0 ? { label: net.model.label, cards: net.moves[0].cards } : null,
+            network: net && net.moves.length > 0 ? { label: net.model.label, bot: net.model.kind === 'bot', cards: net.moves[0].cards } : null,
           })
         } else {
           setVerdict(null)
@@ -287,15 +287,16 @@ export default function App() {
                 <button
                   type="button"
                   className="primary"
+                  title="Play the selected cards (Enter)"
                   disabled={!view.your_turn || busy || selected.length === 0 || !legalMatch}
                   onClick={() => play(selected)}
                 >
                   Play
                 </button>
-                <button type="button" disabled={!canPass || busy} onClick={() => play([])}>
+                <button type="button" title="Pass (P)" disabled={!canPass || busy} onClick={() => play([])}>
                   Pass
                 </button>
-                <button type="button" disabled={selected.length === 0} onClick={() => setSelected([])}>
+                <button type="button" title="Clear the selection (Esc)" disabled={selected.length === 0} onClick={() => setSelected([])}>
                   Clear
                 </button>
                 <button type="button" onClick={() => setSort(sort === 'rank' ? 'suit' : 'rank')}>
@@ -329,12 +330,6 @@ export default function App() {
         <section className="panel" aria-label="History">
           <h2>History</h2>
           {view ? <History view={view} names={names} /> : <span className="muted">No game yet.</span>}
-        </section>
-        <section className="panel">
-          <h2>Keys</h2>
-          <p className="muted" style={{ margin: 0 }}>
-            Click cards to select · <b>Enter</b> play · <b>P</b> pass · <b>Esc</b> clear
-          </p>
         </section>
       </aside>
 

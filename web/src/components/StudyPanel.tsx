@@ -9,7 +9,7 @@ export interface Verdict {
   best: MoveStats
   playedStats: MoveStats | undefined
   /** The network's first choice, if a network gave a hint. */
-  network: { label: string; cards: Card[] } | null
+  network: { label: string; bot: boolean; cards: Card[] } | null
 }
 
 interface Props {
@@ -109,8 +109,6 @@ export function StudyPanel(p: Props) {
             <ModelPicker key={p.model ?? ''} models={p.models} current={p.model} onLoad={p.onLoadModel} />
           )}
 
-          {p.verdict && <VerdictBox v={p.verdict} />}
-
           {p.yourTurn && p.mode === 'live' && (
             <>
               {p.loading && !p.analysis && <p className="muted">Thinking…</p>}
@@ -124,22 +122,23 @@ export function StudyPanel(p: Props) {
               {p.analysis?.network && (
                 <Compare solver={p.analysis.moves} net={p.analysis.network} objective={p.analysis.objective} onPick={p.onPick} />
               )}
-              {p.analysis && (
-                <p className="small-print">
-                  {p.analysis.simulations.toLocaleString()} simulated games in {p.analysis.seconds.toFixed(2)}s.
-                  Ranked by {p.analysis.objective === 'score' ? 'expected score' : 'win rate'}; click a move to
-                  select it. ± is a 95% interval from simulation noise only — the solver assumes opponents
-                  play like its rollout bot.
-                  {p.analysis.network &&
-                    ' The network\'s numbers are its own predictions from one forward pass (no interval); the same move has the same colour in both columns.'}
-                </p>
-              )}
             </>
           )}
           {p.yourTurn && p.mode === 'quiz' && !p.verdict && (
             <p className="muted">Make your move — the solver's opinion appears afterwards.</p>
           )}
           {!p.yourTurn && !p.verdict && <p className="muted">Waiting for your turn…</p>}
+          {p.verdict && <VerdictBox v={p.verdict} />}
+          {p.yourTurn && p.mode === 'live' && p.analysis && (
+            <p className="small-print">
+              {p.analysis.simulations.toLocaleString()} simulated games in {p.analysis.seconds.toFixed(2)}s.
+              Ranked by {p.analysis.objective === 'score' ? 'expected score' : 'win rate'}; click a move to
+              select it. ± is a 95% interval from simulation noise only — the solver assumes opponents
+              play like its rollout bot.
+              {p.analysis.network &&
+                ' The network\'s numbers are its own predictions from one forward pass (no interval); the same move has the same colour in both columns.'}
+            </p>
+          )}
         </>
       )}
     </section>
@@ -307,7 +306,7 @@ function VerdictBox({ v }: { v: Verdict }) {
   const agrees = v.playedStats && v.playedStats.cards.join() === v.best.cards.join()
   const loss = v.playedStats ? v.best.mean_score - v.playedStats.mean_score : null
   return (
-    <div className={`verdict${agrees ? '' : ' off'}`} data-testid="verdict" style={{ marginBottom: 10 }}>
+    <div className={`verdict${agrees ? '' : ' off'}`} data-testid="verdict" style={{ marginTop: 10 }}>
       You played <b>{cardsText(v.played)}</b>.{' '}
       {agrees ? (
         <>That was the solver's top move.</>
@@ -322,8 +321,8 @@ function VerdictBox({ v }: { v: Verdict }) {
         <>
           {' '}
           {sameMove(v.network.cards, v.played)
-            ? `The network (${v.network.label}) would have played the same.`
-            : `The network (${v.network.label}) would have played ${cardsText(v.network.cards)}.`}
+            ? `${who(v.network)} would have played the same.`
+            : `${who(v.network)} would have played ${cardsText(v.network.cards)}.`}
         </>
       )}
     </div>
@@ -332,4 +331,8 @@ function VerdictBox({ v }: { v: Verdict }) {
 
 function sameMove(a: Card[], b: Card[]) {
   return a.length === b.length && a.every((c) => b.includes(c))
+}
+
+function who(n: { label: string; bot: boolean }) {
+  return n.bot ? `The ${n.label.toLowerCase()}` : `The network (${n.label})`
 }
