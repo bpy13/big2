@@ -62,6 +62,7 @@ def _generate_worker(
     min_visits: int,
     epsilon: float,
     shard_games: int,
+    rules: Rules,
 ) -> int:
     rng = random.Random(1_000_003 * worker + int(time.time()))
     deadline = time.time() + 60 * minutes
@@ -77,7 +78,7 @@ def _generate_worker(
         win: list[float] = []
         visits: list[int] = []
         for _ in range(shard_games):
-            s = Rules().new_deal(rng.getrandbits(32))
+            s = rules.new_deal(rng.getrandbits(32))
             while not s.is_terminal:
                 legal = s.legal_actions()
                 if len(legal) == 1:
@@ -126,13 +127,24 @@ def generate(
     min_visits: int = 20,
     epsilon: float = 0.25,
     shard_games: int = 20,
+    rules: Rules | None = None,
 ) -> int:
-    """Generates solver-labelled decisions into ``out_dir`` (one .npz per shard)."""
+    """Generates solver-labelled decisions into ``out_dir`` (one .npz per shard),
+    from games under ``rules`` (default: the default rules)."""
+    rules = rules or Rules()
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     with ProcessPoolExecutor(workers) as pool:
         futures = [
             pool.submit(
-                _generate_worker, out_dir, w, minutes, iterations, min_visits, epsilon, shard_games
+                _generate_worker,
+                out_dir,
+                w,
+                minutes,
+                iterations,
+                min_visits,
+                epsilon,
+                shard_games,
+                rules,
             )
             for w in range(workers)
         ]
@@ -160,6 +172,8 @@ class DistillConfig:
     max_minutes: float = 60.0
     seed: int = 0
     device: str = "auto"  # see poker.rl.device
+    #: Rule variants of the data (``Rules`` keyword arguments), for the evaluation games.
+    rules: dict[str, Any] = field(default_factory=dict)
     net: NetConfig = field(default_factory=NetConfig)
 
 
@@ -293,7 +307,9 @@ def train(cfg: DistillConfig, log: Any = print) -> Path:
                     "decisions": data.decisions(),
                     "loss_score": float(np.mean([x[0] for x in losses])),
                     "loss_win": float(np.mean([x[1] for x in losses])),
-                    **evaluate_vs_greedy(actor, cfg.eval_deals, seed=10_000, device=adev),
+                    **evaluate_vs_greedy(
+                        actor, cfg.eval_deals, seed=10_000, rules=cfg.rules, device=adev
+                    ),
                 }
                 losses.clear()
                 info = {
