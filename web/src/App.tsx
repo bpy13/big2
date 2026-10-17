@@ -103,12 +103,15 @@ export default function App() {
     return () => clearTimeout(t)
   }, [view])
 
+  // Passing is your only legal move: the UI passes for you after a short pause.
+  const forcedPass = !!view?.your_turn && !view.over && view.legal.length === 1 && view.legal[0].length === 0
+
   // Solver analysis for your turn (also computed silently in quiz mode, for the verdict).
   // `turnKey` changes once per human turn, so bot steps do not re-trigger the request.
   const gameId = view?.id
   const turnKey = view && view.your_turn ? `${view.id}:${view.history.length}:${objective}:${view.model}` : null
   useEffect(() => {
-    if (!turnKey || !gameId || studyMode === 'off') return
+    if (!turnKey || !gameId || studyMode === 'off' || forcedPass) return
     let cancelled = false
     api.analyze(gameId, { objective, top: 40 }).then(
       (data) => !cancelled && setAnalysis({ key: turnKey, data }),
@@ -117,11 +120,11 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [turnKey, gameId, objective, studyMode])
+  }, [turnKey, gameId, objective, studyMode, forcedPass])
 
   const currentAnalysis = analysis && analysis.key === turnKey ? analysis.data : null
   const legalMatch = view ? matchLegal(selected, view.legal) : undefined
-  const canPass = !!view?.your_turn && view.legal.some((l) => l.length === 0)
+  const canPass = !!view?.your_turn && !forcedPass && view.legal.some((l) => l.length === 0)
   const playable = useMemo(() => (view?.your_turn ? completions(selected, view.legal) : null), [selected, view])
 
   const play = useCallback(
@@ -176,6 +179,12 @@ export default function App() {
     [view],
   )
 
+  useEffect(() => {
+    if (!forcedPass || dialog || busy) return
+    const t = setTimeout(() => play([]), BOT_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [forcedPass, dialog, busy, play])
+
   // Keyboard: Enter plays the selection, P passes, Escape clears.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -201,7 +210,8 @@ export default function App() {
   let status = ''
   if (view && !view.over) {
     if (view.your_turn) {
-      if (view.is_opening) status = 'Your lead — include 3♦'
+      if (forcedPass && view.current_play) status = `Nothing beats ${cardsText(view.current_play.cards)} — passing`
+      else if (view.is_opening) status = 'Your lead — include 3♦'
       else if (view.current_play) status = `Beat ${cardsText(view.current_play.cards)} or pass`
       else status = 'Your lead — play any combination'
     } else status = `${names[view.current_player ?? 0]} is thinking…`
@@ -228,25 +238,25 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <h1>Big Two</h1>
-        {view && (
-          <span className="meta">
-            Deal #{view.seed} · {difficultyLabel(choice?.difficulty)} bots
-          </span>
-        )}
-        <span className="spacer" />
-        {view?.over && dialog === null && (
-          <button type="button" onClick={() => setDialog('result')}>
-            Results
-          </button>
-        )}
-        <button type="button" onClick={() => setDialog('new')}>
-          New game
-        </button>
-      </header>
-
       <main className="table" aria-label="Card table">
+        <header className="area-title table-title">
+          <h1>Big Two</h1>
+          {view && (
+            <span className="meta">
+              Deal #{view.seed} · {difficultyLabel(choice?.difficulty)} bots
+            </span>
+          )}
+        </header>
+        <div className="area-menu table-menu">
+          {view?.over && dialog === null && (
+            <button type="button" onClick={() => setDialog('result')}>
+              Results
+            </button>
+          )}
+          <button type="button" onClick={() => setDialog('new')}>
+            New game
+          </button>
+        </div>
         {seatEl(2, 'area-top')}
         {seatEl(3, 'area-left')}
         {seatEl(1, 'area-right')}
@@ -307,7 +317,7 @@ export default function App() {
           onObjective={setObjective}
           analysis={currentAnalysis ? { ...currentAnalysis, moves: currentAnalysis.moves.slice(0, 3) } : null}
           loading={!currentAnalysis}
-          yourTurn={!!view?.your_turn}
+          yourTurn={!!view?.your_turn && !forcedPass}
           onPick={(cards) => setSelected(cards)}
           verdict={verdict}
           models={config.models}

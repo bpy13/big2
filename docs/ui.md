@@ -22,6 +22,7 @@ Add `?botDelay=0` to the URL to make bots move instantly (default 700 ms per mov
 * You sit at the bottom; play passes to your right (Bot 1 → Bot 2 → Bot 3).
 * Click cards to select them. Cards that cannot be part of any legal play with your
   current selection are dimmed, and **Play** is enabled only for a legal selection.
+* When passing is your only legal move, the UI passes for you after a short pause.
 * Keys: **Enter** play · **P** pass · **Esc** clear (or close a dialog; **Results** reopens the deal summary).
 * **New game** chooses the opponents and every rule variant from
   [rules/big2.md](rules/big2.md).
