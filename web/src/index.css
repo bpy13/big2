@@ -666,7 +666,7 @@ select {
 /* ---------- History ---------- */
 
 .history {
-  max-height: 280px;
+  max-height: 150px;
   overflow-y: auto;
   font-size: 13px;
   display: flex;
