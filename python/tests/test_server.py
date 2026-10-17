@@ -157,8 +157,8 @@ def test_switching_the_hint_model(
     monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
     monkeypatch.setattr("poker.rl.agent._CACHE", {})
     listed = client.get("/api/config").json()["models"]
-    assert [m["id"] for m in listed] == ["distilled-10h", "ppo-10h", "greedy"]
-    assert not any(m["loaded"] for m in listed if m["kind"] != "bot")
+    assert [m["id"] for m in listed] == ["distilled-10h", "ppo-10h", "greedy", "none"]
+    assert not any(m["loaded"] for m in listed if m["kind"] in ("q", "policy"))
 
     # Greedy bots under the networks' rules: nothing is loaded yet.
     v = run_bots(client, new_game(client, rules={"last_card_duty": False}))
@@ -168,7 +168,7 @@ def test_switching_the_hint_model(
     assert r.status_code == 200 and r.json()["loaded"]
     assert client.get(f"/api/games/{v['id']}").json()["model"] == "ppo-10h"
     loaded = {m["id"]: m["loaded"] for m in client.get("/api/config").json()["models"]}
-    assert loaded == {"distilled-10h": False, "ppo-10h": True, "greedy": True}
+    assert loaded == {"distilled-10h": False, "ppo-10h": True, "greedy": True, "none": True}
     a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 200}).json()
     assert a["network"]["model"]["id"] == "ppo-10h"
     bad = client.post(f"/api/games/{v['id']}/model", json={"model": "nope"})
@@ -184,7 +184,7 @@ def test_without_a_model_rl_is_not_offered(
     monkeypatch.setattr(models, "MODELS_DIR", tmp_path)
     monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
     c = client.get("/api/config").json()
-    assert "rl" not in c["difficulties"] and [m["id"] for m in c["models"]] == ["greedy"]
+    assert "rl" not in c["difficulties"] and [m["id"] for m in c["models"]] == ["greedy", "none"]
     v = run_bots(client, new_game(client))
     assert v["model"] is None
     assert (
@@ -206,3 +206,8 @@ def test_greedy_bot_in_the_hint(client: TestClient) -> None:
     assert move["mean_score"] is None and move["win_rate"] is None and move["prob"] is None
     assert tuple(move["cards"]) in {tuple(m) for m in v["legal"]}
     assert net["pick"]["solver_rank"] >= 1
+    # "No comparison": the solver alone.
+    assert client.post(f"/api/games/{v['id']}/model", json={"model": "none"}).status_code == 200
+    a = client.post(f"/api/games/{v['id']}/analyze", json={"iterations": 300}).json()
+    assert a["network"] is None and a["moves"]
+    assert client.get(f"/api/games/{v['id']}").json()["model"] is None

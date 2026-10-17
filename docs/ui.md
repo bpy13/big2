@@ -84,8 +84,9 @@ and the greedy bot only its move. The greedy bot is how the solver imagines its
 opponents play, so comparing with it shows where the solver expects to exploit them.
 In **Quiz** mode the verdict also says what the network would have played.
 
-**Network** in the panel switches the hint to another network that fits the
-game's rules, or to the **Greedy bot** (any rules). Choosing a network only
+**Compare with** in the panel switches the hint to another network that fits the
+game's rules, to the **Greedy bot** (any rules), or to **No comparison** (the
+solver alone). Choosing a network only
 stages it; it is loaded on the server when you press **Load** (or **Use**, if it
 is already in memory). Nothing but the default network is loaded until you ask.
 The networks offered, and the rules each was trained under, are listed in

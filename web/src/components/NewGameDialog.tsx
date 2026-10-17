@@ -63,7 +63,7 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
   useEscape(onCancel)
   // Networks trained for the chosen rules (default first), then the greedy bot.
   const fitting = config.models.filter((m) => fits(m, rules))
-  const networks = fitting.filter((m) => m.kind !== 'bot')
+  const networks = fitting.filter((m) => m.kind === 'q' || m.kind === 'policy')
   const [picked, setModel] = useState(initial.model)
   const model = fitting.some((m) => m.id === picked) ? picked : fitting[0]?.id
   const chosenModel = fitting.find((m) => m.id === model)
@@ -89,14 +89,16 @@ export function NewGameDialog({ config, initial, onStart, onCancel }: Props) {
                 {fitting.map((m, i) => (
                   <option key={m.id} value={m.id}>
                     {m.label}
-                    {i === 0 && m.kind !== 'bot' ? ' (default)' : ''}
+                    {i === 0 && networks.length > 0 ? ' (default)' : ''}
                   </option>
                 ))}
               </select>
               <span className="help">
                 {chosenModel?.kind === 'bot'
                   ? 'Compared with the solver in the study-mode hint (RL bots use the default network). '
-                  : 'For the RL bots and the study-mode hint. '}
+                  : chosenModel?.kind === 'none'
+                    ? 'The study-mode hint shows the solver alone (RL bots use the default network). '
+                    : 'For the RL bots and the study-mode hint. '}
                 {chosenModel?.note}
                 {chosenModel && !chosenModel.loaded && ' Loaded when you deal.'}
                 {networks.length === 0 && ' No network was trained for these rules.'}

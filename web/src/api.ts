@@ -62,8 +62,8 @@ export interface ModelInfo {
   label: string
   note: string
   /** "q": predicts score and win chance per move; "policy" (PPO): a probability per
-   * move; "bot": the greedy bot, only its move. */
-  kind: 'q' | 'policy' | 'bot'
+   * move; "bot": the greedy bot, only its move; "none": no comparison. */
+  kind: 'q' | 'policy' | 'bot' | 'none'
   loaded: boolean
   /** The rules it was trained under (null: any rules). */
   rules: Rules | null

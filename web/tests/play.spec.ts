@@ -115,7 +115,7 @@ test('hints compare the solver with a network, and another network loads only wh
   await expect(page.getByTestId('network-pick')).toHaveText(/Agree|Disagree/)
 
   // Choosing another network only stages it; the hint changes after "Load".
-  const picker = page.getByRole('combobox', { name: 'Network' })
+  const picker = page.getByRole('combobox', { name: 'Compare with' })
   await picker.selectOption(second.id)
   await expect(compare.getByRole('heading', { name: first.label })).toBeVisible()
   await page.getByRole('button', { name: /^(Load|Use)$/ }).click()
@@ -130,10 +130,17 @@ test('the hint can compare the solver with the greedy bot, under any rules', asy
   await page.getByRole('button', { name: 'Deal' }).click()
   await expect(page.getByRole('status')).toHaveText(/Your lead|Beat/, { timeout: 30_000 })
   // With no network for these rules, the greedy bot is already the default.
-  await expect(page.getByRole('combobox', { name: 'Network' })).toHaveValue('greedy')
+  const picker = page.getByRole('combobox', { name: 'Compare with' })
+  await expect(picker).toHaveValue('greedy')
   const compare = page.getByTestId('compare')
   await expect(compare.getByRole('heading', { name: 'Greedy bot' })).toBeVisible({ timeout: 30_000 })
   await expect(compare.getByTestId('network-move')).toHaveCount(1)
   await expect(compare.getByTestId('network-move')).toContainText('its move')
   await expect(page.getByTestId('network-pick')).toHaveText(/Agree|Disagree/)
+
+  // "No comparison": only the solver's moves.
+  await picker.selectOption('none')
+  await page.getByRole('button', { name: 'Use' }).click()
+  await expect(compare).toBeHidden({ timeout: 30_000 })
+  await expect(page.getByTestId('study-move').first()).toBeVisible()
 })
