@@ -26,6 +26,10 @@ Variants (see docs/solver.md §6):
 greedy bots on the same deals. That is where the belief model is exactly right
 (the opponents *are* greedy bots), so it checks the mechanism itself.
 
+``--belief-accuracy`` measures the samplers directly: at positions from real
+games, how much probability each one gives to the true holder of each hidden
+card (uniform sampling gives about the holder's share of the hidden cards).
+
 Raw JSON goes to runs/search_methods/.
 """
 
@@ -33,9 +37,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 from pathlib import Path
 
+from poker._core import sample_deals
+from poker.agents import make_agent
 from poker.eval import run_tournament
+from poker.games.big2 import Big2State, Rules
 
 BASELINE = "ismcts:iterations=1000"
 VALUE = "models/big2-value.pknn"
@@ -60,6 +68,8 @@ def main() -> None:
     ap.add_argument("--out", default="runs/search_methods")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--vs-greedy", action="store_true", help="each agent vs 3 greedy bots")
+    ap.add_argument("--belief-accuracy", action="store_true", help="score the samplers")
+    ap.add_argument("--positions", type=int, default=100)
     args = ap.parse_args()
     if args.list:
         for k, v in VARIANTS.items():
@@ -69,6 +79,9 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     if args.vs_greedy:
         vs_greedy(args, out)
+        return
+    if args.belief_accuracy:
+        belief_accuracy(args, out)
         return
     path = out / "vs_baseline.json"
     results = json.loads(path.read_text()) if path.exists() else {}
@@ -120,6 +133,54 @@ def vs_greedy(args: argparse.Namespace, out: Path) -> None:
         }
         print(f"vs greedy {name:<14} {s.mean_score:+6.2f} ± {s.score_ci95:.2f}", flush=True)
         path.write_text(json.dumps(results, indent=2))
+
+
+def _positions(players: str, n: int, seed: int) -> list[Big2State]:
+    """Mid-game decision points (≥ 8 actions in, ≥ 2 legal moves) from games
+    between four copies of the agent ``players``."""
+    rng = random.Random(seed)
+    agents = [make_agent(players, seed=i) for i in range(4)]
+    out: list[Big2State] = []
+    while len(out) < n:
+        s = Rules().new_deal(seed=rng.getrandbits(32))
+        stops = 0
+        while not s.is_terminal:
+            if len(s.history) >= 8 and len(s.legal_actions()) > 1 and rng.random() < 0.15:
+                out.append(s.copy())
+                stops += 1
+                if stops == 3:
+                    break
+            s.apply(agents[s.current_player].act(s))
+    return out[:n]
+
+
+def belief_accuracy(args: argparse.Namespace, out: Path) -> None:
+    samplers = {
+        "uniform": {},
+        "greedy ε=0.2": {"belief": "greedy", "epsilon": 0.2},
+        "greedy ε=0.5": {"belief": "greedy", "epsilon": 0.5},
+        "greedy ε=0.2, untempered": {"belief": "greedy", "epsilon": 0.2, "min_ess": 0.0},
+    }
+    results: dict[str, dict[str, float]] = {}
+    for label, players in [("greedy games", "greedy"), ("solver games", "ismcts:iterations=300")]:
+        positions = _positions(players, args.positions, args.seed)
+        for name, kw in samplers.items():
+            probs = []
+            for k, s in enumerate(positions):
+                me = s.current_player
+                assert me is not None
+                truth = s.hands
+                deals = sample_deals(s, 200, seed=k, **kw)  # type: ignore[arg-type]
+                for p in range(4):
+                    if p == me:
+                        continue
+                    for c in range(52):
+                        if truth[p] >> c & 1:
+                            probs.append(sum(d[p] >> c & 1 for d in deals) / len(deals))
+            acc = sum(probs) / len(probs)
+            results.setdefault(label, {})[name] = acc
+            print(f"{label:<13} {name:<26} P(true holder) = {acc:.3f}", flush=True)
+    (out / "belief_accuracy.json").write_text(json.dumps(results, indent=2))
 
 
 if __name__ == "__main__":

@@ -115,6 +115,16 @@ def analyze(
     value: str | None = None,
     value_rollout_weight: float = 0.0,
 ) -> AnalysisResult: ...
+def sample_deals(
+    state: Big2State,
+    n: int,
+    *,
+    belief: str | None = None,
+    candidates: int = 256,
+    epsilon: float = 0.2,
+    min_ess: float = 0.25,
+    seed: int = 0,
+) -> list[list[int]]: ...
 def value_estimate(state: Big2State, path: str) -> tuple[list[float], list[float]]: ...
 
 # --- Phase 3: RL environment (crates/pybind/src/vecenv.rs) -----------------
