@@ -276,6 +276,11 @@ def test_value_network_trains_exports_and_guides_search(tmp_path: Path) -> None:
         pytest.skip("models/big2-distilled.pt not present")
     value_train(cfg, log=lambda r: None)
     assert out.exists()
+    # Training plays the policy on the GPU when there is one, but the cached copy that
+    # load_model hands to the server and the agents must stay on the CPU.
+    from big2.rl.agent import load_model
+
+    assert all(p.device.type == "cpu" for p in load_model(cfg.policy).parameters())
     s = Rules().new_deal(seed=8)
     scores, wins = value_estimate(s, str(out))
     assert abs(sum(scores)) < 1e-3 and abs(sum(wins) - 1) < 1e-5
