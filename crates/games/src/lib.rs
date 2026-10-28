@@ -1,4 +1,4 @@
-//! Interfaces every game implements so that the solvers in `poker-search` (and the
+//! Interfaces every game implements so that the solvers in `big2-search` (and the
 //! RL code in Python) can work with any game, not only Big Two.
 //!
 //! The central trait is [`Game`]: a mutable game *state* that knows whose turn it
@@ -124,7 +124,7 @@ pub fn play_out<G: Game, P: Policy<G>, R: Rng + ?Sized>(
 }
 
 /// A game that can be replayed from its start: needed to ask "how likely were the
-/// actions so far, if the hidden cards were these?" (see `poker_search::belief`).
+/// actions so far, if the hidden cards were these?" (see `big2_search::belief`).
 pub trait Rewind: Game {
     /// The state at the start of the game, with this state's private information
     /// (for a determinized state: the sampled hidden cards), and every action

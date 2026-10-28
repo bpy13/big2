@@ -3,14 +3,14 @@
 //! The network reads the full-information features of a (sampled) position
 //! ([`crate::features::encode_full`], relative to the player to act) and outputs
 //! eight numbers: each relative seat's expected score divided by `score_scale`,
-//! then each seat's win logit. It is trained in Python (`poker rl value-train`)
+//! then each seat's win logit. It is trained in Python (`big2 rl value-train`)
 //! on positions from self-play and exported to the `.pknn` format of
-//! [`poker_nn`].
+//! [`big2_nn`].
 
 use crate::features::{active_full, FULL_FEATURES_NAME, FULL_LEN};
 use crate::state::{State, NUM_PLAYERS};
-use poker_games::{Estimate, Evaluator, Game};
-use poker_nn::Mlp;
+use big2_games::{Estimate, Evaluator, Game};
+use big2_nn::Mlp;
 
 /// A value network for Big Two positions.
 #[derive(Clone, Debug)]
@@ -77,7 +77,7 @@ impl Evaluator<State> for ValueNet {
 mod tests {
     use super::*;
     use crate::rules::RuleSet;
-    use poker_nn::Dense;
+    use big2_nn::Dense;
     use rand::{rngs::SmallRng, SeedableRng};
     use std::collections::BTreeMap;
 

@@ -1,7 +1,7 @@
 //! Opponent-aware determinization: sample hidden cards in proportion to how well
 //! they explain what the opponents have done.
 //!
-//! [`poker_games::Game::determinize`] deals the hidden cards uniformly: every
+//! [`big2_games::Game::determinize`] deals the hidden cards uniformly: every
 //! deal consistent with the hand sizes and the cards played is equally likely.
 //! But the opponents' choices carry information. A player who passed on a low
 //! single probably holds nothing that beats it; a player who broke up a pair
@@ -15,7 +15,7 @@
 //! it by **importance resampling**:
 //!
 //! 1. Draw `candidates` uniform determinizations of the current position.
-//! 2. For each, rewind to the start of the game ([`poker_games::Rewind`]) and
+//! 2. For each, rewind to the start of the game ([`big2_games::Rewind`]) and
 //!    replay the history, adding up the log-probability of each opponent action
 //!    under an [`ActionModel`] (for example [`PolicyModel`], a softened bot).
 //!    Deals in which an observed action would have been illegal get weight 0.
@@ -30,7 +30,7 @@
 //! size* `(Σw)² / Σw²` at least `min_ess` × `candidates`. `τ = 1` is exact Bayes
 //! under the model; `τ = 0` is the uniform sampler.
 
-use poker_games::{ActionModel, Game, Player, Policy, Rewind};
+use big2_games::{ActionModel, Game, Player, Policy, Rewind};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 

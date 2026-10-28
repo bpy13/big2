@@ -12,7 +12,7 @@
 //! others differently, the tie is broken by move order.
 
 use crate::analysis::Objective;
-use poker_games::{Outcome, Transposable};
+use big2_games::{Outcome, Transposable};
 use std::collections::HashMap;
 
 /// A reusable max^n solver. Keep one per thread and call [`Endgame::solve`]

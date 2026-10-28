@@ -1,9 +1,9 @@
-# Run inside the `poker` conda env: `conda activate poker`.
+# Run inside the `big2` conda env: `conda activate big2`.
 .PHONY: dev torch-cuda test test-rust test-python test-web test-e2e lint fmt bench docs web serve web-dev
 
 dev:            ## Build the Rust extension, install the Python package (editable) and UI deps
 	pip install -e ".[dev,rl]"
-	npm install --prefix web
+	cd web && npm install
 
 # PyTorch's CUDA build for NVIDIA GPUs. On Windows, plain `pip install torch` gives a
 # CPU-only build, so run this before `make dev`. Pick the CUDA tag that pytorch.org's
@@ -32,7 +32,7 @@ lint:
 	cargo clippy --workspace --all-targets -- -D warnings
 	ruff check python experiments
 	ruff format --check python experiments
-	mypy python/poker
+	mypy python/big2
 	cd web && npx tsc -b && npx oxlint
 
 fmt:
@@ -41,7 +41,7 @@ fmt:
 	ruff check --fix python experiments
 
 bench:
-	cargo bench -p poker-big2 --bench engine
+	cargo bench -p big2-big2 --bench engine
 
 docs:           ## Build Rust API docs into target/doc
 	cargo doc --workspace --no-deps
@@ -50,7 +50,7 @@ web:            ## Build the UI into web/dist
 	npm run build --prefix web
 
 serve: web      ## UI + API on http://127.0.0.1:8000
-	poker serve
+	big2 serve
 
-web-dev:        ## UI with hot reload on :5173 (run `uvicorn poker.server.app:app --reload` alongside)
+web-dev:        ## UI with hot reload on :5173 (run `uvicorn big2.server.app:app --reload` alongside)
 	npm run dev --prefix web

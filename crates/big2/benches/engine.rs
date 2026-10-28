@@ -1,8 +1,8 @@
-//! Engine throughput: `cargo bench -p poker-big2`.
+//! Engine throughput: `cargo bench -p big2-big2`.
 
+use big2_big2::{bots::Greedy, RuleSet, State};
+use big2_games::{play_out, Game, UniformRandom};
 use criterion::{criterion_group, criterion_main, Criterion, Throughput};
-use poker_big2::{bots::Greedy, RuleSet, State};
-use poker_games::{play_out, Game, UniformRandom};
 use rand::{rngs::SmallRng, SeedableRng};
 use std::hint::black_box;
 

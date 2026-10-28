@@ -15,7 +15,7 @@ training targets:
    targets, weighting each move by its visit count (more simulations = less noise).
 
 The result plays like the solver at a fraction of the cost, and can then be
-improved further with self-play (``poker rl train --init ...``).
+improved further with self-play (``big2 rl train --init ...``).
 
 This is the "expert iteration" idea (Anthony et al., 2017) that AlphaZero also
 uses, with ISMCTS as the expert.
@@ -37,17 +37,17 @@ import numpy as np
 import torch
 from torch import nn
 
-from poker._core import analyze, encode
-from poker.games.big2 import Rules
-from poker.rl.device import actor_device, resolve_device
-from poker.rl.dmc import (
+from big2._core import analyze, encode
+from big2.games.big2 import Rules
+from big2.rl.device import actor_device, resolve_device
+from big2.rl.dmc import (
     TrainConfig,
     _to_float,
     best_eval_so_far,
     evaluate_vs_greedy,
     save_checkpoint,
 )
-from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
+from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
 
 # ---------------------------------------------------------------------------
 # Data generation
@@ -171,7 +171,7 @@ class DistillConfig:
     resume: str | None = None  # continue a run: weights, optimizer, step count
     max_minutes: float = 60.0
     seed: int = 0
-    device: str = "auto"  # see poker.rl.device
+    device: str = "auto"  # see big2.rl.device
     #: Rule variants of the data (``Rules`` keyword arguments), for the evaluation games.
     rules: dict[str, Any] = field(default_factory=dict)
     net: NetConfig = field(default_factory=NetConfig)

@@ -12,14 +12,14 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from poker._core import Big2State, Big2VecEnv, encode  # noqa: E402
-from poker.agents import make_agent  # noqa: E402
-from poker.eval import play_game  # noqa: E402
-from poker.games.big2 import Rules  # noqa: E402
-from poker.rl.device import actor_device, resolve_device  # noqa: E402
-from poker.rl.dmc import TrainConfig, choose, train  # noqa: E402
-from poker.rl.model import ACTION_LEN, STATE_LEN, QNet  # noqa: E402
-from poker.rl.search import rollout_search  # noqa: E402
+from big2._core import Big2State, Big2VecEnv, encode  # noqa: E402
+from big2.agents import make_agent  # noqa: E402
+from big2.eval import play_game  # noqa: E402
+from big2.games.big2 import Rules  # noqa: E402
+from big2.rl.device import actor_device, resolve_device  # noqa: E402
+from big2.rl.dmc import TrainConfig, choose, train  # noqa: E402
+from big2.rl.model import ACTION_LEN, STATE_LEN, QNet  # noqa: E402
+from big2.rl.search import rollout_search  # noqa: E402
 
 # Every device this machine can train on; the trainers are tested on each.
 DEVICES = ["cpu"]
@@ -145,7 +145,7 @@ def test_rl_agents_play_full_games(checkpoint: Path) -> None:
 
 
 def test_rollout_search_reports_candidates(checkpoint: Path) -> None:
-    from poker.rl.agent import load_model
+    from big2.rl.agent import load_model
 
     s = Rules().new_deal(seed=4)
     moves = rollout_search(load_model(checkpoint / "latest.pt"), s, determinizations=8, top=4)
@@ -189,7 +189,7 @@ def test_rl_specs_need_a_checkpoint() -> None:
 
 @pytest.mark.parametrize("device", DEVICES)
 def test_distillation_generates_and_trains(tmp_path: Path, device: str) -> None:
-    from poker.rl import distill
+    from big2.rl import distill
 
     data = tmp_path / "data"
     n = distill.generate(str(data), workers=1, minutes=0.02, iterations=100, shard_games=1)
@@ -223,8 +223,8 @@ def test_distillation_generates_and_trains(tmp_path: Path, device: str) -> None:
 
 @pytest.mark.parametrize("device", DEVICES)
 def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path, device: str) -> None:
-    from poker.rl.ppo import PPOConfig, segment_log_softmax
-    from poker.rl.ppo import train as ppo_train
+    from big2.rl.ppo import PPOConfig, segment_log_softmax
+    from big2.rl.ppo import train as ppo_train
 
     # Log-softmax within segments sums to probability 1 per segment.
     logits = torch.tensor([0.0, 1.0, 2.0, 5.0, -1.0])
@@ -258,9 +258,9 @@ def test_ppo_trains_and_its_checkpoint_plays(tmp_path: Path, device: str) -> Non
 
 
 def test_value_network_trains_exports_and_guides_search(tmp_path: Path) -> None:
-    from poker._core import analyze, value_estimate
-    from poker.rl.value import ValueConfig
-    from poker.rl.value import train as value_train
+    from big2._core import analyze, value_estimate
+    from big2.rl.value import ValueConfig
+    from big2.rl.value import train as value_train
 
     out = tmp_path / "v.pknn"
     cfg = ValueConfig(
@@ -287,7 +287,7 @@ def test_value_network_trains_exports_and_guides_search(tmp_path: Path) -> None:
 
 
 def test_belief_search_runs_and_reports_ess() -> None:
-    from poker._core import analyze
+    from big2._core import analyze
 
     s = Rules().new_deal(seed=6)
     for _ in range(14):
@@ -306,7 +306,7 @@ def test_distill_data_skips_files_renamed_while_listing(
 ) -> None:
     """A generator renames ``*.tmp.npz`` to ``*.npz`` while the trainer lists the
     directory; a file that vanishes between listing and stat is retried later."""
-    from poker.rl.distill import _Data
+    from big2.rl.distill import _Data
 
     owner = np.array([0, 0, 1], dtype=np.int64)
     np.savez(tmp_path / "a.npz", states=np.zeros((2, 3)), owner=owner)

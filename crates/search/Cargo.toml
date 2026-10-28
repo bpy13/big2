@@ -1,5 +1,5 @@
 [package]
-name = "poker-search"
+name = "big2-search"
 description = "Game-independent decision-time search: ISMCTS, PIMC and an exact endgame solver."
 version.workspace = true
 edition.workspace = true
@@ -8,9 +8,9 @@ edition.workspace = true
 bench = false
 
 [dependencies]
-poker-games.workspace = true
+big2-games.workspace = true
 rand.workspace = true
 rayon.workspace = true
 
 [dev-dependencies]
-poker-big2.workspace = true
+big2-big2.workspace = true

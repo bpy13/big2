@@ -1,4 +1,4 @@
-"""Big Two helpers on top of the Rust engine (``poker._core``).
+"""Big Two helpers on top of the Rust engine (``big2._core``).
 
 The engine represents a set of cards as an ``int`` bit mask and an action as the
 mask of cards played (``0`` = pass). This module adds what humans and the CLI
@@ -15,7 +15,7 @@ import random
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from poker._core import Big2State, classify_cards, format_cards, parse_cards
+from big2._core import Big2State, classify_cards, format_cards, parse_cards
 
 __all__ = [
     "Big2State",

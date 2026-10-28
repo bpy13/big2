@@ -1,7 +1,7 @@
-"""Tests for the Python helpers in poker.games.big2."""
+"""Tests for the Python helpers in big2.games.big2."""
 
 import pytest
-from poker.games.big2 import (
+from big2.games.big2 import (
     PASS,
     Big2State,
     Rules,

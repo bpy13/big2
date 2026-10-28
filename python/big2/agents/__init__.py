@@ -20,7 +20,7 @@ tournament runner create them::
     make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
 
 The ``dmc`` and ``dmcsearch`` kinds need PyTorch and a checkpoint from
-``poker rl train`` (see docs/rl.md).
+``big2 rl train`` (see docs/rl.md).
 """
 
 from __future__ import annotations
@@ -29,10 +29,10 @@ import random
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
-from poker._core import Big2State, analyze
+from big2._core import Big2State, analyze
 
 if TYPE_CHECKING:
-    from poker._core import AnalysisResult
+    from big2._core import AnalysisResult
 
 
 class Agent(Protocol):
@@ -77,7 +77,7 @@ class GreedyAgent:
 class SearchAgent:
     """Plays the solver's top move. ``algorithm`` is ``"ismcts"`` or ``"pimc"``.
 
-    Extra keyword options are passed to :func:`poker._core.analyze`
+    Extra keyword options are passed to :func:`big2._core.analyze`
     (``exploration``, ``threads``, ``time_limit``, ``objective``,
     ``endgame_threshold``, ``rollout_epsilon``, ...).
     """
@@ -144,10 +144,10 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
             raise ValueError(f"{kind} needs checkpoint=<path to .pt> in {spec!r}")
         # Imported lazily so the rest of the package works without PyTorch.
         if kind == "dmc":
-            from poker.rl.agent import DMCAgent
+            from big2.rl.agent import DMCAgent
 
             return DMCAgent(str(opts.pop("checkpoint")), name=spec, **opts)
-        from poker.rl.search import RolloutSearchAgent
+        from big2.rl.search import RolloutSearchAgent
 
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(

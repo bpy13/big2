@@ -1,7 +1,7 @@
 """Tournament runner tests."""
 
 import pytest
-from poker.eval import run_tournament
+from big2.eval import run_tournament
 
 
 def test_duplicate_tournament_is_zero_sum_and_symmetric() -> None:

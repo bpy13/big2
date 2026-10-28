@@ -20,8 +20,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from poker.agents import Agent, make_agent
-from poker.games.big2 import Big2State, Rules
+from big2.agents import Agent, make_agent
+from big2.games.big2 import Big2State, Rules
 
 
 @dataclass
@@ -114,7 +114,7 @@ def run_tournament(
     """Runs a duplicate tournament.
 
     Args:
-        lineup: four agent specs (see :func:`poker.agents.make_agent`), e.g.
+        lineup: four agent specs (see :func:`big2.agents.make_agent`), e.g.
             ``["ismcts:iterations=1000", "greedy", "greedy", "greedy"]``.
         deals: number of deals; each is played 4 times (rotated).
         seed: base seed for deals and agents.

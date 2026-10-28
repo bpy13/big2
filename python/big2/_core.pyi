@@ -1,4 +1,4 @@
-"""Type stubs for the Rust extension module ``poker._core`` (crates/pybind).
+"""Type stubs for the Rust extension module ``big2._core`` (crates/pybind).
 
 Card sets are ``int`` bit masks (index = rank*4 + suit, ranks 3..2, suits ♦♣♥♠);
 an action is the mask of cards played, ``0`` = pass.

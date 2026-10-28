@@ -1,13 +1,13 @@
 [package]
-name = "poker-big2"
+name = "big2-big2"
 description = "Big Two rules: combinations, move generation, game state and scoring."
 version.workspace = true
 edition.workspace = true
 
 [dependencies]
-poker-cards.workspace = true
-poker-games.workspace = true
-poker-nn.workspace = true
+big2-cards.workspace = true
+big2-games.workspace = true
+big2-nn.workspace = true
 rand.workspace = true
 
 [dev-dependencies]

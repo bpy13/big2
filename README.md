@@ -1,4 +1,4 @@
-# poker — card-game solver & RL lab
+# big2 — card-game solver & RL lab
 
 A research codebase for studying imperfect-information card games, starting with
 **Big Two** (鋤大D). It pairs a fast Rust rules engine with:
@@ -32,8 +32,8 @@ strength at a fraction of the cost. Details: [Phase 1](docs/study-results/phase1
 
 ```sh
 conda env create -f environment.yml
-conda activate poker
-make dev     # builds the Rust extension, installs the `poker` package (with PyTorch) and UI deps
+conda activate big2
+make dev     # builds the Rust extension, installs the `big2` package (with PyTorch) and UI deps
 make test
 ```
 
@@ -48,25 +48,25 @@ Tools (C++ workload) first, for the Rust linker. To train on an NVIDIA GPU, run
 make serve                                   # then open http://127.0.0.1:8000
 
 # Play a deal in the terminal against three solver bots ("?" asks for a hint)
-poker big2 play
-poker big2 play --hints --bots greedy        # easier bots, top-3 hint every turn
+big2 play
+big2 play --hints --bots greedy        # easier bots, top-3 hint every turn
 
 # Ask the solver about a position, from one seat's point of view
-poker big2 analyze --seat 0 --hand "3d 4d 4h 5h 6d 7d 7s 8d 8s Jd Jh Kc 2s"
-poker big2 analyze --seat 1 --hand "..." --history "0:3d; 1:pass; 2:5c"
+big2 analyze --seat 0 --hand "3d 4d 4h 5h 6d 7d 7s 8d 8s Jd Jh Kc 2s"
+big2 analyze --seat 1 --hand "..." --history "0:3d; 1:pass; 2:5c"
 
 # Duplicate tournament (every deal played 4×, seats rotated)
-poker big2 tournament ismcts:iterations=1000 greedy greedy greedy --deals 200 --workers 6
+big2 tournament ismcts:iterations=1000 greedy greedy greedy --deals 200 --workers 6
 ```
 
 Every command takes the rule variants as options (`--straights no_twos`,
-`--scoring original`, `--pass-rule locked_out`, ...); see `poker big2 <cmd> --help`.
+`--scoring original`, `--pass-rule locked_out`, ...); see `big2 <cmd> --help`.
 
 From Python:
 
 ```python
-from poker._core import analyze
-from poker.games.big2 import Rules, pretty
+from big2._core import analyze
+from big2.games.big2 import Rules, pretty
 
 state = Rules().new_deal(seed=1)
 for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
@@ -91,7 +91,7 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 
 ```
 crates/        Rust: cards, games (traits), big2 (engine), search (solvers), pybind
-python/poker/  Python: games helpers, agents, eval (tournaments), cli, server (FastAPI), rl
+python/big2/  Python: games helpers, agents, eval (tournaments), cli, server (FastAPI), rl
 web/           React + TypeScript UI (Vite); browser tests in web/tests
 experiments/   Scripts that produce the results in docs/study-results/
 models/        Trained network used by the web UI

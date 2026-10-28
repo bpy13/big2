@@ -1,10 +1,10 @@
 //! Tests for opponent-aware determinization and leaf evaluators, on Big Two.
 
-use poker_big2::bots::Greedy;
-use poker_big2::{RuleSet, State};
-use poker_games::{Estimate, Evaluator, Game, Policy, Rewind};
-use poker_search::belief::log_likelihood;
-use poker_search::{
+use big2_big2::bots::Greedy;
+use big2_big2::{RuleSet, State};
+use big2_games::{Estimate, Evaluator, Game, Policy, Rewind};
+use big2_search::belief::log_likelihood;
+use big2_search::{
     ismcts, ismcts_with, Belief, BeliefConfig, IsmctsConfig, Leaf, PolicyModel, UniformSampler,
 };
 use rand::{rngs::SmallRng, SeedableRng};
@@ -116,7 +116,7 @@ fn ismcts_with_uniform_sampler_matches_ismcts() {
     };
     let rollout = Greedy { epsilon: 0.1 };
     let a = ismcts(&s, p, &cfg, &rollout);
-    let b = ismcts_with::<_, _, _, poker_search::NoEvaluator>(
+    let b = ismcts_with::<_, _, _, big2_search::NoEvaluator>(
         &s,
         p,
         &cfg,
@@ -124,7 +124,7 @@ fn ismcts_with_uniform_sampler_matches_ismcts() {
         &UniformSampler,
         None,
     );
-    let key = |r: &poker_search::Analysis<_>| {
+    let key = |r: &big2_search::Analysis<_>| {
         r.moves
             .iter()
             .map(|m| (m.action, m.visits))

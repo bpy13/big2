@@ -20,7 +20,7 @@ from dataclasses import asdict, dataclass
 import torch
 from torch import nn
 
-from poker._core import Big2VecEnv
+from big2._core import Big2VecEnv
 
 STATE_LEN, ACTION_LEN = Big2VecEnv.feature_sizes()
 SCORE_SCALE = 50.0

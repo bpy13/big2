@@ -8,7 +8,7 @@ network in one call instead of simulating:
 
 1. **Generate:** the policy network plays self-play games (5% random moves for
    variety). Every position is recorded with *full information* (all four hands,
-   :func:`poker._core.encode_full`, relative to the player to act).
+   :func:`big2._core.encode_full`, relative to the player to act).
 2. **Label:** when a game ends, each position gets every seat's final score and
    who won, again relative to the player to act.
 3. **Fit:** a 273 → 256 → 256 → 8 MLP regresses the four scores (MSE) and
@@ -39,10 +39,10 @@ import numpy as np
 import torch
 from torch import nn
 
-from poker._core import Big2VecEnv
-from poker.rl.device import actor_device, resolve_device
-from poker.rl.dmc import _to_float, choose
-from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN
+from big2._core import Big2VecEnv
+from big2.rl.device import actor_device, resolve_device
+from big2.rl.dmc import _to_float, choose
+from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN
 
 FULL_LEN = 273
 FEATURES_NAME = "big2-full-v1"
@@ -156,7 +156,7 @@ def _losses(
 def train(cfg: ValueConfig, log: Any = print) -> Path:
     """Trains a value network for ``max_minutes``; writes ``cfg.out`` (best on held-out
     data) and ``run_dir/log.jsonl``. Returns the run directory."""
-    from poker.rl.agent import load_model
+    from big2.rl.agent import load_model
 
     cfg = replace(cfg, device=resolve_device(cfg.device))
     dev, adev = cfg.device, actor_device(cfg.device)

@@ -7,13 +7,13 @@
 //! * [`rules`] — the [`RuleSet`] of table variants.
 //! * [`combo`] — classifying cards into a [`Combo`] and comparing combos.
 //! * [`movegen`] — generating legal plays.
-//! * [`state`] — the [`State`] of a deal, implementing [`poker_games::Game`].
+//! * [`state`] — the [`State`] of a deal, implementing [`big2_games::Game`].
 //! * [`bots`] — simple rule-based policies used as baselines and search rollouts.
 //! * [`features`] — neural-network input encoding (Phase 3).
 //!
 //! ```
-//! use poker_big2::{State, RuleSet};
-//! use poker_games::{Game, UniformRandom, play_out};
+//! use big2_big2::{State, RuleSet};
+//! use big2_games::{Game, UniformRandom, play_out};
 //! use rand::SeedableRng;
 //!
 //! let mut rng = rand::rngs::SmallRng::seed_from_u64(1);

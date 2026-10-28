@@ -1,5 +1,5 @@
 [package]
-name = "poker-cards"
+name = "big2-cards"
 description = "A standard 52-card deck: cards, hands as 64-bit masks, and text notation."
 version.workspace = true
 edition.workspace = true

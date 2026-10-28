@@ -11,7 +11,7 @@ needs no file and works under any rules, or show the solver alone (:data:`NONE`)
 
 Nothing is loaded at startup. The default model loads on first use; any other
 model loads only when the player confirms it (``POST /api/games/{id}/model``) or
-starts a game with it. Loaded models stay in memory (:func:`poker.rl.agent.load_model`
+starts a game with it. Loaded models stay in memory (:func:`big2.rl.agent.load_model`
 caches them).
 """
 
@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from poker.games.big2 import Rules
+from big2.games.big2 import Rules
 
 MODELS_DIR = Path(
     os.environ.get("POKER_MODELS_DIR", Path(__file__).resolve().parents[3] / "models")
@@ -148,7 +148,7 @@ def is_loaded(m: ModelInfo) -> bool:
     if m.kind in ("bot", "none"):
         return True
     try:
-        from poker.rl.agent import is_cached
+        from big2.rl.agent import is_cached
     except ImportError:  # no PyTorch
         return False
     return is_cached(m.path)

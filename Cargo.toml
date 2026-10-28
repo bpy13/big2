@@ -7,11 +7,11 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
-poker-cards = { path = "crates/cards" }
-poker-games = { path = "crates/games" }
-poker-nn = { path = "crates/nn" }
-poker-big2 = { path = "crates/big2" }
-poker-search = { path = "crates/search" }
+big2-cards = { path = "crates/cards" }
+big2-games = { path = "crates/games" }
+big2-nn = { path = "crates/nn" }
+big2-big2 = { path = "crates/big2" }
+big2-search = { path = "crates/search" }
 rand = { version = "0.8", features = ["small_rng"] }
 rayon = "1.10"
 proptest = "1.5"

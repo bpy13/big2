@@ -1,6 +1,6 @@
 //! Decision-time search for imperfect-information games.
 //!
-//! All solvers here work on any [`poker_games::Game`] and answer the same
+//! All solvers here work on any [`big2_games::Game`] and answer the same
 //! question: *in this position, from this player's point of view, how good is each
 //! legal action?* They return an [`Analysis`] with per-action statistics.
 //!
@@ -15,7 +15,7 @@
 //!
 //! Both Monte Carlo solvers reason about hidden cards the same way: they sample
 //! full deals consistent with what the observer has seen
-//! ([`poker_games::Game::determinize`]) and play them out. Their numbers are
+//! ([`big2_games::Game::determinize`]) and play them out. Their numbers are
 //! **estimates** with sampling error, not game-theoretic values.
 
 pub mod analysis;

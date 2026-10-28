@@ -1,7 +1,7 @@
 //! `Big2VecEnv`: many Big Two games stepped in lockstep, for RL (Phase 3).
 //!
 //! Each call to `observe()` returns, for every game waiting on a learner decision,
-//! the encoded state and the encoded legal actions (see `poker_big2::features`),
+//! the encoded state and the encoded legal actions (see `big2_big2::features`),
 //! as flat `bytes` that Python views with `numpy.frombuffer`. `step(choices)`
 //! applies one chosen action per observed game.
 //!
@@ -11,12 +11,12 @@
 //!   Games come in groups of four sharing one deal, with the learner in seat
 //!   `i % 4` of game `i`: a duplicate-deal evaluation.
 
-use poker_big2::bots::Greedy;
-use poker_big2::features::{
+use big2_big2::bots::Greedy;
+use big2_big2::features::{
     encode_action, encode_full as encode_full_state, encode_state, ACTION_LEN, FULL_LEN, STATE_LEN,
 };
-use poker_big2::{Action, RuleSet, State};
-use poker_games::{Game, Policy};
+use big2_big2::{Action, RuleSet, State};
+use big2_games::{Game, Policy};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 use pyo3::types::PyBytes;
@@ -42,7 +42,7 @@ type Observation<'py> = (
     Vec<u8>,
 );
 
-#[pyclass(name = "Big2VecEnv", module = "poker._core")]
+#[pyclass(name = "Big2VecEnv", module = "big2._core")]
 pub struct VecEnv {
     rules: RuleSet,
     mode: Mode,

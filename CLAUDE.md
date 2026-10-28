@@ -4,11 +4,11 @@ Guidance for Claude Code (and humans) working in this repository.
 
 ## Environment
 
-Everything runs inside the `poker` conda env (Python, Rust, Node, maturin):
+Everything runs inside the `big2` conda env (Python, Rust, Node, maturin):
 
 ```sh
 conda env create -f environment.yml   # once
-conda activate poker
+conda activate big2
 make dev                              # build the Rust extension + install Python package (editable)
 ```
 
@@ -22,16 +22,16 @@ make dev                              # build the Rust extension + install Pytho
 | Lint / format | `make lint`, `make fmt` |
 | Engine benchmark | `make bench` |
 | Web UI + API | `make serve` (http://127.0.0.1:8000) |
-| UI dev server | `uvicorn poker.server.app:app --reload` + `make web-dev` |
+| UI dev server | `uvicorn big2.server.app:app --reload` + `make web-dev` |
 | Browser tests | `make test-e2e` (once: `cd web && npx playwright install chromium`) |
-| RL training | `poker rl train` / `poker rl ppo` / `poker rl distill-gen` + `distill-train` (see docs/rl.md) |
+| RL training | `big2 rl train` / `big2 rl ppo` / `big2 rl distill-gen` + `distill-train` (see docs/rl.md) |
 | NVIDIA GPU PyTorch | `make torch-cuda` before `make dev` (trainers take `--device auto\|cpu\|cuda\|mps`) |
 
 ## Layout
 
 * `crates/` — Rust: `cards` (vocabulary), `games` (Game/Policy traits), `big2`
-  (rules engine), `search` (solvers), `pybind` (PyO3 module `poker._core`).
-* `python/poker/` — Python package: agents, evaluation, CLI, server, RL.
+  (rules engine), `search` (solvers), `pybind` (PyO3 module `big2._core`).
+* `python/big2/` — Python package: agents, evaluation, CLI, server, RL.
 * `web/` — React + TypeScript UI.
 * `docs/` — rules spec (`docs/rules/big2.md` is authoritative), architecture,
   decisions (ADRs), study results.
@@ -49,5 +49,5 @@ make dev                              # build the Rust extension + install Pytho
 * Must run on macOS, Windows and Linux: use `pathlib`, no shell-specific Makefile
   recipes, and keep tensors' device explicit (tests run the trainers on every
   device present).
-* Node tools must run inside the conda env (`conda activate poker`); the system
+* Node tools must run inside the conda env (`conda activate big2`); the system
   Node is too old for Vite.

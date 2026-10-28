@@ -1,9 +1,9 @@
 """Agent construction and fair-play tests."""
 
 import pytest
-from poker.agents import GreedyAgent, RandomAgent, SearchAgent, make_agent
-from poker.eval import play_game
-from poker.games.big2 import Rules
+from big2.agents import GreedyAgent, RandomAgent, SearchAgent, make_agent
+from big2.eval import play_game
+from big2.games.big2 import Rules
 
 
 def test_make_agent_parses_specs() -> None:

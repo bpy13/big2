@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import poker.server.app as server
+import big2.server.app as server
 import pytest
 from fastapi.testclient import TestClient
 
@@ -107,7 +107,7 @@ def test_rl_opponents_and_network_hints(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("torch")
-    from poker.server import models
+    from big2.server import models
 
     if not (MODELS / "big2-distilled.pt").exists():
         pytest.skip("no trained model in models/")
@@ -146,7 +146,7 @@ def test_switching_the_hint_model(
     pytest.importorskip("torch")
     import shutil
 
-    from poker.server import models
+    from big2.server import models
 
     if not (MODELS / "big2-distilled.pt").exists():
         pytest.skip("no trained model in models/")
@@ -155,7 +155,7 @@ def test_switching_the_hint_model(
         shutil.copy(MODELS / "big2-distilled.pt", tmp_path / name)
     monkeypatch.setattr(models, "MODELS_DIR", tmp_path)
     monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)
-    monkeypatch.setattr("poker.rl.agent._CACHE", {})
+    monkeypatch.setattr("big2.rl.agent._CACHE", {})
     listed = client.get("/api/config").json()["models"]
     assert [m["id"] for m in listed] == ["distilled-10h", "ppo-10h", "greedy", "none"]
     assert not any(m["loaded"] for m in listed if m["kind"] in ("q", "policy"))
@@ -179,7 +179,7 @@ def test_switching_the_hint_model(
 def test_without_a_model_rl_is_not_offered(
     client: TestClient, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    from poker.server import models
+    from big2.server import models
 
     monkeypatch.setattr(models, "MODELS_DIR", tmp_path)
     monkeypatch.delenv("POKER_RL_CHECKPOINT", raising=False)

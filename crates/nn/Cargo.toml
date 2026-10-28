@@ -1,5 +1,5 @@
 [package]
-name = "poker-nn"
+name = "big2-nn"
 description = "Tiny dependency-free inference for small fully connected networks exported from PyTorch."
 version.workspace = true
 edition.workspace = true

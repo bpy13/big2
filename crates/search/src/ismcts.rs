@@ -36,7 +36,7 @@
 use crate::analysis::{Analysis, MoveStats, Objective, Sums};
 use crate::belief::{Sampler, UniformSampler};
 use crate::endgame::Endgame;
-use poker_games::{play_out, Estimate, Evaluator, Game, Outcome, Player, Policy, Transposable};
+use big2_games::{play_out, Estimate, Evaluator, Game, Outcome, Player, Policy, Transposable};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
