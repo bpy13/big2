@@ -16,7 +16,7 @@ use big2_games::{Player, Policy, Transposable};
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use rayon::prelude::*;
-use std::time::Instant;
+use web_time::Instant;
 
 /// Settings for [`pimc`].
 #[derive(Clone, Debug)]
