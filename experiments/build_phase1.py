@@ -5,6 +5,7 @@ Usage::
     python experiments/build_phase1.py b1 --games 10000 --seeds 1,2,3 --workers 14
     python experiments/build_phase1.py structured-rollout --deals 300 --workers 14
     python experiments/build_phase1.py rebaseline --deals 1000 --workers 14
+    python experiments/build_phase1.py ladder --deals 500 --workers 14
 
 One subcommand per experiment (plan ``docs/plans/2026-10-29-big2-bot-build.md``):
 
@@ -18,7 +19,10 @@ One subcommand per experiment (plan ``docs/plans/2026-10-29-big2-bot-build.md``)
   in self-play under duty-on, 1,000 duplicate deals each; self-play gives σ, the
   spread of one seat's score in one game, which scales the grade thresholds.
 
-A later task adds ``ladder`` (Task 9, §4) here.
+* ``ladder`` (Task 9, §4): round-robin of the five ladder-v0 levels (random,
+  structured greedy, the distilled Q-network, ISMCTS-1000, ISMCTS-5000), each
+  pair head to head through :mod:`big2.eval.harness`; ordering and adjacent gaps
+  against the 1.5-point bar (A8).
 
 Every subcommand writes to ``runs/<job>/`` (git-ignored): one JSON per finished
 cell, ``progress.json`` after each cell, ``results.json`` and ``table.md`` at the
@@ -457,10 +461,212 @@ def rebaseline(args: argparse.Namespace) -> None:
     print(table, flush=True)
 
 
+# ladder -----------------------------------------------------------------------
+
+#: Ladder v0, weakest first (plan Task 9). ``qnet`` reads models/big2-qnet-duty.pknn.
+LADDER_LEVELS = [
+    "random",
+    "greedy:structured=1,epsilon=0.1",
+    "qnet:temperature=1.0",
+    "ismcts:iterations=1000",
+    "ismcts:iterations=5000",
+]
+#: A8 bar: adjacent levels at least this many points per game apart.
+A8_BAR = 1.5
+
+
+def _pair_dir(out: Path, lo: int, hi: int, lineup: str) -> Path:
+    return out / f"L{hi}_vs_L{lo}" / lineup.replace("+", "p")
+
+
+def _pair_records(folder: Path) -> list[dict[str, list[float]]]:
+    """The per-deal records of a finished match, from its saved blocks, in deal order."""
+    blocks = sorted(
+        (json.loads(p.read_text()) for p in folder.glob("block_*.json")),
+        key=lambda b: b["deals"][0],
+    )
+    return [r for b in blocks for r in b["records"]]
+
+
+def ladder(args: argparse.Namespace) -> None:
+    """Round-robin of the five ladder-v0 levels, each pair head to head on the same
+    duplicate deals (build-phase1.md §4). Every pair is saved in blocks of
+    ``--block`` deals under ``runs/<out>/``; a rerun resumes."""
+    import os
+
+    import numpy as np
+    from big2.eval.harness import bootstrap_ci, parse_lineups, play_match
+
+    os.chdir(ROOT)
+    os.environ.setdefault("OMP_NUM_THREADS", "1")
+    out = ROOT / "runs" / args.out
+    out.mkdir(parents=True, exist_ok=True)
+    levels = LADDER_LEVELS
+    lineups = parse_lineups(args.lineups)
+    # Cheap pairs first; the stronger level is always the candidate.
+    pairs = [(lo, hi, lu) for hi in range(len(levels)) for lo in range(hi) for lu in lineups]
+    steps = list(range(args.block, args.deals, args.block)) + [args.deals]
+    t0 = time.time()
+    reports: dict[tuple[int, int, str], Any] = {}
+
+    def progress(running: str | None) -> None:
+        _write_json(
+            out / "progress.json",
+            {
+                "done": [f"L{h} vs L{lo} {lu}" for lo, h, lu in reports],
+                "running": running,
+                "next": [
+                    f"L{h} vs L{lo} {lu}" for lo, h, lu in pairs if (lo, h, lu) not in reports
+                ],
+                "levels": {f"L{i}": s for i, s in enumerate(levels)},
+                "minutes_this_run": round((time.time() - t0) / 60, 1),
+                "updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+            },
+        )
+
+    for lo, hi, lu in pairs:
+        folder = _pair_dir(out, lo, hi, lu)
+        for n in steps:  # one call per block, so progress.json moves every block
+            progress(f"L{hi} vs L{lo} {lu}, deals up to {n}")
+            r = play_match(
+                levels[hi],
+                levels[lo],
+                lu,
+                n,
+                seed=args.seed,
+                workers=args.workers,
+                cache_dir=folder,
+                block=args.block,
+            )
+        reports[(lo, hi, lu)] = r
+        _write_json(folder / "report.json", r.to_dict())
+        progress(None)
+        print(f"done L{hi} vs L{lo} {lu}: {r.mean:+.2f} {r.ci95}", flush=True)
+
+    # Each level's round-robin score: per deal, its mean score over its matches
+    # (same deal seeds in every match), then a bootstrap interval over deals.
+    main_lineup = "ABAB" if "ABAB" in lineups else lineups[0]
+    per_level: list[list[np.ndarray]] = [[] for _ in levels]
+    for lo, hi, lu in pairs:
+        if lu != main_lineup:
+            continue
+        recs = _pair_records(_pair_dir(out, lo, hi, lu))
+        for i in (lo, hi):
+            key = f"score|{levels[i]}"
+            per_level[i].append(np.array([sum(x[key]) / len(x[key]) for x in recs]))
+    standing = []
+    for i, arrs in enumerate(per_level):
+        avg = np.mean(arrs, axis=0)
+        standing.append(
+            {"level": i, "agent": levels[i], "mean": float(avg.mean()), "ci95": bootstrap_ci(avg)}
+        )
+    order = sorted(range(len(levels)), key=lambda i: standing[i]["mean"])
+    gaps = []
+    for i in range(len(levels) - 1):
+        r = reports[(i, i + 1, main_lineup)]
+        gaps.append(
+            {
+                "lower": levels[i],
+                "upper": levels[i + 1],
+                "gap": r.mean,
+                "ci95": r.ci95,
+                "paired_diff": r.paired_diff,
+                "paired_ci95": r.paired_ci95,
+                "win_rate": r.win_rate,
+                "meets_bar": r.mean >= A8_BAR and r.ci95[0] > 0,
+                "standings_separate": standing[i]["ci95"][1] < standing[i + 1]["ci95"][0],
+            }
+        )
+    strict = order == list(range(len(levels))) and all(g["ci95"][0] > 0 for g in gaps)
+    passed = strict and all(g["meets_bar"] and g["standings_separate"] for g in gaps)
+
+    lines = [
+        f"{args.deals:,} duplicate deals per pair (deal seeds 0…{args.deals - 1}, each deal 4×, "
+        f"seats rotated), lineup {', '.join(lineups)}, last-card duty on, tiered scoring. "
+        "Points per game; 95 % bootstrap intervals over deals.",
+        "",
+        "**Levels**: " + "; ".join(f"L{i} `{s}`" for i, s in enumerate(levels)) + ".",
+        "",
+        f"Head to head ({main_lineup}): the row level's mean score per game against the column "
+        "level.",
+        "",
+        "| | " + " | ".join(f"L{j}" for j in range(len(levels))) + " |",
+        "|---|" + "---:|" * len(levels),
+    ]
+    for i in range(len(levels)):
+        cells = []
+        for j in range(len(levels)):
+            if i == j:
+                cells.append("–")
+            elif i > j:
+                r = reports[(j, i, main_lineup)]
+                cells.append(f"{r.mean:+.2f} [{r.ci95[0]:+.2f}, {r.ci95[1]:+.2f}]")
+            else:
+                r = reports[(i, j, main_lineup)]
+                cells.append(f"{r.opponent_mean:+.2f}")
+        lines.append(f"| L{i} | " + " | ".join(cells) + " |")
+    lines += [
+        "",
+        "Round-robin standing (mean score per game over the level's four matches):",
+        "",
+        "| Level | Agent | Mean (95% CI) | s per move (under load) |",
+        "|---|---|---:|---:|",
+    ]
+    for i in order[::-1]:
+        s = standing[i]
+        spm = [
+            r.seconds_per_move if hi == i else r.opponent_seconds_per_move
+            for (lo, hi, lu), r in reports.items()
+            if lu == main_lineup and i in (lo, hi)
+        ]
+        lines.append(
+            f"| L{i} | `{s['agent']}` | {s['mean']:+.2f} [{s['ci95'][0]:+.2f}, "
+            f"{s['ci95'][1]:+.2f}] | {sum(spm) / len(spm):.4f} |"
+        )
+    lines += [
+        "",
+        f"Adjacent gaps (upper level's mean score per game against the lower, {main_lineup}); "
+        f"bar A8: ≥ {A8_BAR} with the interval above 0, and the two standings' intervals apart:",
+        "",
+        "| Lower | Upper | Gap (95% CI) | Paired diff (95% CI) | Upper's win rate | Bar |",
+        "|---|---|---:|---:|---:|---|",
+    ]
+    for g in gaps:
+        ok = "meets" if g["meets_bar"] and g["standings_separate"] else "**short**"
+        lines.append(
+            f"| `{g['lower']}` | `{g['upper']}` | {g['gap']:+.2f} [{g['ci95'][0]:+.2f}, "
+            f"{g['ci95'][1]:+.2f}] | {g['paired_diff']:+.2f} [{g['paired_ci95'][0]:+.2f}, "
+            f"{g['paired_ci95'][1]:+.2f}] | {g['win_rate']:.1%} | {ok} |"
+        )
+    lines += [
+        "",
+        f"Ordering strict: {'yes' if strict else 'no'}. A8 {'passes' if passed else 'fails'}.",
+    ]
+    table = "\n".join(lines) + "\n"
+    _write_json(
+        out / "results.json",
+        {
+            "levels": levels,
+            "deals": args.deals,
+            "lineups": lineups,
+            "matches": [r.to_dict() for r in reports.values()],
+            "standing": standing,
+            "gaps": gaps,
+            "strict": strict,
+            "passed": passed,
+            "minutes_this_run": round((time.time() - t0) / 60, 1),
+        },
+    )
+    (out / "table.md").write_text(table, encoding="utf-8")
+    progress(None)
+    print(table, flush=True)
+
+
 # main -------------------------------------------------------------------------
 
 COMMANDS: dict[str, Callable[[argparse.Namespace], None]] = {
     "b1": b1,
+    "ladder": ladder,
     "rebaseline": rebaseline,
     "structured-rollout": structured_rollout,
 }
@@ -474,6 +680,14 @@ def main() -> None:
     p.add_argument("--candidate", default=ISMCTS_1000)
     p.add_argument("--games", type=int, default=10_000, help="games per opponent and seed")
     p.add_argument("--seeds", default="1,2,3")
+    p.add_argument("--workers", type=int, default=14)
+
+    p = sub.add_parser("ladder", help="Round-robin of the five ladder-v0 levels (Task 9)")
+    p.add_argument("--deals", type=int, default=500)
+    p.add_argument("--lineups", default="ABAB", help="ABAB, 1+3 or both")
+    p.add_argument("--block", type=int, default=100, help="deals per saved block")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--out", default="p1_ladder", help="folder under runs/")
     p.add_argument("--workers", type=int, default=14)
 
     p = sub.add_parser("rebaseline", help="ISMCTS vs greedy, vs DMC-10h, and self-play σ (Task 6)")

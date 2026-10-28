@@ -35,6 +35,8 @@ web/playwright-report/
 !/models/big2-distilled.pt
 !/models/big2-distilled-10h.pt
 !/models/big2-distilled-duty.pt
+# The distilled duty-on network exported for the Rust engine (big2 rl export; ladder level "medium")
+!/models/big2-qnet-duty.pknn
 
 # Frozen code snapshots that long training jobs run from
 /.worktrees/

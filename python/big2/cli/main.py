@@ -277,6 +277,61 @@ def tournament(
         console.print(f"Saved to {out}")
 
 
+# match ------------------------------------------------------------------------
+
+
+@app.command("match")
+def match_cmd(
+    candidate: Annotated[str, typer.Argument(help="Agent spec of the candidate.")],
+    opponent: Annotated[str, typer.Argument(help="Agent spec of the opponent.")],
+    deals: Annotated[int, typer.Option(help="Duplicate deals per lineup (each 4×).")] = 100,
+    lineups: Annotated[
+        str, typer.Option(help="both | 1+3 | ABAB (1+3: candidate vs three opponents)")
+    ] = "both",
+    workers: Annotated[int, typer.Option(help="Parallel processes.")] = 1,
+    seed: int = 0,
+    out: Annotated[str | None, typer.Option(help="Save the reports as JSON.")] = None,
+    straights: Straights = "with_low_twos",
+    flush_order: FlushOrder = "rank_first",
+    pass_rule: PassRule = "may_reenter",
+    scoring: Scoring = "tiered",
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
+) -> None:
+    """Head-to-head match on duplicate deals, with bootstrap 95 % intervals over deals."""
+    import json
+    from pathlib import Path
+
+    from big2.eval.harness import match, parse_lineups
+
+    try:
+        names = parse_lineups(lineups)
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from e
+    if candidate == opponent:
+        raise typer.BadParameter("candidate and opponent must be different specs")
+    rules = _rules(straights, flush_order, pass_rule, scoring, last_card_duty)
+    with console.status(f"Playing {deals} deals × 4 rotations in {', '.join(names)}..."):
+        reports = match(candidate, opponent, deals, names, seed=seed, workers=workers, rules=rules)
+    t = Table(title=f"{candidate} vs {opponent} · {deals} deals")
+    t.add_column("Lineup")
+    t.add_column("Mean score (95% CI)", justify="right")
+    t.add_column("Paired diff (95% CI)", justify="right")
+    t.add_column("Win rate (95% CI)", justify="right")
+    t.add_column("s / move", justify="right")
+    for r in reports:
+        t.add_row(
+            r.lineup,
+            f"{r.mean:+.2f} [{r.ci95[0]:+.2f}, {r.ci95[1]:+.2f}]",
+            f"{r.paired_diff:+.2f} [{r.paired_ci95[0]:+.2f}, {r.paired_ci95[1]:+.2f}]",
+            f"{r.win_rate:.1%} [{r.win_ci95[0]:.1%}, {r.win_ci95[1]:.1%}]",
+            f"{r.seconds_per_move:.4f}",
+        )
+    console.print(t)
+    if out:
+        Path(out).write_text(json.dumps([r.to_dict() for r in reports], indent=2))
+        console.print(f"Saved to {out}")
+
+
 # rl ---------------------------------------------------------------------------
 
 rl = typer.Typer(help="Reinforcement learning (see docs/rl.md).", no_args_is_help=True)
