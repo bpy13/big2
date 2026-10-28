@@ -491,6 +491,24 @@ def rl_value_train(
     console.print(f"Best network written to {out}")
 
 
+@rl.command("export")
+def rl_export(
+    checkpoint: Annotated[
+        str, typer.Option(help="Q-network checkpoint (DMC or distilled) to export.")
+    ],
+    out: Annotated[str, typer.Option(help="Where to write the .pknn (version 2) file.")],
+    f32: Annotated[
+        bool,
+        typer.Option("--f32", help="Store exact f32 weights instead of int8/f16 (3x larger)."),
+    ] = False,
+) -> None:
+    """Export a Q-network for the Rust engine (big2_big2::qnet; see docs/rl.md §4)."""
+    from big2.rl.export import export_qnet_pknn
+
+    path = export_qnet_pknn(checkpoint, out, precision="f32" if f32 else "mixed")
+    console.print(f"Wrote {path} ({path.stat().st_size / 1e6:.2f} MB)")
+
+
 # serve ------------------------------------------------------------------------
 
 

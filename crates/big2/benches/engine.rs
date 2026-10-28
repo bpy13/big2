@@ -1,7 +1,8 @@
 //! Engine throughput: `cargo bench -p big2-big2`.
 
+use big2_big2::qnet::{synthetic_graph, QNet};
 use big2_big2::{bots::Greedy, plan::min_plays, RuleSet, State};
-use big2_games::{play_out, Game, UniformRandom};
+use big2_games::{play_out, Game, Policy, UniformRandom};
 use criterion::{criterion_group, criterion_main, Criterion, Throughput};
 use rand::{rngs::SmallRng, SeedableRng};
 use std::hint::black_box;
@@ -55,6 +56,43 @@ fn bench(c: &mut Criterion) {
             let hand = deals[i % deals.len()].hand(0);
             i += 1;
             black_box(min_plays(black_box(hand), &rules))
+        })
+    });
+
+    // One Q-network decision (state tower once, every legal move through the head)
+    // with the shipped network's sizes; the weights' values do not change the time.
+    // Positions: every third decision of greedy games, so leads and follows mix.
+    let net = QNet::new(synthetic_graph(512, 256, 128, 256, 1)).unwrap();
+    let mut positions = Vec::new();
+    for d in deals.iter().take(32) {
+        let mut s = d.clone();
+        let mut k = 0;
+        while !s.is_terminal() {
+            s.legal_actions(&mut out);
+            if k % 3 == 0 {
+                positions.push((s.clone(), out.clone()));
+            }
+            k += 1;
+            let a = Greedy { epsilon: 0.1 }.choose(&s, &out, &mut rng);
+            s.apply(a);
+        }
+    }
+    g.bench_function("qnet_decision", |b| {
+        b.iter(|| {
+            let (s, legal) = &positions[i % positions.len()];
+            i += 1;
+            black_box(net.score_moves(s, legal))
+        })
+    });
+    let openings: Vec<_> = deals
+        .iter()
+        .map(|d| (d.clone(), d.legal_actions_vec()))
+        .collect();
+    g.bench_function("qnet_decision_opening", |b| {
+        b.iter(|| {
+            let (s, legal) = &openings[i % openings.len()];
+            i += 1;
+            black_box(net.score_moves(s, legal))
         })
     });
     g.finish();
