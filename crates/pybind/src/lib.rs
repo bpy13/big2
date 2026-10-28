@@ -13,6 +13,7 @@
 
 use big2_big2::bots::Greedy;
 use big2_big2::card::{format_mask, parse_mask};
+use big2_big2::plan;
 use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
 use big2_games::{Game, Policy};
@@ -106,6 +107,33 @@ fn classify_cards(
 ) -> PyResult<Option<(String, u32)>> {
     let rules = rules_from(straights, flush_order, None, None, None)?;
     Ok(classify(cards, &rules).map(|c| (c.kind.name().to_string(), c.key)))
+}
+
+/// The fewest plays that shed every card of `hand` (`crates/big2/src/plan.rs`).
+#[pyfunction]
+#[pyo3(signature = (hand, *, straights=None, flush_order=None))]
+fn min_plays(hand: u64, straights: Option<&str>, flush_order: Option<&str>) -> PyResult<u32> {
+    let rules = rules_from(straights, flush_order, None, None, None)?;
+    Ok(plan::min_plays(hand, &rules))
+}
+
+/// Every way to shed `hand` in the fewest plays, best first, at most `max` of
+/// them. Each decomposition is a list of card masks, strongest group first.
+/// The order is the planner's fixed tiebreak: fewest singles, then the
+/// strongest five-card groups first.
+#[pyfunction]
+#[pyo3(signature = (hand, max=8, *, straights=None, flush_order=None))]
+fn decompositions(
+    hand: u64,
+    max: usize,
+    straights: Option<&str>,
+    flush_order: Option<&str>,
+) -> PyResult<Vec<Vec<u64>>> {
+    let rules = rules_from(straights, flush_order, None, None, None)?;
+    Ok(plan::decompositions(hand, &rules, max)
+        .iter()
+        .map(|d| d.combos.iter().map(|c| c.cards).collect())
+        .collect())
 }
 
 /// A Big Two deal. Holds the true state, including every player's hidden hand.
@@ -549,6 +577,8 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse_cards, m)?)?;
     m.add_function(wrap_pyfunction!(format_cards, m)?)?;
     m.add_function(wrap_pyfunction!(classify_cards, m)?)?;
+    m.add_function(wrap_pyfunction!(min_plays, m)?)?;
+    m.add_function(wrap_pyfunction!(decompositions, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
     m.add_function(wrap_pyfunction!(value_estimate, m)?)?;
     m.add_function(wrap_pyfunction!(sample_deals, m)?)?;

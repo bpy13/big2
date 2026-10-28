@@ -1,6 +1,6 @@
 //! Engine throughput: `cargo bench -p big2-big2`.
 
-use big2_big2::{bots::Greedy, RuleSet, State};
+use big2_big2::{bots::Greedy, plan::min_plays, RuleSet, State};
 use big2_games::{play_out, Game, UniformRandom};
 use criterion::{criterion_group, criterion_main, Criterion, Throughput};
 use rand::{rngs::SmallRng, SeedableRng};
@@ -47,6 +47,14 @@ fn bench(c: &mut Criterion) {
             deals[i % deals.len()].legal_actions(&mut out);
             i += 1;
             black_box(out.len())
+        })
+    });
+    let rules = RuleSet::default();
+    g.bench_function("min_plays_13_cards", |b| {
+        b.iter(|| {
+            let hand = deals[i % deals.len()].hand(0);
+            i += 1;
+            black_box(min_plays(black_box(hand), &rules))
         })
     });
     g.finish();
