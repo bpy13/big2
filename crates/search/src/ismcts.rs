@@ -55,7 +55,8 @@ pub struct IsmctsConfig {
     /// Big Two scores are small numbers; see `docs/solver.md` for tuning.
     pub exploration: f64,
     /// Independent trees searched in parallel ("root parallelization"); their
-    /// root statistics are summed.
+    /// root statistics are summed. With `threads <= 1` the search runs on the
+    /// calling thread and never touches rayon.
     pub threads: usize,
     /// Base random seed. With a fixed seed, thread count and no time limit, the
     /// search is reproducible.
@@ -184,24 +185,29 @@ where
     let deadline = cfg.time_limit.map(|t| start + t);
     let threads = cfg.threads.max(1);
 
-    let per_thread: Vec<TreeResult<G::Action>> = (0..threads)
-        .into_par_iter()
-        .map(|t| {
-            let iters = cfg.iterations / threads as u64
-                + u64::from((t as u64) < cfg.iterations % threads as u64);
-            let mut rng = SmallRng::seed_from_u64(
-                cfg.seed
-                    .wrapping_add((t as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)),
-            );
-            let ctx = Ctx {
-                cfg,
-                rollout,
-                sampler,
-                leaf,
-            };
-            search_tree(state, observer, &ctx, iters, deadline, &mut rng)
-        })
-        .collect();
+    // One tree; `t` picks its seed and share of the iterations.
+    let one_tree = |t: usize| -> TreeResult<G::Action> {
+        let iters = cfg.iterations / threads as u64
+            + u64::from((t as u64) < cfg.iterations % threads as u64);
+        let mut rng = SmallRng::seed_from_u64(
+            cfg.seed
+                .wrapping_add((t as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)),
+        );
+        let ctx = Ctx {
+            cfg,
+            rollout,
+            sampler,
+            leaf,
+        };
+        search_tree(state, observer, &ctx, iters, deadline, &mut rng)
+    };
+    // One thread: run on the calling thread so rayon's global pool is never built
+    // (it must not be in WebAssembly).
+    let per_thread: Vec<TreeResult<G::Action>> = if threads == 1 {
+        vec![one_tree(0)]
+    } else {
+        (0..threads).into_par_iter().map(one_tree).collect()
+    };
 
     // Merge root statistics across threads; keep every legal action, even unvisited ones.
     let legal = state.legal_actions_vec();
@@ -401,4 +407,59 @@ where
         }
     }
     play_out(s, rollout, rng)
+}
+
+/// Test helpers shared with `pimc.rs`'s tests.
+#[cfg(test)]
+pub(crate) mod test_support {
+    use crate::analysis::Analysis;
+    use std::fmt::Debug;
+
+    /// FNV-1a over every move's action, visits and the exact bits of its statistics,
+    /// plus the total simulations: equal fingerprints mean byte-identical analyses.
+    pub fn fingerprint<A: Debug>(a: &Analysis<A>) -> u64 {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+        let mut eat = |bytes: &[u8]| {
+            for &b in bytes {
+                h ^= u64::from(b);
+                h = h.wrapping_mul(0x0000_0100_0000_01b3);
+            }
+        };
+        eat(&a.simulations.to_le_bytes());
+        for m in &a.moves {
+            eat(format!("{:?}", m.action).as_bytes());
+            eat(&m.visits.to_le_bytes());
+            eat(&m.mean_score.to_bits().to_le_bytes());
+            eat(&m.score_ci95.to_bits().to_le_bytes());
+            eat(&m.win_rate.to_bits().to_le_bytes());
+        }
+        h
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::test_support::fingerprint;
+    use super::*;
+    use big2_big2::bots::Greedy;
+    use big2_big2::{RuleSet, State};
+
+    /// The single-thread path (no rayon) must give exactly the numbers the rayon path
+    /// gave with `threads = 1` before it existed (recorded from commit 225e77d).
+    #[test]
+    fn single_thread_ismcts_matches_the_recorded_result() {
+        let mut rng = SmallRng::seed_from_u64(7);
+        let s = State::new_deal(RuleSet::default(), &mut rng);
+        let p = s.current_player().unwrap();
+        let cfg = IsmctsConfig {
+            iterations: 2_000,
+            threads: 1,
+            seed: 7,
+            ..Default::default()
+        };
+        let a = ismcts(&s, p, &cfg, &Greedy { epsilon: 0.1 });
+        assert_eq!(a.simulations, 2_000);
+        assert_eq!(a.moves[0].visits, 916);
+        assert_eq!(fingerprint(&a), 0xbf68_edaf_11a2_9315);
+    }
 }
