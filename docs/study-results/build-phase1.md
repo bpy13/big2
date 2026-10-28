@@ -99,4 +99,40 @@ re-implements his two one-line descriptions (B14: read, never copied):
 
 ## 4. Ladder v0 (Task 9)
 
-To be filled by Task 9 (`build_phase1.py ladder`).
+**Question.** Do five candidate levels order strictly, with adjacent gaps of at least 1.5
+points per game over 500 deals and intervals that exclude each other (A8)? Ladder v0 does not
+change the app's levels; Task 10 proposes the switch and Task 29 retunes.
+
+**Levels** (weakest first): L0 `random`; L1 `greedy:structured=1,epsilon=0.1`
+(`StructuredGreedy`); L2 `qnet:temperature=1.0` (the distilled duty-on network,
+`models/big2-qnet-duty.pknn`, Task 7's export); L3 `ismcts:iterations=1000`; L4
+`ismcts:iterations=5000`.
+
+**The `qnet` spec.** The Rust `QNetPolicy` is not exposed through the Python extension, and
+the extension cannot be rebuilt while jobs run. `big2.agents.qnet` therefore reads the
+`.pknn` file in NumPy and repeats the Rust forward pass on the weights the Rust reader sees
+(int8 groups and f16 rounded the same way), and Rust's sampling rule: a move with probability
+proportional to `exp(score / temperature)`, temperature in points. A test checks it against
+PyTorch on an f32 export (within 0.001 points).
+
+**Harness.** `big2.eval.harness` (CLI `big2 match <cand> <opp> --deals N --lineups both`): one
+candidate against one opponent on duplicate deals, lineups "1+3" and "A B A B". Each report has
+`candidate, opponent, lineup, deals, mean, ci95, win_rate, win_ci95, seconds_per_move`, plus
+the opponent's mean and the paired difference per deal (candidate minus opponent). Intervals are
+95 % percentile bootstrap intervals over deals (2,000 resamples), written `[low, high]`.
+
+**Method.** `python experiments/build_phase1.py ladder --deals 500 --lineups both --workers 14`
+(headless job `runs/p1_ladder/run.ps1`; it waits for the Task 6 and Task 8 jobs to finish).
+Every pair of levels plays the same 500 deals (seeds 0…499) in both lineups, the stronger
+level as candidate. The ladder is judged on the A B A B lineup:
+
+- the **gap** between adjacent levels is the upper level's mean score per game against the
+  lower one; it meets A8 when it is ≥ 1.5 with its interval above 0;
+- each level's **standing** is its mean score over its four A B A B matches (per deal, then a
+  bootstrap over deals); adjacent standings' intervals must not overlap;
+- the ordering is strict when the standings sort L0 < … < L4 and every gap's interval is above 0.
+
+The 1+3 results are in `runs/p1_ladder/results.json` beside them.
+
+**Results.** _Pending: the job was waiting for the CPU at hand-back (check
+`runs/p1_ladder/progress.json`; the table lands in `runs/p1_ladder/table.md`)._
