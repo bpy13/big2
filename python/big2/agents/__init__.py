@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
 from big2._core import Big2State, analyze
+from big2.agents.patwa import PatwaGreedy, PatwaSmart
 
 if TYPE_CHECKING:
     from big2._core import AnalysisResult
@@ -122,6 +123,7 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     """Builds an agent from a spec string like ``"ismcts:iterations=2000"``.
 
     Kinds: ``random``, ``greedy[:epsilon=…]``, ``ismcts[:…]``, ``pimc[:…]``,
+    ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
     """
     kind, _, rest = spec.partition(":")
@@ -139,6 +141,11 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return SearchAgent(
             algorithm=kind, iterations=iterations, seed=seed or 0, options=opts, name=spec
         )
+    if kind in ("patwa-greedy", "patwa-smart"):
+        # Approximations of Patwa (2026)'s rule-based opponents (big2.agents.patwa).
+        if kind == "patwa-greedy":
+            return PatwaGreedy(name=spec)
+        return PatwaSmart(name=spec, **opts)
     if kind in ("dmc", "dmcsearch"):
         if "checkpoint" not in opts:
             raise ValueError(f"{kind} needs checkpoint=<path to .pt> in {spec!r}")
@@ -151,8 +158,17 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
 
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(
-        f"unknown agent kind {kind!r} in {spec!r} (random, greedy, ismcts, pimc, dmc, dmcsearch)"
+        f"unknown agent kind {kind!r} in {spec!r} "
+        "(random, greedy, ismcts, pimc, patwa-greedy, patwa-smart, dmc, dmcsearch)"
     )
 
 
-__all__ = ["Agent", "RandomAgent", "GreedyAgent", "SearchAgent", "make_agent"]
+__all__ = [
+    "Agent",
+    "RandomAgent",
+    "GreedyAgent",
+    "SearchAgent",
+    "PatwaGreedy",
+    "PatwaSmart",
+    "make_agent",
+]

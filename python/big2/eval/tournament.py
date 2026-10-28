@@ -7,12 +7,17 @@ every agent plays every seat — and therefore every hand — of every deal.
 Statistics are computed over *deals* (each deal's four games averaged per agent),
 which treats the four correlated games of a deal as one sample, so the
 confidence intervals are honest.
+
+For comparisons with published numbers, ``seat_random=True`` plays each deal once
+with random seats and ``score_as="sum_of_others"`` scores as Charlesworth and Patwa
+do (``docs/study-results/build-phase1.md`` §3).
 """
 
 from __future__ import annotations
 
 import json
 import math
+import random
 import time
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
@@ -47,6 +52,8 @@ class TournamentResult:
     # One entry per deal: {agent: mean score over that deal's games}
     per_deal: list[dict[str, float]] = field(repr=False, default_factory=list)
     seconds: float = 0.0
+    score_as: str = "rules"
+    seat_random: bool = False
 
     def save(self, path: str | Path) -> None:
         Path(path).write_text(json.dumps(asdict(self), indent=2))
@@ -67,23 +74,58 @@ def play_game(
     return state
 
 
+SCORE_AS = ("rules", "sum_of_others")
+"""How a finished game is scored: ``"rules"`` uses the engine's scores (the rule
+set's ``scoring``, ``tiered`` by default); ``"sum_of_others"`` is the scoring of
+Charlesworth (2018) and Patwa (2026)."""
+
+
+def sum_of_others_scores(final: Big2State) -> list[float]:
+    """Charlesworth/Patwa scoring of a finished game.
+
+    The winner gets the sum of the other three players' cards left; each loser gets
+    minus their own count. Raw counts, no tiers: computed from the cards left after
+    the deal, whatever the rule set's ``scoring``. Scores add up to zero.
+    """
+    if final.winner is None:
+        raise ValueError("the game is not over")
+    left = final.hand_sizes
+    return [float(sum(left)) if p == final.winner else -float(left[p]) for p in range(4)]
+
+
+def _seatings(lineup: list[str], deal_seed: int, seat_random: bool) -> list[list[str]]:
+    """The seat orders a deal is played in.
+
+    Duplicate mode: four rotations. Seat-random mode (Patwa's protocol): one game
+    with the lineup shuffled by a generator seeded from the deal.
+    """
+    if not seat_random:
+        return [[lineup[(s - rot) % 4] for s in range(4)] for rot in range(4)]
+    order = list(lineup)
+    random.Random(deal_seed).shuffle(order)
+    return [order]
+
+
 def _play_deals(
-    lineup: list[str], deal_seeds: list[int], rules: Rules
+    lineup: list[str],
+    deal_seeds: list[int],
+    rules: Rules,
+    score_as: str = "rules",
+    seat_random: bool = False,
 ) -> list[dict[str, list[float]]]:
     """Worker: plays the given deals; returns per-deal raw results."""
     out = []
     for ds in deal_seeds:
         deal = rules.new_deal(ds)
         rec: dict[str, list[float]] = defaultdict(list)
-        for rot in range(4):
-            seat_specs = [lineup[(s - rot) % 4] for s in range(4)]
+        for rot, seat_specs in enumerate(_seatings(lineup, ds, seat_random)):
             agents = [make_agent(spec, seed=ds * 4 + rot) for spec in seat_specs]
             move_time = [0.0] * 4
             final = play_game(deal.copy(), agents, move_time)
             moves = [0] * 4
             for p, _ in final.history:
                 moves[p] += 1
-            scores = final.scores
+            scores = sum_of_others_scores(final) if score_as == "sum_of_others" else final.scores
             assert scores is not None
             for s, spec in enumerate(seat_specs):
                 rec[f"score|{spec}"].append(scores[s])
@@ -110,30 +152,49 @@ def run_tournament(
     seed: int = 0,
     workers: int = 1,
     rules: Rules | None = None,
+    score_as: str = "rules",
+    seat_random: bool = False,
 ) -> TournamentResult:
     """Runs a duplicate tournament.
 
     Args:
         lineup: four agent specs (see :func:`big2.agents.make_agent`), e.g.
             ``["ismcts:iterations=1000", "greedy", "greedy", "greedy"]``.
-        deals: number of deals; each is played 4 times (rotated).
+        deals: number of deals; each is played 4 times (rotated), or once with
+            ``seat_random``.
         seed: base seed for deals and agents.
         workers: parallel processes.
         rules: rule variants.
+        score_as: ``"rules"`` (the engine's scores) or ``"sum_of_others"`` (see
+            :func:`sum_of_others_scores`).
+        seat_random: Patwa's protocol: each deal is played once, with the lineup
+            shuffled into random seats, instead of four rotations. Intervals are
+            then over single games, so they are wider than duplicate ones.
     """
     if len(lineup) != 4:
         raise ValueError("a Big Two lineup has exactly 4 agents")
+    if score_as not in SCORE_AS:
+        raise ValueError(f"score_as must be one of {SCORE_AS}, not {score_as!r}")
     for spec in set(lineup):
         make_agent(spec)  # fail fast on bad specs
     rules = rules or Rules()
     seeds = [seed * 1_000_000 + d for d in range(deals)]
     t0 = time.perf_counter()
     if workers <= 1:
-        raw = _play_deals(lineup, seeds, rules)
+        raw = _play_deals(lineup, seeds, rules, score_as, seat_random)
     else:
         chunks = [seeds[i::workers] for i in range(workers)]
         with ProcessPoolExecutor(workers) as pool:
-            parts = list(pool.map(_play_deals, [lineup] * workers, chunks, [rules] * workers))
+            parts = list(
+                pool.map(
+                    _play_deals,
+                    [lineup] * workers,
+                    chunks,
+                    [rules] * workers,
+                    [score_as] * workers,
+                    [seat_random] * workers,
+                )
+            )
         raw = [r for part in parts for r in part]
 
     summaries = []
@@ -166,4 +227,6 @@ def run_tournament(
         summaries=summaries,
         per_deal=per_deal,
         seconds=time.perf_counter() - t0,
+        score_as=score_as,
+        seat_random=seat_random,
     )
