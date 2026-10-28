@@ -11,7 +11,7 @@ use big2_big2::{RuleSet, State};
 use big2_games::{Game, Policy};
 use big2_search::{ismcts, IsmctsConfig};
 use rand::{rngs::SmallRng, SeedableRng};
-use std::time::Instant;
+use web_time::Instant;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

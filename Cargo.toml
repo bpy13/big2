@@ -14,6 +14,7 @@ big2-big2 = { path = "crates/big2" }
 big2-search = { path = "crates/search" }
 rand = { version = "0.8", features = ["small_rng"] }
 rayon = "1.10"
+web-time = "1"
 proptest = "1.5"
 criterion = { version = "0.5", default-features = false }
 

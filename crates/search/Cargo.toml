@@ -11,6 +11,8 @@ bench = false
 big2-games.workspace = true
 rand.workspace = true
 rayon.workspace = true
+# Drop-in for std::time::Instant that also works in WebAssembly (browser performance clock).
+web-time.workspace = true
 
 [dev-dependencies]
 big2-big2.workspace = true

@@ -40,7 +40,8 @@ use big2_games::{play_out, Estimate, Evaluator, Game, Outcome, Player, Policy, T
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use web_time::Instant;
 
 /// Settings for [`ismcts`].
 #[derive(Clone, Debug)]
