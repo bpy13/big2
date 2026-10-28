@@ -68,10 +68,11 @@ pub mod wasm {
             game_id: &str,
             seat: usize,
             budget_ms: u32,
-            iterations: u64,
+            iterations: u32,
         ) -> String {
+            // `u32`, so JavaScript passes a plain number rather than a BigInt.
             self.inner
-                .hint_with_iterations(game_id, seat, budget_ms, iterations)
+                .hint_with_iterations(game_id, seat, budget_ms, u64::from(iterations))
         }
 
         pub fn review(&self, game_id: &str, seat: usize, budget_ms: u32) -> String {
