@@ -190,7 +190,9 @@ to goes through bot-notes (Task 10).
     because rayon's global pool must never be built in WebAssembly. Do not add a `rayon` feature
     flag in this task; a feature flag is an open item if the app stream asks.
 
-- [ ] **Task 3: PyTorch with CUDA in the `big2` env** `[parallel-ok]` **[~10 min download]**
+- [x] **Task 3: PyTorch with CUDA in the `big2` env** `[parallel-ok]` **[~10 min download]**
+  (done 2026-10-29 by the coordinator: torch 2.14.1+cu130 from the `cu130` index; CUDA True on
+  the RTX 4060 Ti; `test_rl.py` 18 passed in 105 s)
   - Files: none in the repo (environment only); `docs/rl.md` §6 unchanged unless the CUDA tag
     differs from `cu128`.
   - Done when: from the repo root, `C:\Users\brian\miniconda3\envs\big2\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/<tag>`

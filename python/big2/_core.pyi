@@ -27,6 +27,17 @@ def format_cards(cards: int) -> str: ...
 def classify_cards(
     cards: int, *, straights: str | None = None, flush_order: str | None = None
 ) -> tuple[str, int] | None: ...
+def min_plays(
+    hand: int, *, straights: str | None = None, flush_order: str | None = None
+) -> int: ...
+def decompositions(
+    hand: int,
+    max: int = 8,
+    *,
+    straights: str | None = None,
+    flush_order: str | None = None,
+) -> list[list[int]]:
+    """Ways to shed ``hand`` in the fewest plays, best first; each a list of card masks."""
 
 class Big2State:
     @staticmethod

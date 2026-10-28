@@ -8,6 +8,7 @@
 //! * [`combo`] — classifying cards into a [`Combo`] and comparing combos.
 //! * [`movegen`] — generating legal plays.
 //! * [`state`] — the [`State`] of a deal, implementing [`big2_games::Game`].
+//! * [`plan`] — fewest plays to shed a hand, its decompositions, labelled candidates.
 //! * [`bots`] — simple rule-based policies used as baselines and search rollouts.
 //! * [`features`] — neural-network input encoding (Phase 3).
 //!
@@ -27,6 +28,7 @@ pub mod card;
 pub mod combo;
 pub mod features;
 pub mod movegen;
+pub mod plan;
 pub mod rules;
 pub mod state;
 pub mod value;
