@@ -203,7 +203,7 @@ to goes through bot-notes (Task 10).
   - Notes: `make` is not on the PATH outside the env, so run the pip command directly. Do not
     rebuild the extension while any `big2` job runs (none should at this point).
 
-- [ ] **Task 4: Min-plays planner and decomposition enumerator** `(fable)` `[parallel-ok]`
+- [x] **Task 4: Min-plays planner and decomposition enumerator** `(fable)` `[parallel-ok]`
   - Files: create `crates/big2/src/plan.rs` (`min_plays(hand, rules) -> u32`;
     `decompositions(hand, rules, max: usize) -> Vec<Decomposition>` where a `Decomposition` is a
     list of `Combo`s covering the hand with the fewest plays, ordered by a fixed tiebreak (fewest
