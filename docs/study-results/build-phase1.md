@@ -8,6 +8,18 @@ Match format unless a section says otherwise: duplicate deals (each deal 4×, se
 last-card duty on, `tiered` scoring, no four-card plays (B22); mean points per deal with a 95 %
 interval over deals, win rate beside it.
 
+## Summary
+
+| Criterion | Result | Verdict |
+|---|---|---|
+| A2 `PimcConfig.time_limit`, one-thread path | 50 ms limit returns in < 200 ms; one thread bit-identical | met |
+| A3 min-plays planner | agrees with brute force on 10,000 hands; ≤ 20 decompositions on 100 % (capped) | met |
+| A4 structured rollout in ISMCTS-1000 | +0.07 ± 0.58 at 300 deals (bar +1.0) | not met: planner kept for keys only |
+| A5 re-baseline, σ | vs 3 greedy +7.40 ± 0.45; vs DMC-10h +0.17 ± 0.37; σ = 27.45 | met |
+| A6 Q-network in Rust | 99.9 % same move, 0.030 RMS, 33 µs | met |
+| A7 B1 (Patwa) | 69.0 % vs greedy (his 64.8 %); 31.2 % vs smart (his 43.5 %, approximation) | recorded |
+| A8 ladder v0 | strict order; ISMCTS-1000 → 5000 gap +0.55 (bar 1.5) | not met: Task 29 retunes |
+
 ## 1. Structured rollout inside ISMCTS (Task 5)
 
 **Planner speed (Task 4).** `cargo bench -p big2-big2 --bench engine`, row `min_plays_13_cards`:

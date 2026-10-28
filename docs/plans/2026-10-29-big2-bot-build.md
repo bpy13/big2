@@ -315,7 +315,9 @@ to goes through bot-notes (Task 10).
   - Notes: this is the `eval-harness` seed (proposal §8). If a gap is under 1.5, report it; Task 29
     retunes the ladder. Ladder v0 does not change the app's levels: Task 10 proposes the switch.
 
-- [ ] **Task 10: bot-notes entry for phase 1** (after 2–9)
+- [x] **Task 10: bot-notes entry for phase 1** (after 2–9)
+  (done: hk-games 23c381e (items, level switch, numbers, fmt) and 5342a50 (time_limit). The B20
+  reminder was dropped: the app stream accepted `quality`/`interval` on 2026-10-29.)
   - Files: modify `C:\Users\brian\OneDrive\Documents\workspace\repo\hk-games\docs\streams\bot-notes.md`
     only (newest entry first; commit it alone in that checkout with `git add docs/streams/bot-notes.md`);
     modify `docs/study-results/build-phase1.md` (summary table at the top).
