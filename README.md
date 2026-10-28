@@ -83,6 +83,9 @@ for m in analyze(state, iterations=20_000, threads=4)["moves"][:3]:
 | [docs/rl.md](docs/rl.md) | Reinforcement learning: methods, models, commands |
 | [docs/study-results/](docs/study-results/) | Measured results of each experiment |
 | [docs/research/prior-work.md](docs/research/prior-work.md) | Published Big Two and Dou Dizhu AI, compared with this project; improvement plan |
+| [docs/research/survey.md](docs/research/survey.md) | Survey of published Big Two work and methods that transfer (2026-10-28) |
+| [docs/research/hard-problems.md](docs/research/hard-problems.md) | The hard problems in Big Two AI and teaching, and how to attack them |
+| [docs/research/strategy-proposal.md](docs/research/strategy-proposal.md) | The bot plan: search, distilled network, belief, teaching layer, in phases |
 | [docs/architecture.md](docs/architecture.md) | Code layout, correctness strategy, performance |
 | [docs/decisions/](docs/decisions/) | Why the project is built the way it is |
 | [CLAUDE.md](CLAUDE.md) | Commands, layout and conventions for contributors |

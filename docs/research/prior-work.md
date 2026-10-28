@@ -1,5 +1,7 @@
 # Prior work on Big Two and similar games, and how this project compares
 
+See also (2026-10-28, newer): [survey.md](survey.md), [hard-problems.md](hard-problems.md) and [strategy-proposal.md](strategy-proposal.md).
+
 **Date:** 2026-10-18. Literature found by web search on that date; numbers are
 quoted from the papers (their own setups, not re-run here). Our numbers are from
 [study-results/](../study-results/).
