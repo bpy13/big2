@@ -37,6 +37,7 @@ dependencies = [
  "big2-cards",
  "big2-games",
  "big2-search",
+ "pyo3",
  "rand 0.8.8",
  "serde",
  "serde_json",
