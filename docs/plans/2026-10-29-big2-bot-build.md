@@ -150,7 +150,7 @@ headers.
 
 ## Phase 0 – Reports (opus)
 
-- [ ] **Task 1: Move the three staged reports into `docs/research/`** `[parallel-ok]`
+- [x] **Task 1: Move the three staged reports into `docs/research/`** `[parallel-ok]`
   - Files: create `docs/research/strategy-proposal.md`, `docs/research/survey.md`,
     `docs/research/hard-problems.md` (copies of
     `C:\Users\brian\OneDrive\Documents\workspace\repo\bot-stream\staging\big2\*.md`); modify
@@ -174,7 +174,7 @@ What remains ours: the engine-side upgrades the proposal's phase 1 lists, the re
 the Rust runtime for the distilled network, and the eval harness. Everything the app must switch
 to goes through bot-notes (Task 10).
 
-- [ ] **Task 2: `PimcConfig.time_limit` and an explicit single-thread path** `[parallel-ok]`
+- [x] **Task 2: `PimcConfig.time_limit` and an explicit single-thread path** `[parallel-ok]`
   - Files: modify `crates/search/src/pimc.rs` (add `pub time_limit: Option<Duration>`, default
     `None`; stop between determinizations when past the deadline; count what ran), modify
     `crates/search/src/ismcts.rs` and `pimc.rs` (when `cfg.threads <= 1`, call `search_tree` /
