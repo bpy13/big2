@@ -225,7 +225,9 @@ to goes through bot-notes (Task 10).
     above and say so in rustdoc. This module becomes the `shedding-core` seed (proposal §8); keep
     it free of `State` apart from `candidates`.
 
-- [ ] **Task 5: Structured rollout policy, and its test inside ISMCTS** **[long: ~20 min CPU]**
+- [x] **Task 5: Structured rollout policy, and its test inside ISMCTS** **[long: ~20 min CPU]**
+  (done 2026-10-29: A4 fails, +0.07 ± 0.58 at 300 deals; planner kept for keys and candidates;
+  Task 11 uses the greedy rollout)
   - Files: create `crates/big2/src/bots/structured.rs` (`StructuredGreedy { epsilon, plan_depth }`
     implementing `Policy<State>`: never break a pair, triple or five-card group of the best
     decomposition to beat a single unless the planner says the hand's min-plays does not rise;

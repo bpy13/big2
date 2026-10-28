@@ -39,8 +39,22 @@ the same as `big2 tournament "ismcts:iterations=1000,rollout=structured" ismcts:
 --out runs/p1_structured/results.json`. Agent specs: `ismcts:rollout=structured` and
 `greedy:structured=1`.
 
-**Results.** _Pending: the run was still going at hand-back (check
-`runs/p1_structured/progress.json`; the table lands in `runs/p1_structured/table.md`)._
+**Results** (`runs/p1_structured/results.json`, 2026-10-29, 6 min on 14 workers). 300
+duplicate deals, A B A B, seed 0, last-card duty on, tiered scoring:
+
+| Agent | Games | Mean score per game (95% CI) | Win rate (95% CI) | s per move |
+|---|---:|---:|---:|---:|
+| `ismcts:iterations=1000,rollout=structured` | 2,400 | +0.07 ± 0.58 | 25.9 % ± 1.1 % | 0.130 |
+| `ismcts:iterations=1000` (greedy rollout) | 2,400 | −0.07 ± 0.58 | 24.1 % ± 1.1 % | 0.048 |
+
+Paired difference per deal (structured seat − greedy-rollout seat): +0.14 ± 1.17.
+
+**Verdict (A4): fails the +1.0 bar.** The structured rollout gains +0.07 ± 0.58 points per
+game, a shortfall of 0.93; the interval covers 0, so the gain is indistinguishable from none.
+It also costs 2.7× the time per move. Following proposal §10 (row 1), the planner stays for
+reason keys and candidate lists only, and round 0's relabelling (Task 11) uses today's greedy
+rollout. A better bot (`StructuredGreedy` beats `Greedy` by about 1 point) did not make a
+better rollout policy at equal iterations.
 
 ## 2. Re-baseline under duty-on, and σ (Task 6)
 
