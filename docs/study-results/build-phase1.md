@@ -10,7 +10,37 @@ interval over deals, win rate beside it.
 
 ## 1. Structured rollout inside ISMCTS (Task 5)
 
-To be filled by Task 5 (`build_phase1.py structured-rollout`).
+**Planner speed (Task 4).** `cargo bench -p big2-big2 --bench engine`, row `min_plays_13_cards`:
+**2.44 µs** per 13-card hand (interval 2.41–2.47 µs); target < 50 µs.
+
+**Question.** Does ISMCTS play better when its rollouts keep the hand's plan? The bar (A4) is
+a gain of at least +1.0 point per game at 300 deals.
+
+**The rollout.** `big2_big2::bots::StructuredGreedy { epsilon, plan_depth }`. A play *keeps
+the plan* when `min_plays(hand − play) + 1 == min_plays(hand)`, i.e. it is a group of one of
+the hand's best decompositions. Following, it plays the weakest beating play that keeps the
+plan; leading, the first play holding the weakest card (Greedy's order) that keeps it. When
+no checked play keeps the plan it plays as `Greedy`. `plan_depth = 8` plays are checked per
+decision; `epsilon = 0.1` as today's rollout.
+
+**A variant that passes loses badly.** The first version passed instead of breaking a pair,
+triple or five-card group to beat a single. As a bot it lost **−7.6 ± 0.5** points per game
+to `Greedy` (2,000 duplicate deals, A B A B, Rust test harness). The shipped version, which
+breaks like `Greedy` when it must, wins **+1.07 ± 0.23** (the same deals; the unit test
+`structured_beats_greedy_head_to_head` keeps it). This matches the Patwa-smart finding in §3:
+passing whenever every play breaks structure is a losing rule.
+
+**Cost.** One ISMCTS-1000 call at the opening takes 38 ms with the structured rollout against
+15 ms with the greedy one (one thread, this PC, other jobs running).
+
+**Method.** `python experiments/build_phase1.py structured-rollout --deals 300 --workers 14`,
+the same as `big2 tournament "ismcts:iterations=1000,rollout=structured" ismcts:iterations=1000
+"ismcts:iterations=1000,rollout=structured" ismcts:iterations=1000 --deals 300 --workers 14
+--out runs/p1_structured/results.json`. Agent specs: `ismcts:rollout=structured` and
+`greedy:structured=1`.
+
+**Results.** _Pending: the run was still going at hand-back (check
+`runs/p1_structured/progress.json`; the table lands in `runs/p1_structured/table.md`)._
 
 ## 2. Re-baseline under duty-on, and σ (Task 6)
 
