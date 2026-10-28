@@ -246,7 +246,8 @@ to goes through bot-notes (Task 10).
   - Notes: duty on and tiered are the CLI defaults; keep them. `epsilon = 0.1` as today. Run
     `Get-Process python` first (environment facts).
 
-- [ ] **Task 6: Re-baseline under duty-on, and σ** **[long: ~45 min CPU]** `[parallel-ok after 5]`
+- [x] **Task 6: Re-baseline under duty-on, and σ** **[long: ~45 min CPU]** `[parallel-ok after 5]`
+  (done: vs 3 greedy +7.40 ± 0.45; vs DMC-10h +0.17 ± 0.37; σ = 27.45 points per seat-game)
   - Files: create `experiments/build_phase1.py` subcommand `rebaseline`; modify
     `docs/study-results/build-phase1.md` §2.
   - Done when: three tournaments finish with results in `runs/p1_rebaseline/*.json` and a table in
@@ -279,7 +280,9 @@ to goes through bot-notes (Task 10).
     exported `.pknn` for shipping lives at `models/big2-qnet-duty.pknn` later (Task 9 decides and
     adds the gitignore exception). Keep `crates/nn` free of big2 types.
 
-- [ ] **Task 8: B1 — Patwa's bots and scoring** `[parallel-ok]` **[~15 min CPU]**
+- [x] **Task 8: B1 — Patwa's bots and scoring** `[parallel-ok]` **[~15 min CPU]**
+  (done: 69.0 % ± 0.5 % vs 3 patwa-greedy (his 64.8 %); 31.2 % ± 0.5 % vs 3 patwa-smart (his
+  43.5 %; our smart bot is a tuned approximation))
   - Files: create `python/big2/agents/patwa.py` (`PatwaGreedy`, `PatwaSmart` as described in
     `docs/research/survey.md` §2.4: keep 2s, avoid orphan singles by hand-written penalties);
     modify `python/big2/agents/__init__.py` (specs `patwa-greedy`, `patwa-smart`); modify
@@ -295,7 +298,9 @@ to goes through bot-notes (Task 10).
   - Notes: Patwa's bots are re-implemented from his text (B14 allows reading; nothing is copied).
     Say in the doc that his agents are approximations.
 
-- [ ] **Task 9: Eval harness and ladder v0** **[long: ~30 min CPU]** (after 5, 7)
+- [x] **Task 9: Eval harness and ladder v0** **[long: ~30 min CPU]** (after 5, 7)
+  (done: order strict; A8 fails only at ISMCTS-1000 → 5000, gap +0.55 [+0.16, +0.94] < 1.5;
+  Task 29 retunes)
   - Files: create `python/big2/eval/harness.py` (both lineups, bootstrap 95 % intervals over
     deals, paired differences, one JSON report shape `{"candidate", "opponent", "lineup", "deals",
     "mean", "ci95", "win_rate", "win_ci95", "seconds_per_move"}`), CLI `big2 match <cand> <opp>

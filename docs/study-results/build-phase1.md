@@ -58,7 +58,20 @@ better rollout policy at equal iterations.
 
 ## 2. Re-baseline under duty-on, and σ (Task 6)
 
-To be filled by Task 6 (`build_phase1.py rebaseline`).
+Method: `python experiments/build_phase1.py rebaseline --workers 14` (headless job
+`runs/p1_rebaseline/run.ps1`).
+
+Candidate `ismcts:iterations=1000` (greedy rollout: Task 5's structured rollout did not pay). 1,000 duplicate deals per tournament (each deal 4×, seats rotated), deal seeds 0…N−1, last-card duty on, tiered scoring, no four-card plays. Mean score per game, 95 % interval over deals. Seconds per move measured under load (other CPU jobs ran beside it); results do not depend on load (fixed iterations).
+
+| Tournament | Agent | Games | Mean score (95% CI) | Win rate (95% CI) | s per move (under load) |
+|---|---|---:|---:|---:|---:|
+| vs 3 greedy (1 + 3) | `ismcts:iterations=1000` | 4,000 | +7.40 ± 0.45 | 50.1% ± 1.4% | 0.049 |
+| vs 3 greedy (1 + 3) | `greedy` | 12,000 | -2.47 ± 0.15 | 16.6% ± 0.5% | 0.000 |
+| vs DMC-10h (A B A B) | `ismcts:iterations=1000` | 8,000 | +0.17 ± 0.37 | 29.4% ± 0.7% | 0.072 |
+| vs DMC-10h (A B A B) | `dmc:checkpoint=models/big2-dmc-selfplay-10h.pt` (trained with duty off) | 8,000 | -0.17 ± 0.37 | 20.6% ± 0.7% | 0.005 |
+| self-play (all four seats) | `ismcts:iterations=1000 (seat 0 only)` | 4,000 | -0.86 ± 1.47 | 23.4% ± 2.1% | 0.075 |
+
+σ of one seat's score in one game (ISMCTS self-play, 16,000 seat-games): **27.45 points**. Of that, the spread between rotations of the same deal and seat (same cards, new search seeds) is 14.76 points.
 
 ## 3. B1: Patwa's bots and scoring (Task 8)
 
@@ -94,8 +107,25 @@ re-implements his two one-line descriptions (B14: read, never copied):
   +1.6 ± 0.25 points per game and 35 % wins. So our smart bot is stronger than our greedy bot,
   as his are; how close either is to his is unknown.
 
-**Results.** _Pending: the run was still going at hand-back (check
-`runs/p1_b1/progress.json`; the table lands in `runs/p1_b1/table.md`)._
+**Results.**
+
+Candidate `ismcts:iterations=1000`, 10,000 seat-random games per seed, seeds 1,2,3, `sum_of_others` scoring, last-card duty on, no four-card plays.
+
+| Opponents (×3) | Seed | Games | Win rate (95% CI) | Mean score (95% CI) | Patwa's PPO win rate |
+|---|---|---:|---:|---:|---:|
+| patwa-greedy | 1 | 10,000 | 69.2% ± 0.9% | +8.97 ± 0.19 | |
+| patwa-greedy | 2 | 10,000 | 69.0% ± 0.9% | +8.93 ± 0.19 | |
+| patwa-greedy | 3 | 10,000 | 68.9% ± 0.9% | +8.80 ± 0.19 | |
+| **patwa-greedy** | **pooled** | 30,000 | **69.0% ± 0.5%** | +8.90 ± 0.11 | 64.8% |
+| patwa-smart | 1 | 10,000 | 31.1% ± 0.9% | +2.12 ± 0.21 | |
+| patwa-smart | 2 | 10,000 | 30.9% ± 0.9% | +2.10 ± 0.21 | |
+| patwa-smart | 3 | 10,000 | 31.6% ± 0.9% | +2.23 ± 0.21 | |
+| **patwa-smart** | **pooled** | 30,000 | **31.2% ± 0.5%** | +2.15 ± 0.12 | 43.5% |
+
+**Verdict.** Against three greedy bots ISMCTS-1000 wins 69.0 % ± 0.5 %, above Patwa's 64.8 %.
+Against three smart bots it wins 31.2 % ± 0.5 %, below his 43.5 %, though above par (25 %)
+with a positive score. Our smart bot is our own tuned approximation, so that row is not a
+like-for-like comparison with his.
 
 ## 4. Ladder v0 (Task 9)
 
@@ -134,5 +164,39 @@ level as candidate. The ladder is judged on the A B A B lineup:
 
 The 1+3 results are in `runs/p1_ladder/results.json` beside them.
 
-**Results.** _Pending: the job was waiting for the CPU at hand-back (check
-`runs/p1_ladder/progress.json`; the table lands in `runs/p1_ladder/table.md`)._
+**Results.**
+
+500 duplicate deals per pair (deal seeds 0…499, each deal 4×, seats rotated), lineup 1+3, ABAB, last-card duty on, tiered scoring. Points per game; 95 % bootstrap intervals over deals.
+
+**Levels**: L0 `random`; L1 `greedy:structured=1,epsilon=0.1`; L2 `qnet:temperature=1.0`; L3 `ismcts:iterations=1000`; L4 `ismcts:iterations=5000`.
+
+Head to head (ABAB): the row level's mean score per game against the column level.
+
+| | L0 | L1 | L2 | L3 | L4 |
+|---|---:|---:|---:|---:|---:|
+| L0 | – | -9.82 | -11.39 | -13.12 | -14.03 |
+| L1 | +9.82 [+9.24, +10.41] | – | -1.80 | -3.01 | -3.65 |
+| L2 | +11.39 [+10.83, +12.00] | +1.80 [+1.32, +2.29] | – | -1.64 | -2.14 |
+| L3 | +13.12 [+12.52, +13.71] | +3.01 [+2.50, +3.55] | +1.64 [+1.23, +2.07] | – | -0.55 |
+| L4 | +14.03 [+13.35, +14.72] | +3.65 [+3.10, +4.20] | +2.14 [+1.69, +2.57] | +0.55 [+0.16, +0.94] | – |
+
+Round-robin standing (mean score per game over the level's four matches):
+
+| Level | Agent | Mean (95% CI) | s per move (under load) |
+|---|---|---:|---:|
+| L4 | `ismcts:iterations=5000` | +5.09 [+4.76, +5.42] | 0.2133 |
+| L3 | `ismcts:iterations=1000` | +4.31 [+4.01, +4.61] | 0.0384 |
+| L2 | `qnet:temperature=1.0` | +2.35 [+2.09, +2.61] | 0.0009 |
+| L1 | `greedy:structured=1,epsilon=0.1` | +0.34 [-0.01, +0.68] | 0.0000 |
+| L0 | `random` | -12.09 [-12.59, -11.60] | 0.0000 |
+
+Adjacent gaps (upper level's mean score per game against the lower, ABAB); bar A8: ≥ 1.5 with the interval above 0, and the two standings' intervals apart:
+
+| Lower | Upper | Gap (95% CI) | Paired diff (95% CI) | Upper's win rate | Bar |
+|---|---|---:|---:|---:|---|
+| `random` | `greedy:structured=1,epsilon=0.1` | +9.82 [+9.24, +10.41] | +19.64 [+18.46, +20.81] | 45.1% | meets |
+| `greedy:structured=1,epsilon=0.1` | `qnet:temperature=1.0` | +1.80 [+1.32, +2.29] | +3.60 [+2.64, +4.58] | 30.4% | meets |
+| `qnet:temperature=1.0` | `ismcts:iterations=1000` | +1.64 [+1.23, +2.07] | +3.28 [+2.41, +4.14] | 28.3% | meets |
+| `ismcts:iterations=1000` | `ismcts:iterations=5000` | +0.55 [+0.16, +0.94] | +1.09 [+0.35, +1.87] | 24.9% | **short** |
+
+Ordering strict: yes. A8 fails.
