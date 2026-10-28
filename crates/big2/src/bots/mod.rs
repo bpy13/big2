@@ -2,6 +2,14 @@
 //!
 //! They are deliberately simple: they serve as baseline opponents for measuring
 //! the solver and the RL agents, and as fast rollout policies inside search.
+//!
+//! * [`Greedy`] — shed the weakest cards first.
+//! * [`StructuredGreedy`] — the same, but keeps the hand's best plan (pairs,
+//!   triples, five-card groups) together, using the [`crate::plan`] planner.
+
+mod structured;
+
+pub use structured::{StructuredGreedy, DEFAULT_PLAN_DEPTH};
 
 use crate::state::{Action, State};
 use big2_cards::mask;

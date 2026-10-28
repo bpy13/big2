@@ -102,7 +102,13 @@ class Big2State:
     def apply(self, cards: int) -> None: ...
     def child(self, cards: int) -> Big2State: ...
     def determinize(self, observer: int, seed: int | None = None) -> Big2State: ...
-    def greedy_action(self, epsilon: float = 0.0, seed: int | None = None) -> int: ...
+    def greedy_action(
+        self,
+        epsilon: float = 0.0,
+        seed: int | None = None,
+        structured: bool = False,
+        plan_depth: int = 8,
+    ) -> int: ...
     def random_action(self, seed: int | None = None) -> int: ...
     def copy(self) -> Big2State: ...
 
@@ -119,6 +125,8 @@ def analyze(
     endgame_threshold: int = 0,
     endgame_max_nodes: int = 20_000,
     rollout_epsilon: float = 0.1,
+    rollout: str = "greedy",  # "greedy" | "structured" (StructuredGreedy, Task 5)
+    rollout_plan_depth: int = 8,
     belief: str | None = None,  # None | "greedy" | "oracle" (cheats; diagnostics only)
     belief_candidates: int = 256,
     belief_epsilon: float = 0.2,

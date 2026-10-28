@@ -3,15 +3,18 @@
 Usage::
 
     python experiments/build_phase1.py b1 --games 10000 --seeds 1,2,3 --workers 14
+    python experiments/build_phase1.py structured-rollout --deals 300 --workers 14
 
 One subcommand per experiment (plan ``docs/plans/2026-10-29-big2-bot-build.md``):
 
+* ``structured-rollout`` (Task 5, §1): ISMCTS-1000 with the planner-aware
+  ``StructuredGreedy`` rollout against ISMCTS-1000 with today's greedy rollout,
+  A B A B on duplicate deals; verdict against the +1.0 bar (A4).
 * ``b1`` (Task 8, §3): ISMCTS-1000 against three Patwa-greedy and three
   Patwa-smart bots, under Patwa's protocol (seat-random games, ``sum_of_others``
   scoring), to set beside his PPO agent's 64.8 % and 43.5 % win rates.
 
-Later tasks add ``structured-rollout`` (Task 5, §1), ``rebaseline`` (Task 6, §2) and
-``ladder`` (Task 9, §4) here.
+Later tasks add ``rebaseline`` (Task 6, §2) and ``ladder`` (Task 9, §4) here.
 
 Every subcommand writes to ``runs/<job>/`` (git-ignored): one JSON per finished
 cell, ``progress.json`` after each cell, ``results.json`` and ``table.md`` at the
@@ -142,9 +145,109 @@ def b1(args: argparse.Namespace) -> None:
     print(table, flush=True)
 
 
+# structured-rollout -----------------------------------------------------------
+
+#: A4 bar: the structured rollout must gain at least this many points per game.
+A4_BAR = 1.0
+
+
+def structured_rollout(args: argparse.Namespace) -> None:
+    """ISMCTS with the structured rollout vs today's greedy rollout, A B A B
+    (build-phase1.md §1). Equivalent to ``big2 tournament "<S>" "<B>" "<S>" "<B>"
+    --deals N --out runs/p1_structured/results.json``."""
+    out = ROOT / "runs" / "p1_structured"
+    out.mkdir(parents=True, exist_ok=True)
+    structured = f"ismcts:iterations={args.iterations},rollout=structured"
+    baseline = f"ismcts:iterations={args.iterations}"
+    path = out / "results.json"
+    t0 = time.time()
+    if path.exists():
+        r = _load_result(path)
+    else:
+        _write_json(
+            out / "progress.json",
+            {
+                "done": [],
+                "next": [f"{args.deals} deals A B A B: {structured} vs {baseline}"],
+                "started": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "note": "one tournament call; it writes results.json when it ends",
+            },
+        )
+        r = run_tournament(
+            [structured, baseline, structured, baseline],
+            args.deals,
+            seed=args.seed,
+            workers=args.workers,
+        )
+        r.save(path)
+    _write_json(
+        out / "progress.json",
+        {
+            "done": [f"{args.deals} deals A B A B"],
+            "next": [],
+            "minutes_this_run": round((time.time() - t0) / 60, 1),
+            "updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+        },
+    )
+    s = {x.agent: x for x in r.summaries}[structured]
+    b = {x.agent: x for x in r.summaries}[baseline]
+    # Paired difference per deal (structured seat minus baseline seat): the two sides
+    # sum to zero in A B A B, so it is twice the structured mean; reported for clarity.
+    diffs = [d[structured] - d[baseline] for d in r.per_deal]
+    n = len(diffs)
+    dm = sum(diffs) / n
+    dci = 1.96 * math.sqrt(sum((x - dm) ** 2 for x in diffs) / (n - 1) / n)
+    passed = s.mean_score >= A4_BAR
+    verdict = (
+        f"passes the +{A4_BAR:.1f} bar"
+        if passed
+        else f"fails the +{A4_BAR:.1f} bar (shortfall {A4_BAR - s.mean_score:.2f})"
+    )
+    lines = [
+        f"{r.deals} duplicate deals, lineup A B A B, seed {r.seed}, "
+        f"{r.seconds / 60:.0f} min wall time.",
+        "",
+        "| Agent | Games | Mean score per game (95% CI) | Win rate (95% CI) | s per move |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    for x in (s, b):
+        lines.append(
+            f"| `{x.agent}` | {x.games:,} | {x.mean_score:+.2f} ± {x.score_ci95:.2f} "
+            f"| {x.win_rate:.1%} ± {x.win_ci95:.1%} | {x.seconds_per_move:.3f} |"
+        )
+    lines += [
+        "",
+        f"Paired difference per deal (structured seat − greedy-rollout seat): "
+        f"{dm:+.2f} ± {dci:.2f}.",
+        f"Verdict (A4): the structured side's mean {s.mean_score:+.2f} {verdict}.",
+    ]
+    table = "\n".join(lines) + "\n"
+    _write_json(
+        out / "summary.json",
+        {
+            "structured": structured,
+            "baseline": baseline,
+            "deals": r.deals,
+            "mean": s.mean_score,
+            "ci95": s.score_ci95,
+            "win_rate": s.win_rate,
+            "win_ci95": s.win_ci95,
+            "paired_diff": dm,
+            "paired_diff_ci95": dci,
+            "bar": A4_BAR,
+            "passed": passed,
+        },
+    )
+    (out / "table.md").write_text(table, encoding="utf-8")
+    print(table, flush=True)
+
+
 # main -------------------------------------------------------------------------
 
-COMMANDS: dict[str, Callable[[argparse.Namespace], None]] = {"b1": b1}
+COMMANDS: dict[str, Callable[[argparse.Namespace], None]] = {
+    "b1": b1,
+    "structured-rollout": structured_rollout,
+}
 
 
 def main() -> None:
@@ -155,6 +258,15 @@ def main() -> None:
     p.add_argument("--candidate", default=ISMCTS_1000)
     p.add_argument("--games", type=int, default=10_000, help="games per opponent and seed")
     p.add_argument("--seeds", default="1,2,3")
+    p.add_argument("--workers", type=int, default=14)
+
+    p = sub.add_parser(
+        "structured-rollout",
+        help="ISMCTS with the structured rollout vs the greedy rollout, A B A B (Task 5)",
+    )
+    p.add_argument("--deals", type=int, default=300)
+    p.add_argument("--iterations", type=int, default=1000)
+    p.add_argument("--seed", type=int, default=0)
     p.add_argument("--workers", type=int, default=14)
 
     args = ap.parse_args()

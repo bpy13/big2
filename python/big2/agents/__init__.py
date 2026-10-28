@@ -14,7 +14,9 @@ Agents can be built from short spec strings, which is how the CLI and the
 tournament runner create them::
 
     make_agent("greedy")
+    make_agent("greedy:structured=1,epsilon=0.1")
     make_agent("ismcts:iterations=2000,exploration=0.25")
+    make_agent("ismcts:iterations=1000,rollout=structured")
     make_agent("pimc:iterations=200")
     make_agent("dmc:checkpoint=runs/dmc/v1/best.pt")
     make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
@@ -60,18 +62,27 @@ class RandomAgent:
 
 @dataclass
 class GreedyAgent:
-    """Rule-based baseline: shed the weakest cards first (see ``crates/big2/src/bots.rs``)."""
+    """Rule-based baseline: shed the weakest cards first (``crates/big2/src/bots/``).
+
+    With ``structured=True`` it is ``StructuredGreedy``: it keeps the pairs, triples
+    and five-card groups of the hand's best plan (min-plays planner), checking at
+    most ``plan_depth`` plays per decision.
+    """
 
     epsilon: float = 0.0
     seed: int | None = None
     name: str = "greedy"
+    structured: bool = False
+    plan_depth: int = 8
     _rng: random.Random = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         self._rng = random.Random(self.seed)
 
     def act(self, state: Big2State) -> int:
-        return state.greedy_action(self.epsilon, self._rng.getrandbits(63))
+        return state.greedy_action(
+            self.epsilon, self._rng.getrandbits(63), self.structured, self.plan_depth
+        )
 
 
 @dataclass
@@ -122,7 +133,8 @@ def _parse_value(v: str) -> Any:
 def make_agent(spec: str, seed: int | None = None) -> Agent:
     """Builds an agent from a spec string like ``"ismcts:iterations=2000"``.
 
-    Kinds: ``random``, ``greedy[:epsilon=…]``, ``ismcts[:…]``, ``pimc[:…]``,
+    Kinds: ``random``, ``greedy[:epsilon=…,structured=1,plan_depth=…]``,
+    ``ismcts[:…,rollout=structured]``, ``pimc[:…]``,
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
     """
@@ -135,7 +147,13 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     if kind == "random":
         return RandomAgent(seed=seed, name=spec)
     if kind == "greedy":
-        return GreedyAgent(epsilon=float(opts.pop("epsilon", 0.0)), seed=seed, name=spec)
+        return GreedyAgent(
+            epsilon=float(opts.pop("epsilon", 0.0)),
+            seed=seed,
+            name=spec,
+            structured=bool(opts.pop("structured", False)),
+            plan_depth=int(opts.pop("plan_depth", 8)),
+        )
     if kind in ("ismcts", "pimc"):
         iterations = int(opts.pop("iterations", 1000 if kind == "ismcts" else 100))
         return SearchAgent(

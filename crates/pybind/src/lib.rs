@@ -11,7 +11,7 @@
 //! The friendlier Python API lives in `python/big2/games/big2.py`; this module is
 //! its engine room.
 
-use big2_big2::bots::Greedy;
+use big2_big2::bots::{Greedy, StructuredGreedy, DEFAULT_PLAN_DEPTH};
 use big2_big2::card::{format_mask, parse_mask};
 use big2_big2::plan;
 use big2_big2::value::ValueNet;
@@ -54,6 +54,42 @@ fn rng_from(seed: Option<u64>) -> SmallRng {
     match seed {
         Some(s) => SmallRng::seed_from_u64(s),
         None => SmallRng::from_entropy(),
+    }
+}
+
+/// The rollout policy the solvers play simulated games with (`rollout=` option).
+#[derive(Clone, Copy)]
+enum Rollout {
+    Greedy(Greedy),
+    Structured(StructuredGreedy),
+}
+
+impl Rollout {
+    fn parse(name: &str, epsilon: f64, plan_depth: usize) -> PyResult<Self> {
+        match name {
+            "greedy" => Ok(Rollout::Greedy(Greedy { epsilon })),
+            "structured" => Ok(Rollout::Structured(StructuredGreedy {
+                epsilon,
+                plan_depth,
+            })),
+            other => Err(value_error(format!(
+                "unknown rollout {other:?} (use \"greedy\" or \"structured\")"
+            ))),
+        }
+    }
+}
+
+impl Policy<State> for Rollout {
+    fn choose<R: rand::Rng + ?Sized>(
+        &self,
+        state: &State,
+        legal: &[Action],
+        rng: &mut R,
+    ) -> Action {
+        match self {
+            Rollout::Greedy(p) => p.choose(state, legal, rng),
+            Rollout::Structured(p) => p.choose(state, legal, rng),
+        }
     }
 }
 
@@ -329,14 +365,23 @@ impl PyState {
         }
     }
 
-    /// The greedy baseline bot's choice (card mask).
-    #[pyo3(signature = (epsilon=0.0, seed=None))]
-    fn greedy_action(&self, epsilon: f64, seed: Option<u64>) -> PyResult<u64> {
+    /// The greedy baseline bot's choice (card mask). With `structured=True`, the
+    /// planner-aware `StructuredGreedy` (keeps pairs, triples and five-card groups
+    /// of the hand's best plan; `plan_depth` plays checked per decision).
+    #[pyo3(signature = (epsilon=0.0, seed=None, structured=false, plan_depth=DEFAULT_PLAN_DEPTH))]
+    fn greedy_action(
+        &self,
+        epsilon: f64,
+        seed: Option<u64>,
+        structured: bool,
+        plan_depth: usize,
+    ) -> PyResult<u64> {
         let legal = self.inner.legal_actions_vec();
         if legal.is_empty() {
             return Err(value_error("the deal is over"));
         }
-        Ok(Greedy { epsilon }
+        let name = if structured { "structured" } else { "greedy" };
+        Ok(Rollout::parse(name, epsilon, plan_depth)?
             .choose(&self.inner, &legal, &mut rng_from(seed))
             .cards())
     }
@@ -377,9 +422,11 @@ impl PyState {
 /// ```
 ///
 /// `algorithm` is `"ismcts"` (default) or `"pimc"`. For PIMC, `iterations` is the
-/// number of sampled deals. The GIL is released while searching.
+/// number of sampled deals. `rollout` is `"greedy"` (default) or `"structured"`
+/// (`StructuredGreedy` with `rollout_plan_depth`), both with `rollout_epsilon`.
+/// The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -394,6 +441,8 @@ fn analyze<'py>(
     endgame_threshold: usize,
     endgame_max_nodes: u64,
     rollout_epsilon: f64,
+    rollout: &str,
+    rollout_plan_depth: usize,
     belief: Option<&str>,
     belief_candidates: usize,
     belief_epsilon: f64,
@@ -414,9 +463,7 @@ fn analyze<'py>(
             )))
         }
     };
-    let rollout = Greedy {
-        epsilon: rollout_epsilon,
-    };
+    let rollout = Rollout::parse(rollout, rollout_epsilon, rollout_plan_depth)?;
     let s = state.inner.clone();
     // "oracle" sees the true hidden cards: a diagnostic upper bound, not fair play.
     let oracle = belief == Some("oracle");
