@@ -117,6 +117,38 @@ The web UI lists the networks in `python/big2/server/models.py` whose files
 exist, each with its rules, and offers a network only for games under those rules.
 The trainers take `--last-card-duty/--no-last-card-duty` (default: on).
 
+### 4.1 The network in Rust: `big2 rl export`
+
+The engine (and so the app, through WebAssembly) plays a Q-network without Python:
+
+```sh
+big2 rl export --checkpoint models/big2-distilled-duty.pt --out runs/p1_qnet/distilled-duty.pknn
+```
+
+writes a `.pknn` version 2 file (format in `crates/nn/src/lib.rs`) with three towers,
+`state`, `action` and `head`. `big2_big2::qnet::QNet::from_bytes` reads it;
+`score_moves(state, legal)` returns each move's predicted score in points and win
+logit, and `QNetPolicy { net, temperature }` plays it (best move at temperature 0,
+otherwise a softmax over the scores in points).
+
+**Size and accuracy.** The state tower's first layer (two thirds of the weights) is
+stored as int8 with one f16 scale per 32 weights, the other layers as f16, biases as
+f32. The rounding of the first layer is offset by a bias correction measured on
+2,000 self-play positions. For `big2-distilled-duty.pt` (2026-10-29):
+
+| | Value |
+|---|---|
+| File size | 1.16 MB (f32: 3.4 MB; `--f32` writes that) |
+| Same best move as PyTorch, 1,000 positions | 99.9 % (seeds 7 and 99: 99.8 %, 99.5 %) |
+| Score difference, RMS | 0.030 points |
+| Time per decision, native (`cargo bench -p big2-big2 --bench engine -- qnet`) | 33 µs |
+
+Plain int8 with one scale per row (0.85 MB) was tried first and rejected: 93 % same
+move, 0.75 points RMS. `python/tests/test_export.py` checks the comparison: it builds
+the `qnet_dump` example (`crates/big2/examples/qnet_dump.rs`), which plays seeded
+games in Rust and writes the features and scores, and scores the same features in
+PyTorch.
+
 ## 5. Commands
 
 ```sh

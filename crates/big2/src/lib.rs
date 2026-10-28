@@ -11,6 +11,7 @@
 //! * [`plan`] — fewest plays to shed a hand, its decompositions, labelled candidates.
 //! * [`bots`] — simple rule-based policies used as baselines and search rollouts.
 //! * [`features`] — neural-network input encoding (Phase 3).
+//! * [`qnet`] — the distilled Q-network read from a `.pknn` v2 file, and its policy.
 //!
 //! ```
 //! use big2_big2::{State, RuleSet};
@@ -29,6 +30,7 @@ pub mod combo;
 pub mod features;
 pub mod movegen;
 pub mod plan;
+pub mod qnet;
 pub mod rules;
 pub mod state;
 pub mod value;
