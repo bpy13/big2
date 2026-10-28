@@ -18,6 +18,7 @@ tournament runner create them::
     make_agent("ismcts:iterations=2000,exploration=0.25")
     make_agent("ismcts:iterations=1000,rollout=structured")
     make_agent("pimc:iterations=200")
+    make_agent("qnet:temperature=1.0")  # models/big2-qnet-duty.pknn unless path=…
     make_agent("dmc:checkpoint=runs/dmc/v1/best.pt")
     make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
 
@@ -136,6 +137,7 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     Kinds: ``random``, ``greedy[:epsilon=…,structured=1,plan_depth=…]``,
     ``ismcts[:…,rollout=structured]``, ``pimc[:…]``,
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
+    ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
     ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
     """
     kind, _, rest = spec.partition(":")
@@ -164,6 +166,16 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         if kind == "patwa-greedy":
             return PatwaGreedy(name=spec)
         return PatwaSmart(name=spec, **opts)
+    if kind == "qnet":
+        # NumPy copy of the Rust QNetPolicy, reading the exported .pknn (big2.agents.qnet).
+        from big2.agents.qnet import DEFAULT_QNET, QNetAgent
+
+        return QNetAgent(
+            path=str(opts.pop("path", DEFAULT_QNET)),
+            temperature=float(opts.pop("temperature", 1.0)),
+            seed=seed,
+            name=spec,
+        )
     if kind in ("dmc", "dmcsearch"):
         if "checkpoint" not in opts:
             raise ValueError(f"{kind} needs checkpoint=<path to .pt> in {spec!r}")
@@ -177,7 +189,7 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(
         f"unknown agent kind {kind!r} in {spec!r} "
-        "(random, greedy, ismcts, pimc, patwa-greedy, patwa-smart, dmc, dmcsearch)"
+        "(random, greedy, ismcts, pimc, patwa-greedy, patwa-smart, qnet, dmc, dmcsearch)"
     )
 
 
