@@ -259,7 +259,9 @@ to goes through bot-notes (Task 10).
     Note: one tournament of 1,000 deals with four searching seats is 4,000 games × ~45 decisions ×
     15 ms ≈ 45 min on 14 workers; (a) is faster.
 
-- [ ] **Task 7: The distilled Q-network in Rust (`.pknn` v2)** `[parallel-ok]`
+- [x] **Task 7: The distilled Q-network in Rust (`.pknn` v2)** `[parallel-ok]`
+  (done af571df: 99.9 % same move, 0.030 points RMS, 1.16 MB, 33 µs per decision; int8 only on
+  the first state layer (grouped scales + bias correction), f16 elsewhere: per-row int8 gave 93 % / 0.75)
   - Files: modify `crates/nn/src/lib.rs` (format v2: a `graph` of named towers so one file holds
     the state tower, the move tower and the head; int8 weights with per-row scales, f32 bias;
     `from_bytes`; v1 still loads); create `crates/big2/src/qnet.rs` (`QNet::from_bytes`,
