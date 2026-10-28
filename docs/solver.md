@@ -132,13 +132,13 @@ Caveats, in order of importance:
 ## 5. Usage
 
 ```sh
-poker big2 analyze --seat 0 --hand "3d 4d 4h 5h 6d 7d 7s 8d 8s Jd Jh Kc 2s"
-poker big2 analyze --seat 2 --hand "..." --history "0:3d 4d 5h 6s 7c; 1:pass; 2:..."
+big2 analyze --seat 0 --hand "3d 4d 4h 5h 6d 7d 7s 8d 8s Jd Jh Kc 2s"
+big2 analyze --seat 2 --hand "..." --history "0:3d 4d 5h 6s 7c; 1:pass; 2:..."
 ```
 
 ```python
-from poker._core import analyze
-from poker.games.big2 import Rules, pretty
+from big2._core import analyze
+from big2.games.big2 import Rules, pretty
 
 state = Rules().new_deal(seed=1)
 result = analyze(state, iterations=20_000, threads=4)
@@ -171,7 +171,7 @@ keeps a spread of plausible deals rather than trusting one guess.
 
 A simulation normally ends with a greedy-bot rollout: the search judges a
 position by how it ends *if everyone plays like the greedy bot*. A value network
-(`poker rl value-train`, [rl.md](rl.md)) instead predicts how it ends if
+(`big2 rl value-train`, [rl.md](rl.md)) instead predicts how it ends if
 everyone plays like the distilled network, from the full sampled deal, in one
 call to a small MLP evaluated in Rust (`crates/nn`, no Python involved).
 `value_rollout_weight` mixes the two: 0 = network only, 1 = rollout only.

@@ -15,7 +15,7 @@ position:
 
 The policy scores each legal move with the same state/move towers as the DMC
 network; a softmax over the legal moves of a decision gives the probabilities.
-Checkpoints load with :func:`poker.rl.agent.load_model` (the agent then plays the
+Checkpoints load with :func:`big2.rl.agent.load_model` (the agent then plays the
 most likely move).
 """
 
@@ -32,10 +32,10 @@ import numpy as np
 import torch
 from torch import nn
 
-from poker._core import Big2VecEnv
-from poker.rl.device import actor_device, resolve_device
-from poker.rl.dmc import _to_float, best_eval_so_far, evaluate_vs_greedy
-from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig
+from big2._core import Big2VecEnv
+from big2.rl.device import actor_device, resolve_device
+from big2.rl.dmc import _to_float, best_eval_so_far, evaluate_vs_greedy
+from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig
 
 
 class PolicyValueNet(nn.Module):
@@ -105,7 +105,7 @@ class PPOConfig:
     eval_deals: int = 256
     max_minutes: float = 60.0
     seed: int = 0
-    device: str = "auto"  # see poker.rl.device
+    device: str = "auto"  # see big2.rl.device
     rules: dict[str, Any] = field(default_factory=dict)  # Rules keyword arguments
     net: NetConfig = field(default_factory=NetConfig)
 

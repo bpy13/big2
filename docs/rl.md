@@ -44,7 +44,7 @@ highest predicted score (or win probability, with `objective=win`).
 
 ## 3. Methods
 
-### 3.1 Deep Monte Carlo self-play (DouZero) — `poker rl train`
+### 3.1 Deep Monte Carlo self-play (DouZero) — `big2 rl train`
 
 DouZero (Zha et al., ICML 2021) beat all earlier programs at Dou Dizhu, a close
 relative of Big Two, with a simple recipe:
@@ -60,7 +60,7 @@ other jobs) it took ~9 s: ~2.3 s playing the games and ~6.6 s of gradient steps.
 The Rust batched environment (`Big2VecEnv`) plays ~13,000 random games/s, so the
 network — mostly learning, partly choosing moves — is the bottleneck; see §6.
 
-### 3.2 PPO self-play — `poker rl ppo`
+### 3.2 PPO self-play — `big2 rl ppo`
 
 Proximal Policy Optimization (Schulman et al., 2017), as in Charlesworth's Big
 Two agent (2018). Instead of move values, the network outputs move
@@ -72,7 +72,7 @@ probabilities (softmax over the legal moves) plus a position value:
    the others, clipped so one batch cannot change the policy much; regress the
    value toward the final score; small entropy bonus for exploration.
 
-### 3.3 Search distillation (expert iteration) — `poker rl distill-gen` + `distill-train`
+### 3.3 Search distillation (expert iteration) — `big2 rl distill-gen` + `distill-train`
 
 Self-play learns from one noisy number per decision. The solver already
 estimates every promising move from hundreds of simulated games. Distillation
@@ -91,7 +91,7 @@ opponents play like the greedy bot.
 
 ### 3.4 Network + search — `dmcsearch:` agents
 
-`python/poker/rl/search.py` combines a network with Monte Carlo search:
+`python/big2/rl/search.py` combines a network with Monte Carlo search:
 
 1. The network ranks the legal moves; keep the best 6.
 2. Sample 32 deals of the hidden cards.
@@ -113,7 +113,7 @@ opponents play like the greedy bot.
 | `big2-distilled-finetuned.pt` | Distilled, then 60 min DMC self-play | off | no (retrain) |
 
 A network does not know other rule variants than the one it was trained under.
-The web UI lists the networks in `python/poker/server/models.py` whose files
+The web UI lists the networks in `python/big2/server/models.py` whose files
 exist, each with its rules, and offers a network only for games under those rules.
 The trainers take `--last-card-duty/--no-last-card-duty` (default: on).
 
@@ -121,22 +121,22 @@ The trainers take `--last-card-duty/--no-last-card-duty` (default: on).
 
 ```sh
 # Self-play (all trainers take --device auto|cpu|cuda|mps, see §6)
-poker rl train --run-dir runs/dmc/v1 --minutes 90             # DMC
-poker rl train --run-dir runs/dmc/ft --init models/big2-distilled.pt   # DMC from given weights
-poker rl ppo --run-dir runs/ppo/v1 --minutes 60                # PPO
+big2 rl train --run-dir runs/dmc/v1 --minutes 90             # DMC
+big2 rl train --run-dir runs/dmc/ft --init models/big2-distilled.pt   # DMC from given weights
+big2 rl ppo --run-dir runs/ppo/v1 --minutes 60                # PPO
 
 # Distillation (run the two side by side; the trainer picks up new data as it appears)
-poker rl distill-gen --out-dir runs/distill/data --workers 4 --minutes 60
-poker rl distill-train --data-dir runs/distill/data --run-dir runs/distill/v1 --minutes 75
+big2 rl distill-gen --out-dir runs/distill/data --workers 4 --minutes 60
+big2 rl distill-train --data-dir runs/distill/data --run-dir runs/distill/v1 --minutes 75
 
 # Continue a run (weights, optimizer, counters); every trainer takes --resume
-poker rl train --run-dir runs/dmc/v1_more --resume runs/dmc/v1/latest.pt --minutes 600
-poker rl ppo --run-dir runs/ppo/v1_more --resume runs/ppo/v1/latest.pt --minutes 600
-poker rl distill-train --run-dir runs/distill/more --resume runs/distill/v1/latest.pt
+big2 rl train --run-dir runs/dmc/v1_more --resume runs/dmc/v1/latest.pt --minutes 600
+big2 rl ppo --run-dir runs/ppo/v1_more --resume runs/ppo/v1/latest.pt --minutes 600
+big2 rl distill-train --run-dir runs/distill/more --resume runs/distill/v1/latest.pt
 # Sharing the CPU between jobs: --threads N (PyTorch), --workers N (distill-gen)
 
 # Use a network
-poker big2 tournament dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 \
+big2 tournament dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 \
     dmc:checkpoint=models/big2-distilled.pt ismcts:iterations=1000 --deals 100 --workers 6
 
 # Reproduce the Phase 3 study
@@ -150,7 +150,7 @@ distilled ones) and `dmcsearch:checkpoint=PATH[,determinizations=32,top=6]`.
 Each run directory holds `log.jsonl` (one line per iteration or evaluation),
 `config.json`, `latest.pt` (resumable) and `best.pt` (best evaluation vs greedy).
 
-### 3.5 Value network for search leaves — `poker rl value-train`
+### 3.5 Value network for search leaves — `big2 rl value-train`
 
 Trains a small MLP on full-information positions from distilled-network
 self-play to predict every seat's final score and the winner, and exports it
@@ -187,11 +187,11 @@ both as `collect_s` and `train_s`):
 **NVIDIA GPU setup** (Windows or Linux):
 
 ```sh
-conda env create -f environment.yml && conda activate poker
+conda env create -f environment.yml && conda activate big2
 make torch-cuda      # PyTorch's CUDA build; prints "CUDA available: True"
 make dev
 pytest python/tests/test_rl.py    # also runs the trainers on the GPU
-poker rl train --run-dir runs/dmc/gpu --minutes 600 --envs 1024
+big2 rl train --run-dir runs/dmc/gpu --minutes 600 --envs 1024
 ```
 
 On Windows, `pip install torch` alone installs a CPU-only build — hence

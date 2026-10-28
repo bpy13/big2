@@ -1,9 +1,9 @@
 //! Turn flow, scoring and determinization tests. Each test cites the section of
 //! `docs/rules/big2.md` it checks.
 
-use poker_big2::card::{parse_mask, FULL_DECK};
-use poker_big2::{Action, IllegalAction, PassRule, RuleSet, Scoring, State};
-use poker_games::{play_out, Game, UniformRandom};
+use big2_big2::card::{parse_mask, FULL_DECK};
+use big2_big2::{Action, IllegalAction, PassRule, RuleSet, Scoring, State};
+use big2_games::{play_out, Game, UniformRandom};
 use proptest::prelude::*;
 use rand::{rngs::SmallRng, SeedableRng};
 
@@ -250,14 +250,14 @@ fn arb_rules() -> impl Strategy<Value = RuleSet> {
     )
         .prop_map(|(st, fl, pr, sc, lcd)| RuleSet {
             straights: if st {
-                poker_big2::Straights::WithLowTwos
+                big2_big2::Straights::WithLowTwos
             } else {
-                poker_big2::Straights::NoTwos
+                big2_big2::Straights::NoTwos
             },
             flush_order: if fl {
-                poker_big2::FlushOrder::RankFirst
+                big2_big2::FlushOrder::RankFirst
             } else {
-                poker_big2::FlushOrder::SuitFirst
+                big2_big2::FlushOrder::SuitFirst
             },
             pass_rule: if pr {
                 PassRule::MayReenter

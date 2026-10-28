@@ -17,11 +17,11 @@ notebooks are most productive in Python.
 ## Decision
 
 * Rules, move generation, state, and the search solvers are written in Rust
-  (`crates/`), built into one Python extension module `poker._core` with PyO3 and
+  (`crates/`), built into one Python extension module `big2._core` with PyO3 and
   maturin.
-* Everything else is Python (`python/poker/`): agents, evaluation, CLI, FastAPI
+* Everything else is Python (`python/big2/`): agents, evaluation, CLI, FastAPI
   server, RL.
-* The Rust toolchain lives inside the `poker` conda environment (conda-forge
+* The Rust toolchain lives inside the `big2` conda environment (conda-forge
   `rust`), not in a global rustup install.
 
 ## Consequences

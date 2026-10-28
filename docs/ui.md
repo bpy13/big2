@@ -3,7 +3,7 @@
 ## Running it
 
 ```sh
-conda activate poker
+conda activate big2
 make serve            # builds web/ and serves UI + API on http://127.0.0.1:8000
 ```
 
@@ -11,7 +11,7 @@ During UI development, run the API and the Vite dev server side by side (the dev
 server forwards `/api` to port 8000 and reloads on save):
 
 ```sh
-uvicorn poker.server.app:app --reload     # terminal 1
+uvicorn big2.server.app:app --reload     # terminal 1
 make web-dev                              # terminal 2 → http://127.0.0.1:5173
 ```
 
@@ -90,7 +90,7 @@ solver alone). Choosing a network only
 stages it; it is loaded on the server when you press **Load** (or **Use**, if it
 is already in memory). Nothing but the default network is loaded until you ask.
 The networks offered, and the rules each was trained under, are listed in
-`python/poker/server/models.py`; set `POKER_RL_CHECKPOINT` to add any other
+`python/big2/server/models.py`; set `POKER_RL_CHECKPOINT` to add any other
 checkpoint (for the default rules) as the default.
 
 ### How to read the numbers
@@ -123,7 +123,7 @@ exactly. The same data is available at `GET /api/games/{id}/log`.
 ## API
 
 The UI uses a small JSON API; the endpoint table is in the docstring of
-`python/poker/server/app.py`, and FastAPI serves interactive docs at `/docs`.
+`python/big2/server/app.py`, and FastAPI serves interactive docs at `/docs`.
 Bots move one step per `POST /api/games/{id}/step`, so the client controls pacing
 and can animate each move. Games are kept in memory (the 200 most recent).
 

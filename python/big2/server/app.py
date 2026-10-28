@@ -1,7 +1,7 @@
 """FastAPI app: the HTTP API behind the web UI.
 
-Run with ``poker serve`` (serves the built UI from ``web/dist`` too) or, during
-UI development, ``uvicorn poker.server.app:app --reload`` next to ``npm run dev``.
+Run with ``big2 serve`` (serves the built UI from ``web/dist`` too) or, during
+UI development, ``uvicorn big2.server.app:app --reload`` next to ``npm run dev``.
 
 Endpoints (all JSON):
 
@@ -33,10 +33,10 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from poker.agents import make_agent
-from poker.games.big2 import Rules, cards
-from poker.server import models
-from poker.server.session import DIFFICULTIES, GameSession, difficulties
+from big2.agents import make_agent
+from big2.games.big2 import Rules, cards
+from big2.server import models
+from big2.server.session import DIFFICULTIES, GameSession, difficulties
 
 MAX_SESSIONS = 200
 GAME_LOG_DIR = Path(os.environ.get("POKER_GAME_LOG_DIR", "runs/games"))
@@ -52,9 +52,7 @@ RULE_OPTIONS: dict[str, list[Any]] = {
     "last_card_duty": [True, False],
 }
 
-app = FastAPI(
-    title="poker", version="0.1.0", description="Big Two vs solver bots, with study mode."
-)
+app = FastAPI(title="big2", version="0.1.0", description="Big Two vs solver bots, with study mode.")
 _sessions: OrderedDict[str, GameSession] = OrderedDict()
 
 

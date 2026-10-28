@@ -21,8 +21,8 @@ import argparse
 import json
 from pathlib import Path
 
-from poker.eval import run_tournament
-from poker.games.big2 import Rules
+from big2.eval import run_tournament
+from big2.games.big2 import Rules
 
 SOLVER = "ismcts:iterations=1000"
 NEW = "runs/distill/duty_v1/latest.pt"

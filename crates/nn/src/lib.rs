@@ -8,7 +8,7 @@
 //!
 //! # File format (`.pknn`)
 //!
-//! Little-endian, written by `poker.rl.value.export_pknn` in Python:
+//! Little-endian, written by `big2.rl.value.export_pknn` in Python:
 //!
 //! ```text
 //! b"PKNN"  u32 version (= 1)

@@ -1,4 +1,4 @@
-// Typed client for the FastAPI backend (python/poker/server/app.py).
+// Typed client for the FastAPI backend (python/big2/server/app.py).
 // Cards are codes like "Td" (rank + suit); see docs/rules/big2.md.
 
 export type Card = string
@@ -56,7 +56,7 @@ export interface MoveStats {
 }
 
 /** A trained network, or the greedy bot, the hint can compare the solver with
- * (see python/poker/server/models.py). */
+ * (see python/big2/server/models.py). */
 export interface ModelInfo {
   id: string
   label: string

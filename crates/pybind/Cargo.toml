@@ -1,6 +1,6 @@
 [package]
-name = "poker-pybind"
-description = "Python bindings: the `poker._core` extension module."
+name = "big2-pybind"
+description = "Python bindings: the `big2._core` extension module."
 version.workspace = true
 edition.workspace = true
 
@@ -10,9 +10,9 @@ crate-type = ["cdylib"]
 bench = false
 
 [dependencies]
-poker-cards.workspace = true
-poker-games.workspace = true
-poker-big2.workspace = true
-poker-search.workspace = true
+big2-cards.workspace = true
+big2-games.workspace = true
+big2-big2.workspace = true
+big2-search.workspace = true
 rand.workspace = true
 pyo3 = { version = "0.30", features = ["extension-module", "abi3-py311"] }

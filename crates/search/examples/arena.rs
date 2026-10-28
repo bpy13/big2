@@ -1,15 +1,15 @@
 //! Quick strength check: one searching seat vs three greedy bots, duplicate deals.
 //!
-//! `cargo run --release -p poker-search --example arena -- <deals> <iterations> <exploration> [endgame_threshold] [endgame_max_nodes]`
+//! `cargo run --release -p big2-search --example arena -- <deals> <iterations> <exploration> [endgame_threshold] [endgame_max_nodes]`
 //!
 //! Every deal is played four times with the searcher rotated through all seats, so
 //! card luck cancels out. If the searcher were as strong as greedy, its mean score
 //! would be 0.
 
-use poker_big2::bots::Greedy;
-use poker_big2::{RuleSet, State};
-use poker_games::{Game, Policy};
-use poker_search::{ismcts, IsmctsConfig};
+use big2_big2::bots::Greedy;
+use big2_big2::{RuleSet, State};
+use big2_games::{Game, Policy};
+use big2_search::{ismcts, IsmctsConfig};
 use rand::{rngs::SmallRng, SeedableRng};
 use std::time::Instant;
 

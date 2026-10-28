@@ -15,7 +15,7 @@ Each iteration plays ``games_per_iter`` games, then trains on the samples of the
 last ``replay_iters`` iterations. Every ``eval_every`` iterations the greedy
 network plays a duplicate-deal match against three greedy bots.
 
-Run with ``poker rl train`` (see ``--help``) or :func:`train`. Output in
+Run with ``big2 rl train`` (see ``--help``) or :func:`train`. Output in
 ``run_dir``: ``log.jsonl`` (one line per iteration), ``latest.pt``, ``best.pt``
 (best evaluation score) and ``iter_XXXXX.pt`` snapshots.
 """
@@ -34,9 +34,9 @@ import numpy as np
 import torch
 from torch import nn
 
-from poker._core import Big2VecEnv
-from poker.rl.device import actor_device, resolve_device
-from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
+from big2._core import Big2VecEnv
+from big2.rl.device import actor_device, resolve_device
+from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
 
 
 @dataclass
@@ -55,7 +55,7 @@ class TrainConfig:
     max_iters: int = 1_000_000
     max_minutes: float = 60.0
     seed: int = 0
-    device: str = "auto"  # see poker.rl.device
+    device: str = "auto"  # see big2.rl.device
     rules: dict[str, Any] = field(default_factory=dict)
     net: NetConfig = field(default_factory=NetConfig)
 

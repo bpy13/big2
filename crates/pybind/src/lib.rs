@@ -1,4 +1,4 @@
-//! The `poker._core` Python extension module.
+//! The `big2._core` Python extension module.
 //!
 //! The Python side sees only plain values:
 //!
@@ -8,15 +8,15 @@
 //! * rule variants are keyword arguments with snake_case names
 //!   (`straights="no_twos"`, `scoring="original"`, …).
 //!
-//! The friendlier Python API lives in `python/poker/games/big2.py`; this module is
+//! The friendlier Python API lives in `python/big2/games/big2.py`; this module is
 //! its engine room.
 
-use poker_big2::bots::Greedy;
-use poker_big2::card::{format_mask, parse_mask};
-use poker_big2::value::ValueNet;
-use poker_big2::{classify, Action, RuleSet, State};
-use poker_games::{Game, Policy};
-use poker_search::{
+use big2_big2::bots::Greedy;
+use big2_big2::card::{format_mask, parse_mask};
+use big2_big2::value::ValueNet;
+use big2_big2::{classify, Action, RuleSet, State};
+use big2_games::{Game, Policy};
+use big2_search::{
     ismcts_with, pimc, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective,
     OracleSampler, PimcConfig, PolicyModel, UniformSampler,
 };
@@ -109,7 +109,7 @@ fn classify_cards(
 }
 
 /// A Big Two deal. Holds the true state, including every player's hidden hand.
-#[pyclass(name = "Big2State", module = "poker._core")]
+#[pyclass(name = "Big2State", module = "big2._core")]
 #[derive(Clone)]
 pub(crate) struct PyState {
     pub(crate) inner: State,
@@ -539,7 +539,7 @@ fn value_estimate(state: &PyState, path: &str) -> PyResult<(Vec<f64>, Vec<f64>)>
     if state.inner.is_terminal() {
         return Err(value_error("the deal is over"));
     }
-    let est = poker_games::Evaluator::evaluate(&*load_value_net(path)?, &state.inner);
+    let est = big2_games::Evaluator::evaluate(&*load_value_net(path)?, &state.inner);
     Ok((est.scores, est.wins))
 }
 

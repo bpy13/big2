@@ -3,7 +3,7 @@ requires = ["maturin>=1.7,<2"]
 build-backend = "maturin"
 
 [project]
-name = "poker"
+name = "big2"
 version = "0.1.0"
 description = "Card-game solver and RL lab, starting with Big Two"
 readme = "README.md"
@@ -21,11 +21,11 @@ dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11", "httpx>=0.27"]
 rl = ["torch>=2.2"]  # Phase 3: training and the RL opponents
 
 [project.scripts]
-poker = "poker.cli.main:app"
+big2 = "big2.cli.main:app"
 
 [tool.maturin]
 python-source = "python"
-module-name = "poker._core"
+module-name = "big2._core"
 manifest-path = "crates/pybind/Cargo.toml"
 features = ["pyo3/extension-module"]
 

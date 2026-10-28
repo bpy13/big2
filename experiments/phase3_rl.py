@@ -30,10 +30,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from poker._core import analyze
-from poker.agents import make_agent
-from poker.eval import run_tournament
-from poker.games.big2 import Big2State, Rules
+from big2._core import analyze
+from big2.agents import make_agent
+from big2.eval import run_tournament
+from big2.games.big2 import Big2State, Rules
 
 #: Agents compared; checkpoints are the ones shipped in models/ (see docs/rl.md).
 AGENTS: dict[str, str] = {

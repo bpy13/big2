@@ -22,10 +22,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from poker._core import analyze as core_analyze
-from poker.agents import Agent, make_agent
-from poker.games.big2 import Big2State, Rules, card_list, kind_of
-from poker.server import models
+from big2._core import analyze as core_analyze
+from big2.agents import Agent, make_agent
+from big2.games.big2 import Big2State, Rules, card_list, kind_of
+from big2.server import models
 
 #: Bot strength presets offered by the UI. Values are agent specs.
 DIFFICULTIES: dict[str, str] = {
@@ -73,7 +73,7 @@ class GameSession:
     seat: int
     bot_spec: str
     seed: int
-    #: Network for the study-mode hint (a :mod:`poker.server.models` id; ``None`` = default).
+    #: Network for the study-mode hint (a :mod:`big2.server.models` id; ``None`` = default).
     model: str | None = None
     id: str = field(default_factory=lambda: secrets.token_urlsafe(8))
     created: float = field(default_factory=time.time)
@@ -198,7 +198,7 @@ class GameSession:
         other rules."""
         m = models.get(model_id, self.rules)
         if m.kind in ("q", "policy"):
-            from poker.rl.agent import load_model
+            from big2.rl.agent import load_model
 
             load_model(m.path)
         self.model = m.id
@@ -208,7 +208,7 @@ class GameSession:
         """The hint network's top 3 moves, and how the solver rates its first choice.
 
         ``solver`` is the solver's ranking of every legal move (best first). The
-        result has ``model`` (:func:`poker.server.models.describe`), ``moves`` and
+        result has ``model`` (:func:`big2.server.models.describe`), ``moves`` and
         ``pick``: the network's first choice with its ``solver_rank`` (1 = the
         solver's best), the solver's ``solver`` stats for it, and ``loss`` — how
         much worse the solver rates it than its own best, in points (objective
@@ -253,8 +253,8 @@ class GameSession:
     ) -> tuple[list[dict[str, Any]], str]:
         """Every legal move as the network rates it, its best first, and the network's
         kind (``"q"`` or ``"policy"``)."""
-        from poker.rl.agent import evaluate_moves, is_policy, load_model
-        from poker.rl.model import SCORE_SCALE
+        from big2.rl.agent import evaluate_moves, is_policy, load_model
+        from big2.rl.model import SCORE_SCALE
 
         net = load_model(m.path)
         moves = evaluate_moves(net, self.state)

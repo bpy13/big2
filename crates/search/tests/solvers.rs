@@ -1,11 +1,11 @@
 //! Solver tests on Big Two positions.
 
-use poker_big2::bots::Greedy;
-use poker_big2::card::parse_mask;
-use poker_big2::{Action, RuleSet, State};
-use poker_games::{Game, Transposable};
-use poker_search::endgame::{solve_naive, Endgame};
-use poker_search::{ismcts, pimc, IsmctsConfig, Objective, PimcConfig};
+use big2_big2::bots::Greedy;
+use big2_big2::card::parse_mask;
+use big2_big2::{Action, RuleSet, State};
+use big2_games::{Game, Transposable};
+use big2_search::endgame::{solve_naive, Endgame};
+use big2_search::{ismcts, pimc, IsmctsConfig, Objective, PimcConfig};
 use rand::seq::SliceRandom;
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 
@@ -119,7 +119,7 @@ fn ismcts_is_reproducible_with_a_fixed_seed() {
     };
     let a = ismcts(&s, p, &cfg, &Greedy { epsilon: 0.1 });
     let b = ismcts(&s, p, &cfg, &Greedy { epsilon: 0.1 });
-    let summary = |x: &poker_search::Analysis<Action>| {
+    let summary = |x: &big2_search::Analysis<Action>| {
         x.moves
             .iter()
             .map(|m| (m.action, m.visits))
@@ -145,7 +145,7 @@ fn ismcts_never_peeks_at_hidden_cards() {
     };
     let a = ismcts(&s1, p, &cfg, &Greedy { epsilon: 0.1 });
     let b = ismcts(&s2, p, &cfg, &Greedy { epsilon: 0.1 });
-    let summary = |x: &poker_search::Analysis<Action>| {
+    let summary = |x: &big2_search::Analysis<Action>| {
         x.moves
             .iter()
             .map(|m| (m.action, m.visits, m.mean_score.to_bits()))

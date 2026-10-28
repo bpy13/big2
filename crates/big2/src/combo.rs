@@ -14,7 +14,7 @@
 
 use crate::card::{rank_of, suit_mask, suits_at, NUM_RANKS};
 use crate::rules::{FlushOrder, RuleSet, Straights};
-use poker_cards::mask;
+use big2_cards::mask;
 use std::fmt;
 
 /// The kind of a combination.

@@ -1,5 +1,5 @@
 [package]
-name = "poker-games"
+name = "big2-games"
 description = "Game-independent interfaces shared by every game and by the search solvers."
 version.workspace = true
 edition.workspace = true

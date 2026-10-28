@@ -40,10 +40,10 @@ import json
 import random
 from pathlib import Path
 
-from poker._core import sample_deals
-from poker.agents import make_agent
-from poker.eval import run_tournament
-from poker.games.big2 import Big2State, Rules
+from big2._core import sample_deals
+from big2.agents import make_agent
+from big2.eval import run_tournament
+from big2.games.big2 import Big2State, Rules
 
 BASELINE = "ismcts:iterations=1000"
 VALUE = "models/big2-value.pknn"

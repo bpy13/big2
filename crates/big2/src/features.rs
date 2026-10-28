@@ -42,8 +42,8 @@
 
 use crate::combo::Kind;
 use crate::state::{Action, State, NUM_PLAYERS};
-use poker_cards::mask;
-use poker_games::Game;
+use big2_cards::mask;
+use big2_games::Game;
 
 /// Actions of history included in the state features.
 pub const HISTORY_LEN: usize = 12;

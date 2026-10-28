@@ -12,7 +12,7 @@ import os
 import random
 
 import pytest
-from poker._core import Big2State
+from big2._core import Big2State
 
 from tests.reference.big2_reference import RefGame, cards_from_mask
 

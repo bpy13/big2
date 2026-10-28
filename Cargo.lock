@@ -30,6 +30,55 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "big2-big2"
+version = "0.1.0"
+dependencies = [
+ "big2-cards",
+ "big2-games",
+ "big2-nn",
+ "criterion",
+ "proptest",
+ "rand 0.8.8",
+]
+
+[[package]]
+name = "big2-cards"
+version = "0.1.0"
+
+[[package]]
+name = "big2-games"
+version = "0.1.0"
+dependencies = [
+ "rand 0.8.8",
+]
+
+[[package]]
+name = "big2-nn"
+version = "0.1.0"
+
+[[package]]
+name = "big2-pybind"
+version = "0.1.0"
+dependencies = [
+ "big2-big2",
+ "big2-cards",
+ "big2-games",
+ "big2-search",
+ "pyo3",
+ "rand 0.8.8",
+]
+
+[[package]]
+name = "big2-search"
+version = "0.1.0"
+dependencies = [
+ "big2-big2",
+ "big2-games",
+ "rand 0.8.8",
+ "rayon",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -405,55 +454,6 @@ name = "oorandom"
 version = "11.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d6790f58c7ff633d8771f42965289203411a5e5c68388703c06e14f24770b41e"
-
-[[package]]
-name = "poker-big2"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "poker-cards",
- "poker-games",
- "poker-nn",
- "proptest",
- "rand 0.8.8",
-]
-
-[[package]]
-name = "poker-cards"
-version = "0.1.0"
-
-[[package]]
-name = "poker-games"
-version = "0.1.0"
-dependencies = [
- "rand 0.8.8",
-]
-
-[[package]]
-name = "poker-nn"
-version = "0.1.0"
-
-[[package]]
-name = "poker-pybind"
-version = "0.1.0"
-dependencies = [
- "poker-big2",
- "poker-cards",
- "poker-games",
- "poker-search",
- "pyo3",
- "rand 0.8.8",
-]
-
-[[package]]
-name = "poker-search"
-version = "0.1.0"
-dependencies = [
- "poker-big2",
- "poker-games",
- "rand 0.8.8",
- "rayon",
-]
 
 [[package]]
 name = "portable-atomic"

@@ -8,7 +8,7 @@
 use crate::card::{suit_mask, suits_at, NUM_RANKS};
 use crate::combo::{classify, num_straights, Combo, Kind, STRAIGHT_RANKS};
 use crate::rules::RuleSet;
-use poker_cards::mask;
+use big2_cards::mask;
 
 /// Calls `f` for each subset of the 4-bit suit set `suits` with exactly `k` suits.
 #[inline]

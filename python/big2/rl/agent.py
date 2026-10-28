@@ -10,8 +10,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from poker._core import Big2State, encode
-from poker.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
+from big2._core import Big2State, encode
+from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
 
 torch.set_num_threads(1)  # many agents run in parallel processes during tournaments
 
@@ -19,15 +19,15 @@ _CACHE: dict[str, nn.Module] = {}
 
 
 def load_model(path: str | Path) -> nn.Module:
-    """Loads (and caches) a checkpoint from :mod:`poker.rl.dmc`, :mod:`poker.rl.distill`
-    or :mod:`poker.rl.ppo`. For a PPO policy the first output is a logit, not a score:
+    """Loads (and caches) a checkpoint from :mod:`big2.rl.dmc`, :mod:`big2.rl.distill`
+    or :mod:`big2.rl.ppo`. For a PPO policy the first output is a logit, not a score:
     the argmax is still the move to play, but the numbers are not points."""
     key = str(Path(path).resolve())
     if key not in _CACHE:
         ckpt = torch.load(key, map_location="cpu", weights_only=False)
         net: nn.Module
         if ckpt.get("arch") == "ppo":
-            from poker.rl.ppo import PolicyValueNet
+            from big2.rl.ppo import PolicyValueNet
 
             net = PolicyValueNet(NetConfig(**ckpt["net_config"]))
         else:
@@ -45,7 +45,7 @@ def is_cached(path: str | Path) -> bool:
 
 def is_policy(net: nn.Module) -> bool:
     """True for a PPO policy, whose first output is a logit rather than a score."""
-    from poker.rl.ppo import PolicyValueNet
+    from big2.rl.ppo import PolicyValueNet
 
     return isinstance(net, PolicyValueNet)
 

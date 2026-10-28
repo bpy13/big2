@@ -12,7 +12,7 @@
 use crate::analysis::{Analysis, MoveStats, Objective, Sums};
 use crate::endgame::Endgame;
 use crate::ismcts::{simulate, IsmctsConfig};
-use poker_games::{Player, Policy, Transposable};
+use big2_games::{Player, Policy, Transposable};
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use rayon::prelude::*;

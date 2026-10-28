@@ -19,7 +19,7 @@ import argparse
 import json
 from pathlib import Path
 
-from poker.eval import run_tournament
+from big2.eval import run_tournament
 
 SOLVER = "ismcts:iterations=1000"
 

@@ -8,7 +8,7 @@ flowchart TB
         nn["nn<br/>MLP inference (.pknn)"]
         big2["big2<br/>rules · combos · movegen · State · bots · features · value net"]
         search["search<br/>ISMCTS · PIMC · max^n endgame · belief sampling"]
-        pybind["pybind<br/>PyO3 module poker._core"]
+        pybind["pybind<br/>PyO3 module big2._core"]
         cards --> big2
         games --> big2
         nn --> big2
@@ -16,11 +16,11 @@ flowchart TB
         big2 --> pybind
         search --> pybind
     end
-    subgraph py["Python (python/poker/)"]
+    subgraph py["Python (python/big2/)"]
         helpers["games/big2.py<br/>parsing · Rules · observation → state"]
         agents["agents/<br/>random · greedy · ismcts · pimc"]
         evalm["eval/<br/>duplicate tournaments"]
-        cli["cli/<br/>poker big2 play · analyze · tournament"]
+        cli["cli/<br/>big2 play · analyze · tournament"]
         server["server/<br/>FastAPI · game sessions · review"]
         rl["rl/<br/>DMC · PPO · distillation · network search"]
     end
@@ -55,9 +55,9 @@ confidence intervals.
 
 **`crates/pybind`** exposes all of the above to Python as plain values: card masks
 are `int`, an action is the mask of cards played (`0` = pass), rules are keyword
-strings. `python/poker/_core.pyi` documents and types it.
+strings. `python/big2/_core.pyi` documents and types it.
 
-**`python/poker`** is everything above the engine: helpers, agents built from spec
+**`python/big2`** is everything above the engine: helpers, agents built from spec
 strings (`"ismcts:iterations=2000"`), the tournament runner, and the CLI.
 
 ## Correctness strategy

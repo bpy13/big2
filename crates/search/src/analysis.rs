@@ -1,6 +1,6 @@
 //! The result type shared by all solvers.
 
-use poker_games::{Estimate, Game, Outcome, Player};
+use big2_games::{Estimate, Game, Outcome, Player};
 use std::time::Duration;
 
 /// What the searching player tries to maximize.

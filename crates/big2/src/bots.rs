@@ -4,8 +4,8 @@
 //! the solver and the RL agents, and as fast rollout policies inside search.
 
 use crate::state::{Action, State};
-use poker_cards::mask;
-use poker_games::{Game, Policy};
+use big2_cards::mask;
+use big2_games::{Game, Policy};
 use rand::Rng;
 
 /// "Get rid of the weakest cards first."

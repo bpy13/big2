@@ -6,7 +6,7 @@
 //! So `3♦ = 0`, `3♣ = 1`, …, `2♠ = 51`. A hand is a `u64` with bit `index` set for
 //! each card held.
 
-use poker_cards::{mask, parse_cards, Card, ParseCardError, Rank, Suit};
+use big2_cards::{mask, parse_cards, Card, ParseCardError, Rank, Suit};
 
 /// Number of cards in the deck.
 pub const NUM_CARDS: u8 = 52;

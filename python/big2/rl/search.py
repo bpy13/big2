@@ -29,10 +29,10 @@ import numpy as np
 import torch
 from torch import nn
 
-from poker._core import Big2State, Big2VecEnv
-from poker.rl.agent import evaluate_moves, load_model
-from poker.rl.dmc import choose
-from poker.rl.model import ACTION_LEN, STATE_LEN
+from big2._core import Big2State, Big2VecEnv
+from big2.rl.agent import evaluate_moves, load_model
+from big2.rl.dmc import choose
+from big2.rl.model import ACTION_LEN, STATE_LEN
 
 
 @torch.no_grad()

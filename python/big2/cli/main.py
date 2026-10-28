@@ -1,14 +1,14 @@
-"""The ``poker`` command-line tool.
+"""The ``big2`` command-line tool.
 
 Examples::
 
-    poker big2 play                                    # you vs three ISMCTS bots
-    poker big2 play --hints --bots greedy              # easier bots, solver hints every turn
-    poker big2 analyze --seat 0 --hand "3d 4d 4h 5h 6d 7d 7s 8d 8s Jd Jh Kc 2s"
-    poker big2 analyze --seat 1 --hand "..." --history "0:3d; 1:pass; 2:5c"
-    poker big2 tournament ismcts:iterations=1000 greedy greedy greedy --deals 200 --workers 6
+    big2 play                                    # you vs three ISMCTS bots
+    big2 play --hints --bots greedy              # easier bots, solver hints every turn
+    big2 analyze --seat 0 --hand "3d 4d 4h 5h 6d 7d 7s 8d 8s Jd Jh Kc 2s"
+    big2 analyze --seat 1 --hand "..." --history "0:3d; 1:pass; 2:5c"
+    big2 tournament ismcts:iterations=1000 greedy greedy greedy --deals 200 --workers 6
 
-Run ``poker big2 <command> --help`` for all options.
+Run ``big2 <command> --help`` for all options.
 """
 
 from __future__ import annotations
@@ -19,17 +19,15 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from poker._core import analyze as core_analyze
-from poker.agents import make_agent
-from poker.eval import run_tournament
-from poker.games.big2 import Big2State, Rules, cards, pretty, state_from_observation
+from big2._core import analyze as core_analyze
+from big2.agents import make_agent
+from big2.eval import run_tournament
+from big2.games.big2 import Big2State, Rules, cards, pretty, state_from_observation
 
 if TYPE_CHECKING:
-    from poker._core import AnalysisResult
+    from big2._core import AnalysisResult
 
 app = typer.Typer(help="Card-game solver and RL lab.", no_args_is_help=True)
-big2 = typer.Typer(help="Big Two (see docs/rules/big2.md).", no_args_is_help=True)
-app.add_typer(big2, name="big2")
 console = Console()
 
 # Shared rule options -------------------------------------------------------
@@ -86,7 +84,7 @@ def _parse_history(text: str) -> list[tuple[int, int]]:
 # analyze ---------------------------------------------------------------------
 
 
-@big2.command()
+@app.command()
 def analyze(
     seat: Annotated[int, typer.Option(help="Your seat (0-3).")],
     hand: Annotated[str, typer.Option(help='Your current hand, e.g. "3d 4c 5h".')],
@@ -151,7 +149,7 @@ def _show_table(state: Big2State, you: int, names: list[str]) -> None:
         console.print("[italic]New trick — you lead.[/]" if state.current_player == you else "")
 
 
-@big2.command()
+@app.command()
 def play(
     seat: Annotated[int, typer.Option(help="Your seat (0-3).")] = 0,
     bots: Annotated[
@@ -214,7 +212,7 @@ def play(
 # tournament -----------------------------------------------------------------
 
 
-@big2.command()
+@app.command()
 def tournament(
     lineup: Annotated[
         list[str],
@@ -278,7 +276,7 @@ def _set_threads(threads: int) -> None:
 
 
 def _show_device(device: str) -> None:
-    from poker.rl.device import actor_device, resolve_device
+    from big2.rl.device import actor_device, resolve_device
 
     try:
         d = resolve_device(device)
@@ -309,7 +307,7 @@ def rl_train(
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Train a Q-network by Deep Monte Carlo self-play."""
-    from poker.rl.dmc import TrainConfig, train
+    from big2.rl.dmc import TrainConfig, train
 
     cfg = TrainConfig(
         run_dir=run_dir,
@@ -356,7 +354,7 @@ def rl_ppo(
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Train a policy by PPO self-play."""
-    from poker.rl.ppo import PPOConfig, train
+    from big2.rl.ppo import PPOConfig, train
 
     def log(r: dict[str, Any]) -> None:
         line = (
@@ -391,7 +389,7 @@ def rl_distill_gen(
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Generate solver-labelled training data for search distillation."""
-    from poker.rl.distill import generate
+    from big2.rl.distill import generate
 
     rules = Rules(last_card_duty=last_card_duty)
     n = generate(out_dir, workers=workers, minutes=minutes, iterations=iterations, rules=rules)
@@ -416,7 +414,7 @@ def rl_distill_train(
     ] = DEFAULT_RULES.last_card_duty,
 ) -> None:
     """Train a Q-network on solver-labelled data (picks up new shards as they appear)."""
-    from poker.rl.distill import DistillConfig, train
+    from big2.rl.distill import DistillConfig, train
 
     def log(r: dict[str, Any]) -> None:
         console.print(
@@ -454,8 +452,8 @@ def rl_value_train(
     device: Device = "auto",
     threads: Threads = 0,
 ) -> None:
-    """Train a value network for search leaves (see poker/rl/value.py)."""
-    from poker.rl.value import ValueConfig, train
+    """Train a value network for search leaves (see big2/rl/value.py)."""
+    from big2.rl.value import ValueConfig, train
 
     def log(r: dict[str, Any]) -> None:
         console.print(
@@ -482,14 +480,14 @@ def serve(
     """Start the web UI and API (build the UI first with `make web`)."""
     import uvicorn
 
-    from poker.server.app import WEB_DIST
+    from big2.server.app import WEB_DIST
 
     if not WEB_DIST.is_dir():
         console.print(
             f"[yellow]No built UI at {WEB_DIST}; serving the API only. Run `make web` first.[/]"
         )
     console.print(f"Open http://{host}:{port}")
-    uvicorn.run("poker.server.app:app", host=host, port=port, reload=reload)
+    uvicorn.run("big2.server.app:app", host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ Usage::
 
     python experiments/phase1_solver.py --deals 100 --workers 7 [--only ladder,budget,...]
 
-Each experiment is a duplicate tournament (see poker.eval.tournament). Raw results
+Each experiment is a duplicate tournament (see big2.eval.tournament). Raw results
 are written as JSON to runs/phase1/ (git-ignored); this script prints a Markdown
 table per experiment that is pasted into the results document.
 """
@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from poker.eval import TournamentResult, run_tournament
+from big2.eval import TournamentResult, run_tournament
 
 BASE = "ismcts:iterations=1000"
 
