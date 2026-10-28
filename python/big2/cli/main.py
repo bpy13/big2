@@ -22,6 +22,7 @@ from rich.table import Table
 from big2._core import analyze as core_analyze
 from big2.agents import make_agent
 from big2.eval import run_tournament
+from big2.eval.tournament import SCORE_AS
 from big2.games.big2 import Big2State, Rules, cards, pretty, state_from_observation
 
 if TYPE_CHECKING:
@@ -227,13 +228,35 @@ def tournament(
     pass_rule: PassRule = "may_reenter",
     scoring: Scoring = "tiered",
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
+    score_as: Annotated[
+        str,
+        typer.Option(
+            help="rules (the --scoring rule) | sum_of_others (winner takes the others' "
+            "cards left; Charlesworth and Patwa)"
+        ),
+    ] = "rules",
+    seat_random: Annotated[
+        bool,
+        typer.Option(help="Play each deal once with random seats (Patwa's protocol)."),
+    ] = False,
 ) -> None:
     """Duplicate tournament between four agents."""
     if len(lineup) != 4:
         raise typer.BadParameter("give exactly four agent specs")
+    if score_as not in SCORE_AS:
+        raise typer.BadParameter(f"--score-as must be one of {', '.join(SCORE_AS)}")
     rules = _rules(straights, flush_order, pass_rule, scoring, last_card_duty)
-    with console.status(f"Playing {deals} deals × 4 rotations..."):
-        result = run_tournament(lineup, deals, seed=seed, workers=workers, rules=rules)
+    games = "once, random seats" if seat_random else "× 4 rotations"
+    with console.status(f"Playing {deals} deals {games}..."):
+        result = run_tournament(
+            lineup,
+            deals,
+            seed=seed,
+            workers=workers,
+            rules=rules,
+            score_as=score_as,
+            seat_random=seat_random,
+        )
     t = Table(title=f"{deals} deals · {result.seconds:.0f}s")
     t.add_column("Agent", overflow="fold")
     t.add_column("Games", justify="right")
