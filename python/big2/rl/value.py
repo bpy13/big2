@@ -26,6 +26,7 @@ this out*, which is cheaper to query than playing it out.
 
 from __future__ import annotations
 
+import copy
 import json
 import math
 import struct
@@ -165,7 +166,9 @@ def train(cfg: ValueConfig, log: Any = print) -> Path:
     (run / "config.json").write_text(json.dumps(asdict(cfg), indent=2))
     torch.manual_seed(cfg.seed)
     rng = np.random.default_rng(cfg.seed)
-    policy = load_model(cfg.policy).to(adev)
+    # load_model caches one CPU copy shared by the server and the agents; Module.to moves
+    # in place, so move a private copy to the actor device, never the cached one.
+    policy = copy.deepcopy(load_model(cfg.policy)).to(adev)
     net = ValueMLP(cfg.hidden).to(dev)
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr)
     env = Big2VecEnv(cfg.envs, seed=cfg.seed)
