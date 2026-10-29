@@ -9,6 +9,8 @@ A research codebase for studying imperfect-information card games, starting with
 3. **Reinforcement learning** agents (DMC, PPO, search distillation), compared
    head-to-head with the solver.
 
+![Study mode: the solver's top 3 moves with win rates, compared with the distilled network's picks](docs/img/study-ui.png)
+
 ## Findings so far
 
 | Agent | vs the field (head-to-head) | ms / move |
