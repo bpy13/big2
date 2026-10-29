@@ -196,7 +196,7 @@ def test_distillation_generates_and_trains(tmp_path: Path, device: str) -> None:
     assert n > 0 and list(data.glob("*.npz"))
     shard = np.load(next(data.glob("*.npz")))
     assert shard["states"].shape[1] == STATE_LEN and shard["actions"].shape[1] == ACTION_LEN
-    assert (shard["visits"] >= 20).all() and (np.diff(shard["owner"]) >= 0).all()
+    assert (shard["visits"] >= 0).all() and (np.diff(shard["owner"]) >= 0).all()
     cfg = distill.DistillConfig(
         data_dir=str(data),
         run_dir=str(tmp_path / "run"),
@@ -219,6 +219,69 @@ def test_distillation_generates_and_trains(tmp_path: Path, device: str) -> None:
     assert torch.load(tmp_path / "run2" / "latest.pt", weights_only=False)["info"]["iter"] > steps
     agent = make_agent(f"dmc:checkpoint={run / 'latest.pt'}")
     assert agent.act(Rules().new_deal(seed=1)) in Rules().new_deal(seed=1).legal_actions()
+
+
+def test_distill_gen_round0_fields(tmp_path: Path) -> None:
+    """Task 11: a 2-game run stores every candidate with its search statistics and
+    the deal's outcome per decision (shard format 2), plus progress and results."""
+    import json
+
+    from big2._core import candidates
+    from big2.rl import distill
+
+    data = tmp_path / "data"
+    n = distill.generate(
+        str(data), workers=1, minutes=0, iterations=100, shard_games=2, rollout="greedy"
+    )
+    shards = list(data.glob("*.npz"))
+    assert len(shards) == 1
+    z = np.load(shards[0])
+    assert int(z["format"]) == distill.SHARD_FORMAT == 2
+    d, rows = len(z["states"]), len(z["owner"])
+    assert d == n > 20  # two whole deals
+    assert z["states"].shape == (d, STATE_LEN)
+    for key, shape in [
+        ("player", (d,)),
+        ("final_cards", (d, 4)),
+        ("final_scores", (d, 4)),
+        ("next_leader", (d,)),
+        ("chosen", (d,)),
+    ]:
+        assert z[key].shape == shape, key
+    assert z["actions"].shape == (rows, ACTION_LEN)
+    for key in ("cards", "keeps", "breaks", "visits", "score", "win"):
+        assert z[key].shape == (rows,), key
+    owner = z["owner"]
+    assert (np.diff(owner) >= 0).all() and set(owner.tolist()) == set(range(d))
+    counts = np.bincount(owner, minlength=d)
+    assert (counts >= 2).all()  # only searched decisions are stored
+    assert (z["chosen"] >= 0).all() and (z["chosen"] < counts).all()
+    lo = np.concatenate([[0], np.cumsum(counts)[:-1]])
+    assert (z["visits"][lo + z["chosen"]] > 0).all()  # the played move was searched
+    assert np.bincount(owner, weights=z["visits"]).min() >= 90  # ~100 simulations each
+    # Planner order: moves that keep a decomposition come before the others.
+    keeps = z["keeps"]
+    for i in range(d):
+        k = keeps[lo[i] : lo[i] + counts[i]]
+        assert not ((k[:-1] < 0) & (k[1:] >= 0)).any()
+    assert ((keeps >= 0) | (z["breaks"] > 0) | (z["cards"] == 0)).all()
+    # Outcome relative to the actor: exactly one seat ends with no cards, scores sum to 0.
+    fc = z["final_cards"]
+    assert ((fc == 0).sum(axis=1) == 1).all() and (fc <= 13).all()
+    assert np.allclose(z["final_scores"].sum(axis=1), 0, atol=1e-4)
+    winner_abs = (z["player"] + np.argmax(fc == 0, axis=1)) % 4
+    assert len(set(winner_abs.tolist())) <= 2  # one winner per deal
+    nl = z["next_leader"]
+    assert ((nl >= -1) & (nl <= 3)).all() and (nl >= 0).any() and (nl == -1).any()
+    # The binding lists every legal action once.
+    s = Rules().new_deal(seed=0)
+    assert sorted(c for c, _, _ in candidates(s)) == sorted(s.legal_actions())
+    progress = json.loads((tmp_path / "progress.json").read_text())
+    results = json.loads((tmp_path / "results.json").read_text())
+    assert results["status"] == "done" and results["decisions"] == d
+    assert progress["candidate_rows"] == rows and results["config"]["rollout"] == "greedy"
+    # A target already reached returns at once (the resume path of the long job).
+    assert distill.generate(str(data), workers=1, iterations=100, target_decisions=d) == 0
 
 
 @pytest.mark.parametrize("device", DEVICES)
