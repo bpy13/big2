@@ -42,6 +42,24 @@ The state tower runs once per decision; only the small head runs per legal move.
 About 0.8 M parameters, 3.3 MB on disk. The network plays the move with the
 highest predicted score (or win probability, with `objective=win`).
 
+**Network v2** (`QNetV2`, build plan Task 12) keeps the same towers and changes only
+the head's last layer:
+
+```
+state (1,103) ─ 512 ─ 256 ─┐
+                            ├─ 256 ─ 128 ─ 57  (4 × 14 cards-left logits, prior logit)
+move (61 + 52) ─ 128 ──────┘
+```
+
+Per candidate move it predicts, for each seat (the actor, next, across, previous), the
+probability of finishing the deal with 0, 1, …, 13 cards, plus a prior logit (a softmax
+over the decision's candidates gives the search's move probabilities). The expected
+score of any scoring follows from the distributions: with `E[p_i]` a seat's expected
+penalty (`payoff(scoring) · distribution`; tiered `[0,1,…,7,16,18,30,33,36,52]`),
+`score_i = Σ_j E[p_j] − 4·E[p_i]`, the pairwise settlement, which is linear. `win_loss`
+uses the payoff `[0,1,1,…,1]`, which turns the same formula into +3 / −1. So one
+network serves `tiered`, `original` and `win_loss`. 849,977 parameters.
+
 ## 3. Methods
 
 ### 3.1 Deep Monte Carlo self-play (DouZero) — `big2 rl train`
@@ -88,6 +106,29 @@ uses those estimates as targets:
 This is the "expert iteration" idea behind AlphaZero, with ISMCTS as the expert.
 The network becomes a fast copy of the solver, including its assumption that
 opponents play like the greedy bot.
+
+**Network v2: `distill-train --model v2`** (build plan Task 12). Format-2 shards
+(`distill-gen` since Task 11) store every legal move with the search's visits and mean
+score, and the real deal's outcome: each seat's cards left. The trainer loads the whole
+folder once into GPU memory (round 0: 2.74 M decisions, 13.8 M candidates, about
+4 GB as uint8) and holds out every 50th shard for validation. Losses per decision:
+
+| Head | Target | Loss |
+|---|---|---|
+| `actor` | the actor's cards left at the end, for the move actually played | cross-entropy, 14 classes |
+| `seats` | the three opponents' cards left, same move | cross-entropy, mean of 3 |
+| `prior` | the search's visit shares over all candidates | cross-entropy |
+| `score` (auxiliary) | the search's mean score of every candidate simulated ≥ 20 times, weight `min(visits, 200) / 200` | squared error of the tiered score from the distributions, in units of 50 points |
+
+The search gives no per-move cards-left counts, so the distributions learn from the
+one move played; the auxiliary score loss gives the other moves' distributions a
+low-noise target. Weights 1 : 1 : 1 for the three heads (build plan open question 8)
+and 0.5 for `score` (`DistillV2Config`). AdamW, learning rate 1e-3 with warm-up and a
+cosine decay over `--minutes`, 2,048 decisions per step. Every 5 minutes: validation
+losses, two 128-deal matches vs 3 greedy (playing by the prior, and by the expected
+tiered score), `latest.pt`, `progress.json`; `best.pt` when the validation total drops.
+It stops at `--minutes` (counting resumed time) or after `--patience` evaluations
+without improvement, and writes `results.json` with the validation loss per head.
 
 ### 3.4 Network + search — `dmcsearch:` agents
 
@@ -148,6 +189,22 @@ move, 0.75 points RMS. `python/tests/test_export.py` checks the comparison: it b
 the `qnet_dump` example (`crates/big2/examples/qnet_dump.rs`), which plays seeded
 games in Rust and writes the features and scores, and scores the same features in
 PyTorch.
+
+**Network v2 in Rust** (build plan Task 13). `big2 rl export` sees a v2 checkpoint
+(`arch = qnet_v2`) and writes the same towers and precisions with kind `big2-pvnet`
+(the calibration games play by the prior). `big2_big2::pvnet::PvNet::from_bytes` reads
+it; `evaluate(state, candidates)` returns `PvOutput { prior, cand_dist, dist, score }`:
+the prior as probabilities, each candidate's 4 × 14 distributions, the position's
+distributions (the candidates' mixed by the prior) and the actor's expected score
+under the state's scoring. `score_for(scoring)` and `seat_scores(scoring)` give any
+other scoring from the same output. `PvNet::plays_to_out(state)` passes the
+planner's `min_plays` through; `lead_value(state, samples, rng)` is the actor's score
+when leading the next trick minus their score when the other side leads it (two
+evaluations on rebuilt positions; see the rustdoc for what it cannot see).
+`python/tests/test_export.py -k v2` compares Rust and PyTorch through the
+`pvnet_dump` example. Time per evaluation, native, network v2's sizes
+(`cargo bench -p big2-big2 --bench engine -- pvnet`, 2026-10-29, with a CPU job
+running beside it): 39 µs at the opening, 36 µs over mixed positions (bar: 0.3 ms).
 
 ## 5. Commands
 

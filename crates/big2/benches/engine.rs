@@ -1,5 +1,6 @@
 //! Engine throughput: `cargo bench -p big2-big2`.
 
+use big2_big2::pvnet::{self, PvNet};
 use big2_big2::qnet::{synthetic_graph, QNet};
 use big2_big2::{bots::Greedy, plan::min_plays, RuleSet, State};
 use big2_games::{play_out, Game, Policy, UniformRandom};
@@ -93,6 +94,23 @@ fn bench(c: &mut Criterion) {
             let (s, legal) = &openings[i % openings.len()];
             i += 1;
             black_box(net.score_moves(s, legal))
+        })
+    });
+    // One policy-value evaluation (Task 13) with network v2's sizes: the PUCT budget
+    // rests on the opening number (plan bar < 0.3 ms).
+    let pv = PvNet::new(pvnet::synthetic_graph(512, 256, 128, 256, 1)).unwrap();
+    g.bench_function("pvnet_evaluate_opening", |b| {
+        b.iter(|| {
+            let (s, legal) = &openings[i % openings.len()];
+            i += 1;
+            black_box(pv.evaluate(s, legal))
+        })
+    });
+    g.bench_function("pvnet_evaluate", |b| {
+        b.iter(|| {
+            let (s, legal) = &positions[i % positions.len()];
+            i += 1;
+            black_box(pv.evaluate(s, legal))
         })
     });
     g.finish();
