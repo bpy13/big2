@@ -333,9 +333,10 @@ to goes through bot-notes (Task 10).
 
 ## Phase 2 – The network inside the search (opus; Task 14 fable)
 
-- [ ] **Task 11: Relabel round 0 with the structured ISMCTS** **[long: ~3 h CPU, headless]**
-  (code done bd179ec, test passes; job running since 2026-10-29 08:15, ends ~11:36: greedy
-  rollout, ~10k decisions/min ≈ 2 M decisions and ≈ 10 M candidate rows; tick when it ends)
+- [x] **Task 11: Relabel round 0 with the structured ISMCTS** **[long: ~3 h CPU, headless]**
+  (done bd179ec; job finished 2026-10-29 11:35: greedy rollout (Task 5), 2,740,296 searched
+  decisions, 13,800,253 candidate rows, 5,030 shards in `runs/round0/data`. "≥ 5 M" read as
+  candidate rows; rerun `runs\round0\run.ps1` to add decisions if Task 12 needs more.)
   - Files: modify `python/big2/rl/distill.py` (`distill-gen` stores per decision: the candidate
     list from `plan::candidates`, each candidate's visits, mean score, win rate; the final cards
     left of all four seats relative to the actor; who leads the next trick); modify
