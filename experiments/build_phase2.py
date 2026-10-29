@@ -35,10 +35,48 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+
+def no_power_throttling() -> None:
+    """Opts this process out of Windows power throttling (EcoQoS).
+
+    Windows throttles windowless background processes: launched detached and headless,
+    each match worker got about 0.15 of a core (measured 2026-10-29; 1.0 after opting
+    out). This runs at import, so every worker the process pool spawns (which
+    re-imports this script) opts out too.
+    """
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    class PowerThrottlingState(ctypes.Structure):
+        _fields_ = [
+            ("version", ctypes.c_ulong),
+            ("control_mask", ctypes.c_ulong),
+            ("state_mask", ctypes.c_ulong),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32")
+    kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+    kernel32.SetProcessInformation.argtypes = [
+        ctypes.c_void_p,
+        ctypes.c_int,
+        ctypes.c_void_p,
+        ctypes.c_ulong,
+    ]
+    # ProcessPowerThrottling = 4; control EXECUTION_SPEED (1) with state 0 = never throttle.
+    state = PowerThrottlingState(1, 1, 0)
+    kernel32.SetProcessInformation(
+        kernel32.GetCurrentProcess(), 4, ctypes.byref(state), ctypes.sizeof(state)
+    )
+
+
+no_power_throttling()
 
 ROOT = Path(__file__).resolve().parent.parent
 ISMCTS_1000 = "ismcts:iterations=1000"
@@ -374,6 +412,9 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()
 
+    # The tables hold ≥ and −; a redirected Windows console would otherwise use cp1252.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     os.chdir(ROOT)  # network paths in agent specs are relative to the repo root
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     out = ROOT / "runs" / args.out
