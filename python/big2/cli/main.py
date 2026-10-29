@@ -464,13 +464,30 @@ def rl_distill_gen(
     workers: int = 4,
     minutes: float = 60.0,
     iterations: Annotated[int, typer.Option(help="Solver simulations per decision.")] = 1000,
+    rollout: Annotated[
+        str, typer.Option(help="Rollout policy inside the search: greedy or structured.")
+    ] = "greedy",
+    target_decisions: Annotated[
+        int | None,
+        typer.Option(help="Stop once the folder holds this many decisions (earlier runs count)."),
+    ] = None,
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
 ) -> None:
-    """Generate solver-labelled training data for search distillation."""
+    """Generate solver-labelled training data for search distillation.
+
+    Writes progress.json and results.json beside the data folder; rerunning resumes."""
     from big2.rl.distill import generate
 
     rules = Rules(last_card_duty=last_card_duty)
-    n = generate(out_dir, workers=workers, minutes=minutes, iterations=iterations, rules=rules)
+    n = generate(
+        out_dir,
+        workers=workers,
+        minutes=minutes,
+        iterations=iterations,
+        rules=rules,
+        rollout=rollout,
+        target_decisions=target_decisions,
+    )
     console.print(f"{n:,} decisions written to {out_dir}")
 
 

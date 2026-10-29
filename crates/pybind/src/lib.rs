@@ -172,6 +172,31 @@ fn decompositions(
         .collect())
 }
 
+/// Every legal action of the player to act, labelled against the decompositions
+/// of that player's hand (`plan::candidates` with up to `max_decompositions`
+/// plans). Returns `[(cards, keeps, breaks)]` in the planner's order: `keeps` is
+/// the index of the best decomposition that has the play as a group (`-1` if
+/// none), `breaks` the mask of the group it breaks (`0` if none or a pass).
+#[pyfunction]
+#[pyo3(signature = (state, max_decompositions=8))]
+fn candidates(state: &PyState, max_decompositions: usize) -> PyResult<Vec<(u64, i32, u64)>> {
+    let s = &state.inner;
+    let player = s
+        .current_player()
+        .ok_or_else(|| value_error("the deal is over"))?;
+    let decomps = plan::decompositions(s.hand(player), s.rules(), max_decompositions);
+    Ok(plan::candidates(s, &decomps)
+        .iter()
+        .map(|c| {
+            (
+                c.action.cards(),
+                c.keeps.map_or(-1, |k| k as i32),
+                c.breaks.map_or(0, |b| b.cards),
+            )
+        })
+        .collect())
+}
+
 /// A Big Two deal. Holds the true state, including every player's hidden hand.
 #[pyclass(name = "Big2State", module = "big2._core")]
 #[derive(Clone)]
@@ -626,6 +651,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(classify_cards, m)?)?;
     m.add_function(wrap_pyfunction!(min_plays, m)?)?;
     m.add_function(wrap_pyfunction!(decompositions, m)?)?;
+    m.add_function(wrap_pyfunction!(candidates, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
     m.add_function(wrap_pyfunction!(value_estimate, m)?)?;
     m.add_function(wrap_pyfunction!(sample_deals, m)?)?;

@@ -39,6 +39,11 @@ def decompositions(
 ) -> list[list[int]]:
     """Ways to shed ``hand`` in the fewest plays, best first; each a list of card masks."""
 
+def candidates(state: Big2State, max_decompositions: int = 8) -> list[tuple[int, int, int]]:
+    """Every legal action as ``(cards, keeps, breaks)``, planner order: ``keeps`` is
+    the best decomposition index that keeps the play whole (-1: none), ``breaks``
+    the mask of the group it breaks (0: none)."""
+
 class Big2State:
     @staticmethod
     def new_deal(
