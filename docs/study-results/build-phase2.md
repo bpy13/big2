@@ -14,7 +14,7 @@ Network: round 0, network v2 (Task 12), `runs/net_r0/best.pt`, exported as
 `runs/net_r0/pvnet-r0.pknn` (1.17 MB). Its validation losses on 55,046 held-out decisions:
 actor 1.576, seats 1.818, prior 1.259 (top-1 68.5 %), score 0.0083 (RMS 4.56 points).
 
-Status: the job started 2026-10-29 14:35 (8 workers, headless). The tables below are filled in
+Status: the job started 2026-10-29 14:43 (8 workers, headless). The tables below are filled in
 from `runs/p2_matches/*/table.md` once it ends.
 
 ## 1. PUCT-2000 vs ISMCTS-1000 (a, A9)
