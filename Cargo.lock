@@ -39,6 +39,7 @@ dependencies = [
  "big2-search",
  "pyo3",
  "rand 0.8.8",
+ "rand_chacha",
  "serde",
  "serde_json",
  "wasm-bindgen",

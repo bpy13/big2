@@ -18,8 +18,8 @@ use big2_big2::qnet::{QNet, QNetPolicy};
 use big2_big2::{Action, RuleSet, State, NUM_PLAYERS};
 use big2_games::{Game, Policy};
 use big2_search::{Analysis, MoveStats};
-use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
+use rand_chacha::ChaCha8Rng;
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -147,8 +147,8 @@ impl GameEntry {
     /// A seeded generator for the decision at this point of the game: the same
     /// position always draws the same numbers, so a restored game continues
     /// exactly as the original would have.
-    fn rng(&self, salt: u64) -> SmallRng {
-        SmallRng::seed_from_u64(self.decision_seed(salt))
+    fn rng(&self, salt: u64) -> ChaCha8Rng {
+        ChaCha8Rng::seed_from_u64(self.decision_seed(salt))
     }
 
     fn decision_seed(&self, salt: u64) -> u64 {
@@ -240,7 +240,7 @@ impl Api {
             check_seat(s)?;
         }
         let rules = rules_from_json(cfg.variants.as_ref())?;
-        let mut rng = SmallRng::seed_from_u64(cfg.seed);
+        let mut rng = ChaCha8Rng::seed_from_u64(cfg.seed);
         let state = State::new_deal(rules, &mut rng);
         let entry = GameEntry {
             start: Start::Deal(state.hands()),
@@ -332,7 +332,7 @@ impl Api {
         })? as u64;
         let start = Instant::now();
         let action = match level {
-            "random" => legal[g.rng(level_index).gen_range(0..legal.len())],
+            "random" => legal[g.rng(level_index).gen_range(0..legal.len() as u32) as usize],
             "easy" => StructuredGreedy {
                 epsilon: EASY_EPSILON,
                 ..StructuredGreedy::default()

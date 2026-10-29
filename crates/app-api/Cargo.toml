@@ -14,6 +14,8 @@ big2-big2.workspace = true
 big2-games.workspace = true
 big2-search.workspace = true
 rand.workspace = true
+# Same random stream on every platform (SmallRng differs on wasm32), so the server can replay deals.
+rand_chacha = "0.3"
 # Instant that also works in the browser (performance.now()).
 web-time.workspace = true
 serde = { version = "1", features = ["derive"] }
