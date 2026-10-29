@@ -304,7 +304,8 @@ def generate(
             _write_json(pdir / "progress.json", state)
         return total
 
-    if target_decisions is not None and report(False) >= target_decisions:
+    # The first report sets the baseline (shards of earlier runs) for the rate.
+    if report(False) >= (target_decisions if target_decisions is not None else math.inf):
         report(True)
         return 0
     with mp.Manager() as manager, ProcessPoolExecutor(workers) as pool:
