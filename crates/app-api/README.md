@@ -46,7 +46,7 @@ Two shapes differ from the contract's table because every response must be an ob
 `api`: `legal_actions` wraps the list in `{actions}` and `review` wraps it in `{items}`.
 
 `budget_ms` is a ceiling in milliseconds; `0` means no limit. ISMCTS checks the clock every
-64 simulations; the review checks it between chunks of 20 sampled deals. Every search runs
+64 simulations; the review passes it to PIMC as `PimcConfig.time_limit`, which the engine checks between sampled deals. Every search runs
 with one thread (the engine's `threads = 1` path), so nothing here needs a thread pool.
 
 ### Randomness
@@ -236,13 +236,14 @@ may be noise.
 | Level | What it plays |
 |---|---|
 | `random` | a uniformly random legal move |
-| `easy` | the greedy bot (weakest cards first, lowest combination that beats the table), with 10% random moves |
-| `medium` | ISMCTS, 300 simulations |
+| `easy` | `StructuredGreedy` (greedy play that keeps the hand's best decomposition into combinations), with 10% random moves (`epsilon = 0.1`) |
+| `medium` | `QNetPolicy`, temperature 1.0: the trained network `models/big2-qnet-duty.pknn` (1.16 MB), embedded with `include_bytes!` and parsed once on the first `medium` move; no search |
 | `hard` | ISMCTS, 2,000 simulations |
 | `expert` | ISMCTS, 10,000 simulations |
 
-All ISMCTS levels use one thread, the greedy rollout policy with 10% noise, and stop early at
-`budget_ms`.
+`hard` and `expert` use one thread, the greedy rollout policy with 10% noise, and stop early at
+`budget_ms`. `easy` and `medium` ignore `budget_ms` (they answer in well under a millisecond). All levels draw their
+randomness from the decision seed, so a snapshot restored later continues identically.
 
 ## Reason keys
 
@@ -292,7 +293,9 @@ Release builds, one thread, opening position of seed 100, Windows 11 desktop
 | `bot_action` expert (10,000) | 152 ms | 113 ms |
 | `review`, 300 deals per decision | 16 decisions: 141 ms | 11 decisions: 25 ms |
 
-The `.wasm` of the web target is 350,977 bytes (343 KB) before gzip.
+The `.wasm` of the web target is 1,572,286 bytes (1.5 MB) before gzip (2026-10-30). It was 350,977 bytes (343 KB) before the 1.16 MB network was embedded for `medium`.
+
+Per-move time of the new levels in WebAssembly (Node 22, one 25-move and one 22-move game, seed 11, 2026-10-30): `easy` mean 0.10 ms, first move 2.1 ms; `medium` mean 0.54 ms, first move 7.9 ms (the first move parses the network).
 
 Rayon in the engine's search crate compiles for `wasm32-unknown-unknown`; with `threads = 1`
 the single-thread path runs on the calling thread and no worker is spawned (checked by the

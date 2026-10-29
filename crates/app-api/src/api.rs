@@ -13,7 +13,8 @@ use crate::shapes::{
 use crate::solver::{
     bot_iterations, grade_for, ismcts_analysis, pimc_budgeted, HINT_ITERATIONS, REVIEW_DEALS,
 };
-use big2_big2::bots::Greedy;
+use big2_big2::bots::StructuredGreedy;
+use big2_big2::qnet::{QNet, QNetPolicy};
 use big2_big2::{Action, RuleSet, State, NUM_PLAYERS};
 use big2_games::{Game, Policy};
 use big2_search::{Analysis, MoveStats};
@@ -22,14 +23,30 @@ use rand::{Rng, SeedableRng};
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 use web_time::Instant;
 
 /// Bot levels, weakest first (`GameMeta.bot_levels`).
 pub const BOT_LEVELS: [&str; 5] = ["random", "easy", "medium", "hard", "expert"];
 
-/// The `easy` bot is the greedy policy with this much random play.
+/// The `easy` bot is the structured greedy policy with this much random play.
 const EASY_EPSILON: f64 = 0.1;
+
+/// Softmax temperature of the `medium` bot's network policy.
+const MEDIUM_TEMPERATURE: f64 = 1.0;
+
+/// The `medium` network, embedded because WebAssembly has no file I/O.
+static QNET_BYTES: &[u8] = include_bytes!("../../../models/big2-qnet-duty.pknn");
+
+/// The network is parsed once, on the first `medium` move, and shared by all games.
+fn qnet() -> Arc<QNet> {
+    static NET: OnceLock<Arc<QNet>> = OnceLock::new();
+    NET.get_or_init(|| {
+        Arc::new(QNet::from_bytes(QNET_BYTES).expect("the embedded network is valid"))
+    })
+    .clone()
+}
 
 /// Where a game started: a full deal, or a mid-game position (a drill).
 #[derive(Clone, Debug)]
@@ -316,8 +333,14 @@ impl Api {
         let start = Instant::now();
         let action = match level {
             "random" => legal[g.rng(level_index).gen_range(0..legal.len())],
-            "easy" => Greedy {
+            "easy" => StructuredGreedy {
                 epsilon: EASY_EPSILON,
+                ..StructuredGreedy::default()
+            }
+            .choose(&g.state, &legal, &mut g.rng(level_index)),
+            "medium" => QNetPolicy {
+                net: qnet(),
+                temperature: MEDIUM_TEMPERATURE,
             }
             .choose(&g.state, &legal, &mut g.rng(level_index)),
             _ => {
