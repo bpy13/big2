@@ -36,6 +36,7 @@
 use crate::analysis::{Analysis, MoveStats, Objective, Sums};
 use crate::belief::{Sampler, UniformSampler};
 use crate::endgame::Endgame;
+use crate::infoset_endgame::{infoset_endgame, InfosetConfig};
 use big2_games::{play_out, Estimate, Evaluator, Game, Outcome, Player, Policy, Transposable};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -67,6 +68,10 @@ pub struct IsmctsConfig {
     pub endgame_threshold: usize,
     /// Node budget per exact solve; when exceeded, fall back to a rollout.
     pub endgame_max_nodes: u64,
+    /// Answer exactly at the root once few cards are hidden from the observer
+    /// ([`crate::infoset_endgame`]: every deal solved); when its node budget runs
+    /// out, the normal search runs. `None` (the default) never does.
+    pub infoset_endgame: Option<InfosetConfig>,
 }
 
 impl Default for IsmctsConfig {
@@ -80,6 +85,7 @@ impl Default for IsmctsConfig {
             objective: Objective::Score,
             endgame_threshold: 0,
             endgame_max_nodes: 20_000,
+            infoset_endgame: None,
         }
     }
 }
@@ -184,6 +190,13 @@ where
     let start = Instant::now();
     let deadline = cfg.time_limit.map(|t| start + t);
     let threads = cfg.threads.max(1);
+    if let Some(ic) = &cfg.infoset_endgame {
+        if let Some(r) = infoset_endgame(state, observer, ic, cfg.objective, sampler) {
+            if r.exact {
+                return r.analysis;
+            }
+        }
+    }
 
     // One tree; `t` picks its seed and share of the iterations.
     let one_tree = |t: usize| -> TreeResult<G::Action> {

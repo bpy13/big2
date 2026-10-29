@@ -45,6 +45,7 @@
 use crate::analysis::{Analysis, MoveStats, Objective, Sums};
 use crate::belief::{Sampler, UniformSampler};
 use crate::endgame::Endgame;
+use crate::infoset_endgame::{infoset_endgame, InfosetConfig};
 use big2_games::{Estimate, Game, Player, Policy, PriorValue, Transposable};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
@@ -87,6 +88,10 @@ pub struct PuctConfig {
     /// A rollout that stops early is valued by the network at the position it
     /// reached (one more evaluation).
     pub rollout_moves: u32,
+    /// Answer exactly at the root once few cards are hidden from the observer
+    /// ([`crate::infoset_endgame`]: every deal solved, no network); when its node
+    /// budget runs out, the normal search runs. `None` (the default) never does.
+    pub infoset_endgame: Option<InfosetConfig>,
 }
 
 impl Default for PuctConfig {
@@ -103,6 +108,7 @@ impl Default for PuctConfig {
             anytime_first_ms: None,
             leaf_network_weight: 1.0,
             rollout_moves: 0,
+            infoset_endgame: None,
         }
     }
 }
@@ -253,6 +259,17 @@ where
         .anytime_first_ms
         .map(|ms| start + Duration::from_millis(ms));
     let threads = cfg.threads.max(1);
+    if let Some(ic) = &cfg.infoset_endgame {
+        if let Some(r) = infoset_endgame(state, observer, ic, cfg.objective, sampler) {
+            if r.exact {
+                return PuctAnalysis {
+                    analysis: r.analysis,
+                    first_answer: None,
+                    first_answer_simulations: 0,
+                };
+            }
+        }
+    }
 
     let one_tree = |t: usize| -> TreeResult<G::Action> {
         let sims = cfg.simulations / threads as u64
