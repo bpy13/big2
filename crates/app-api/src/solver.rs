@@ -9,7 +9,7 @@
 use big2_big2::bots::Greedy;
 use big2_big2::{Action, Scoring, State};
 use big2_games::Game;
-use big2_search::{ismcts, pimc, Analysis, IsmctsConfig, MoveStats, Objective, PimcConfig};
+use big2_search::{ismcts, pimc, Analysis, IsmctsConfig, Objective, PimcConfig};
 use std::time::Duration;
 use web_time::Instant;
 
@@ -24,11 +24,7 @@ pub const HINT_ITERATIONS: u64 = 20_000;
 /// Sampled deals per reviewed decision when the budget allows (as the web UI).
 pub const REVIEW_DEALS: u64 = 300;
 
-/// Deals run per PIMC call inside the review; the review checks the clock
-/// between chunks.
-const REVIEW_CHUNK: u64 = 20;
-
-/// ISMCTS iterations per bot level.
+/// ISMCTS iterations per search bot level (easy and medium are not searches).
 pub fn bot_iterations(level: &str) -> Option<u64> {
     match level {
         "medium" => Some(300),
@@ -65,9 +61,10 @@ pub fn ismcts_analysis(
 }
 
 /// PIMC for the player to move: up to `deals` sampled deals, stopping early
-/// when the next chunk would run past `deadline`. Every legal action gets the
-/// same number of rollouts, so the played move and the best move are compared
-/// fairly. At least one chunk always runs.
+/// at `deadline`. The engine checks the clock between deals and gives every
+/// legal action the same number of deals, so the played move and the best move
+/// are compared fairly. One thread: the same code path on native and in
+/// WebAssembly, and bit-identical to a run without a time limit.
 pub fn pimc_budgeted(
     state: &State,
     deals: u64,
@@ -75,79 +72,16 @@ pub fn pimc_budgeted(
     seed: u64,
 ) -> Analysis<Action> {
     let seat = state.current_player().expect("the deal is not over");
-    let start = Instant::now();
-    let mut merged: Option<Analysis<Action>> = None;
-    let mut done = 0u64;
-    let mut chunk_index = 0u64;
-    while done < deals {
-        let n = REVIEW_CHUNK.min(deals - done);
-        let cfg = PimcConfig {
-            determinizations: n,
-            threads: 1,
-            seed: seed.wrapping_add(chunk_index.wrapping_mul(0x9E37_79B9_7F4A_7C15)),
-            objective: Objective::Score,
-            ..PimcConfig::default()
-        };
-        let part = pimc(state, seat, &cfg, &rollout());
-        done += n;
-        chunk_index += 1;
-        merged = Some(match merged {
-            None => part,
-            Some(acc) => merge(acc, &part),
-        });
-        if let Some(d) = deadline {
-            let now = Instant::now();
-            // Would another chunk of the same size overrun the deadline?
-            let per_deal = now.duration_since(start) / done as u32;
-            if now + per_deal * REVIEW_CHUNK as u32 >= d {
-                break;
-            }
-        }
-    }
-    let mut out = merged.expect("at least one chunk ran");
-    out.elapsed = start.elapsed();
-    out
-}
-
-/// Adds the samples of `part` to `acc` (same position, so the same actions).
-/// Means and confidence intervals combine exactly from the per-move counts.
-fn merge(mut acc: Analysis<Action>, part: &Analysis<Action>) -> Analysis<Action> {
-    for m in &mut acc.moves {
-        if let Some(p) = part.moves.iter().find(|p| p.action == m.action) {
-            *m = merge_stats(m, p);
-        }
-    }
-    acc.simulations += part.simulations;
-    acc.moves
-        .sort_by(|a, b| b.mean_score.total_cmp(&a.mean_score));
-    acc
-}
-
-fn merge_stats(a: &MoveStats<Action>, b: &MoveStats<Action>) -> MoveStats<Action> {
-    let (na, nb) = (a.visits as f64, b.visits as f64);
-    let n = na + nb;
-    if n == 0.0 {
-        return a.clone();
-    }
-    // `score_ci95 = 1.96·√(var/n)`, so `var = (ci/1.96)²·n` and `E[x²] = var + mean²`.
-    let second_moment = |m: &MoveStats<Action>, k: f64| {
-        let var = (m.score_ci95 / 1.96).powi(2) * k;
-        var + m.mean_score * m.mean_score
+    let cfg = PimcConfig {
+        determinizations: deals,
+        time_limit: deadline.map(|d| d.saturating_duration_since(Instant::now())),
+        threads: 1,
+        seed,
+        objective: Objective::Score,
+        ..PimcConfig::default()
     };
-    let mean = (na * a.mean_score + nb * b.mean_score) / n;
-    let ex2 = (na * second_moment(a, na) + nb * second_moment(b, nb)) / n;
-    let var = (ex2 - mean * mean).max(0.0);
-    let p = (na * a.win_rate + nb * b.win_rate) / n;
-    MoveStats {
-        action: a.action,
-        visits: a.visits + b.visits,
-        mean_score: mean,
-        score_ci95: 1.96 * (var / n).sqrt(),
-        win_rate: p,
-        win_ci95: 1.96 * (p * (1.0 - p) / n).sqrt(),
-    }
+    pimc(state, seat, &cfg, &rollout())
 }
-
 /// Score points that one card left at the end is worth under `scoring`: the
 /// unit the grade thresholds are expressed in.
 ///
@@ -195,31 +129,5 @@ mod tests {
         assert_eq!(grade_for(false, 5.0, t), "mistake");
         assert_eq!(grade_for(false, 9.0, t), "blunder");
         assert_eq!(grade_for(false, 0.5, Scoring::WinLoss), "inaccuracy");
-    }
-
-    #[test]
-    fn merging_two_halves_matches_one_run_of_sums() {
-        let a = MoveStats {
-            action: Action::Pass,
-            visits: 2,
-            mean_score: 1.0,
-            score_ci95: 0.0, // both samples equal 1
-            win_rate: 1.0,
-            win_ci95: 0.0,
-        };
-        let b = MoveStats {
-            action: Action::Pass,
-            visits: 2,
-            mean_score: 3.0,
-            score_ci95: 0.0, // both samples equal 3
-            win_rate: 0.0,
-            win_ci95: 0.0,
-        };
-        let m = merge_stats(&a, &b);
-        assert_eq!(m.visits, 4);
-        assert!((m.mean_score - 2.0).abs() < 1e-9);
-        // Samples 1,1,3,3: variance 1, ci = 1.96·√(1/4).
-        assert!((m.score_ci95 - 0.98).abs() < 1e-9);
-        assert!((m.win_rate - 0.5).abs() < 1e-9);
     }
 }

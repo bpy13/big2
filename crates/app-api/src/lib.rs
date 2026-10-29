@@ -61,7 +61,13 @@ pub mod python {
 
         /// Releases the GIL while the search runs, so the server's other
         /// coroutines keep going during a bot's think time.
-        pub fn bot_action(&self, py: Python<'_>, game_id: &str, level: &str, budget_ms: u32) -> String {
+        pub fn bot_action(
+            &self,
+            py: Python<'_>,
+            game_id: &str,
+            level: &str,
+            budget_ms: u32,
+        ) -> String {
             py.detach(|| self.inner.bot_action(game_id, level, budget_ms))
         }
 
@@ -87,7 +93,13 @@ pub mod python {
             py.detach(|| self.inner.review(game_id, seat, budget_ms))
         }
 
-        pub fn grade(&self, py: Python<'_>, position: &str, action: &str, budget_ms: u32) -> String {
+        pub fn grade(
+            &self,
+            py: Python<'_>,
+            position: &str,
+            action: &str,
+            budget_ms: u32,
+        ) -> String {
             py.detach(|| self.inner.grade(position, action, budget_ms))
         }
 
