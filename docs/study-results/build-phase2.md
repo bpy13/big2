@@ -21,7 +21,9 @@ below are copied from `runs/p2_matches/*/table.md`.
 in `ABAB`, and it loses clearly at equal wall time. A10 fails: the distribution head loses to
 Task 7's mean-score network under `win_loss` and in `ABAB` under tiered. `c_puct = 2.5` is the
 best of the three values tried, all negative. The plan's fallback (Task 15 notes, proposal §10
-row 2) follows in §6.
+row 2) is in §6: the prior is well calibrated, the value is over-spread; a leaf value
+`0.5·network + 0.5·rollout` lifts PUCT by about 1.6–2.0 points to a tie with ISMCTS-1000
+(+0.30 and +0.61, intervals covering 0, 300 deals), still short of A9 and 19× dearer per move.
 
 Reading the tables: "paired diff" is the candidate's mean minus the opponent's mean per deal
 (in `ABAB` that is twice the candidate's mean, since the game is zero-sum). In `1+3` a neutral
@@ -195,4 +197,31 @@ ISMCTS-1000 does: the rollout mix in §6.2 adds real play-outs back into the lea
 
 ### 6.2 Leaf value `λ · network + (1 − λ) · rollout` (e)
 
-(job running; see the plan's Task 15 status line)
+`experiments/build_phase2.py rollout-leaf`: PUCT-2000, `c_puct = 2.5` (§4's best), against
+ISMCTS-1000 on deals 0…299, both lineups. The leaf rollout is the greedy policy with epsilon
+0.1 that ISMCTS-1000 itself plays, to the end of the deal (`rollout_moves = 0`); Task 5's
+structured rollout did not beat it (A4). λ = 0 is the control: the network's prior orders the
+tries, rollouts alone value them. Job 2026-10-30 01:34–03:07, 6 workers, under outside load
+(and limited to logical CPUs 4–19 from 01:40), so the seconds per move are high for both sides.
+Raw output: `runs/p2_fallback/e_rollout_leaf/`.
+
+| Match | Lineup | Deals | Candidate mean per game (95% CI) | Candidate win rate (95% CI) | Opponent mean | Opponent win rate | Paired diff (95% CI) | s per move cand / opp |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| λ = 0.5 | 1+3 | 300 | +0.22 [-0.59, +1.09] | 22.1% [20.4%, 23.7%] | -0.07 | 26.0% | +0.30 [-0.84, +1.41] | 0.226 / 0.012 |
+| λ = 0.5 | ABAB | 300 | +0.31 [-0.27, +0.85] | 23.2% [22.1%, 24.3%] | -0.31 | 26.8% | +0.61 [-0.56, +1.73] | 0.225 / 0.013 |
+| λ = 0.0 | 1+3 | 300 | -0.49 [-1.34, +0.35] | 23.4% [21.8%, 25.2%] | +0.16 | 25.5% | -0.65 [-1.75, +0.42] | 0.506 / 0.028 |
+| λ = 0.0 | ABAB | 300 | +0.31 [-0.16, +0.76] | 25.3% [24.2%, 26.3%] | -0.31 | 24.7% | +0.62 [-0.28, +1.57] | 0.458 / 0.025 |
+
+For comparison, the network-only leaf (λ = 1) with the same `c_puct` on the same 300 deals (§4):
+−1.28 [−2.47, −0.10] in `1+3`, −1.39 [−2.54, −0.22] in `ABAB`.
+
+**Verdict: the fallback fails the bar, but the rollout mix helps.** Neither λ passes the A9
+screen (paired diff ≥ +1.0, interval above 0) in either lineup; every interval covers 0, so
+PUCT with a rollout ties ISMCTS-1000. Against the network-only leaf on the same deals, λ = 0.5
+gains about +1.6 (`1+3`) and +2.0 (`ABAB`) points, and the win rate climbs from 17–19 % to
+22–23 %: mixing real play-outs into the leaf removes most of the network value's damage
+(§6.1: over-spread and optimistic). λ = 0.5 is at least as good as λ = 0 (`1+3` +0.30 against
+−0.65; `ABAB` equal), so the network value adds a little on top of rollouts, not much. The cost
+stays high: PUCT-2000 with rollouts takes about 19× the time per move of ISMCTS-1000, so at
+equal time it would lose (§2). Proposal §10 row 2 now says: one more round of expert iteration,
+then ship ISMCTS as `expert` if PUCT still only ties. The next step is in `docs/open-items.md`.
