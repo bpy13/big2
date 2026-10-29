@@ -272,7 +272,9 @@ def test_distill_gen_round0_fields(tmp_path: Path) -> None:
     winner_abs = (z["player"] + np.argmax(fc == 0, axis=1)) % 4
     assert len(set(winner_abs.tolist())) <= 2  # one winner per deal
     nl = z["next_leader"]
-    assert ((nl >= -1) & (nl <= 3)).all() and (nl >= 0).any() and (nl == -1).any()
+    # -1 appears only when a searched decision sits in the deal's last trick; a deal
+    # whose last trick is one forced lead (the winner's only legal move) has none.
+    assert ((nl >= -1) & (nl <= 3)).all() and (nl >= 0).any()
     # The binding lists every legal action once.
     s = Rules().new_deal(seed=0)
     assert sorted(c for c, _, _ in candidates(s)) == sorted(s.legal_actions())
@@ -282,6 +284,107 @@ def test_distill_gen_round0_fields(tmp_path: Path) -> None:
     assert progress["candidate_rows"] == rows and results["config"]["rollout"] == "greedy"
     # A target already reached returns at once (the resume path of the long job).
     assert distill.generate(str(data), workers=1, iterations=100, target_decisions=d) == 0
+
+
+def test_qnet_v2_shapes_and_size() -> None:
+    """Task 12: per candidate 4 × 14 cards-left logits and one prior logit; ~0.8–1.0 M
+    parameters with the v1 towers (state 512–256, move 128)."""
+    from big2.rl.model import QNetV2, V2Scorer
+
+    net = QNetV2()
+    params = sum(p.numel() for p in net.parameters())
+    assert 800_000 <= params <= 1_000_000, params
+    st = torch.rand(3, STATE_LEN).round()
+    ac = torch.rand(7, ACTION_LEN).round()
+    index = torch.tensor([0, 0, 1, 1, 1, 2, 2])
+    dist, prior = net(st, ac, index)
+    assert dist.shape == (7, 4, 14) and prior.shape == (7,)
+    for mode in ("prior", "score"):
+        score, zero = V2Scorer(net, mode)(st, ac, index)
+        assert score.shape == (7,) and not zero.any()
+
+
+def test_v2_payoff_reproduces_the_rules_settlement() -> None:
+    """Task 12: the tiered payoff is rules §7.1's penalty table; one-hot distributions
+    of a finished deal give exactly the engine's scores under every scoring."""
+    from big2.rl.model import payoff, seat_scores
+
+    assert payoff("tiered").tolist() == [0, 1, 2, 3, 4, 5, 6, 7, 16, 18, 30, 33, 36, 52]
+    assert payoff("original").tolist() == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 20, 22, 24, 39]
+    assert payoff("win_loss").tolist() == [0] + [1] * 13
+    with pytest.raises(ValueError):
+        payoff("sum_of_others")
+    rng = np.random.default_rng(5)
+    for scoring in ("tiered", "original", "win_loss"):
+        for seed in range(20):
+            s = Rules(scoring=scoring).new_deal(seed=seed)
+            while not s.is_terminal:
+                legal = s.legal_actions()
+                s.apply(legal[int(rng.integers(len(legal)))])
+            onehot = torch.nn.functional.one_hot(torch.tensor(s.hand_sizes), 14).float()
+            got = seat_scores(onehot, scoring).tolist()
+            assert got == pytest.approx(list(s.scores), abs=1e-5), (scoring, s.hand_sizes)
+
+
+def test_v2_segment_log_softmax_matches_per_group() -> None:
+    from big2.rl.model import segment_log_softmax
+
+    logits = torch.tensor([1.0, 2.0, -3.0, 0.5, 40.0, 41.0])
+    index = torch.tensor([0, 0, 0, 1, 2, 2])
+    got = segment_log_softmax(logits, index, 3)
+    want = torch.cat(
+        [logits[:3].log_softmax(0), logits[3:4].log_softmax(0), logits[4:].log_softmax(0)]
+    )
+    assert torch.allclose(got, want, atol=1e-6)
+
+
+@pytest.mark.parametrize("device", DEVICES)
+def test_distill_train_v2_writes_results_and_resumes(tmp_path: Path, device: str) -> None:
+    """Task 12: ``train_v2`` on format-2 shards writes per-head validation losses,
+    ``best.pt``, ``latest.pt``, progress and results, and resumes from ``latest.pt``."""
+    import json
+    import shutil
+
+    from big2.rl import distill
+
+    data = tmp_path / "data"
+    distill.generate(str(data), workers=1, minutes=0, iterations=50, shard_games=2)
+    (shard,) = data.glob("*.npz")
+    shutil.copy(shard, data / "z_copy.npz")  # two shards: one held out, one for training
+    cfg = distill.DistillV2Config(
+        data_dir=str(data),
+        run_dir=str(tmp_path / "run"),
+        max_minutes=0.05,
+        eval_every_minutes=0.02,
+        eval_deals=2,
+        batch_size=16,
+        val_every=2,
+        warmup_steps=5,
+        device=device,
+        net=distill.NetConfigV2(state_hidden=32, state_out=16, action_out=16, head_hidden=32),
+    )
+    run = distill.train_v2(cfg, log=lambda r: None)
+    results = json.loads((run / "results.json").read_text())
+    assert results["status"] == "done"
+    heads = results["val_loss_per_head"]
+    assert set(heads) == {"actor", "seats", "prior", "score"}
+    assert all(v is not None and v > 0 for v in heads.values()), heads
+    assert results["val_decisions"] > 0 and results["decisions"] == 2 * results["val_decisions"]
+    assert (run / "best.pt").exists() and (run / "latest.pt").exists()
+    net, ckpt = distill.load_qnet_v2(run / "best.pt")
+    assert ckpt["arch"] == "qnet_v2" and net.cfg.head_hidden == 32
+    steps = torch.load(run / "latest.pt", weights_only=False)["info"]["steps"]
+    resumed = replace(cfg, max_minutes=0.1, resume=str(run / "latest.pt"))
+    distill.train_v2(resumed, log=lambda r: None)
+    info = torch.load(run / "latest.pt", weights_only=False)["info"]
+    assert info["steps"] > steps and len(info["history"]) >= 2
+    with pytest.raises(ValueError, match="v2"):
+        distill.load_qnet_v2(_v1_checkpoint(tmp_path / "v1.pt"))
+
+
+def _v1_checkpoint(path: Path) -> Path:
+    torch.save({"model": QNet().state_dict(), "net_config": QNet().config_dict()}, path)
+    return path
 
 
 @pytest.mark.parametrize("device", DEVICES)

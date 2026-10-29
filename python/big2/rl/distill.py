@@ -62,7 +62,19 @@ from big2.rl.dmc import (
     evaluate_vs_greedy,
     save_checkpoint,
 )
-from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
+from big2.rl.model import (
+    ACTION_LEN,
+    MAX_CARDS,
+    SCORE_SCALE,
+    STATE_LEN,
+    NetConfig,
+    NetConfigV2,
+    QNet,
+    QNetV2,
+    V2Scorer,
+    seat_scores,
+    segment_log_softmax,
+)
 
 # ---------------------------------------------------------------------------
 # Data generation
@@ -514,4 +526,386 @@ def train(cfg: DistillConfig, log: Any = print) -> Path:
                 logf.write(json.dumps(rec) + "\n")
                 logf.flush()
                 log(rec)
+    return run
+
+
+# ---------------------------------------------------------------------------
+# Network v2 training (plan Task 12): distributions, all seats, prior
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class DistillV2Config:
+    """Settings of :func:`train_v2`. Loss weights default to 1 : 1 : 1 for the three
+    heads (open question 8 of the build plan), plus ``score_weight`` for the
+    auxiliary mean-score loss (see :func:`train_v2`)."""
+
+    data_dir: str = "runs/round0/data"
+    run_dir: str = "runs/net_r0"
+    lr: float = 1e-3
+    weight_decay: float = 1e-4
+    warmup_steps: int = 500
+    batch_size: int = 2048  # decisions per minibatch
+    #: Every ``val_every``-th shard (by sorted name) is held out for validation.
+    val_every: int = 50
+    actor_weight: float = 1.0  # the actor's cards-left distribution
+    seats_weight: float = 1.0  # the three opponents' distributions
+    prior_weight: float = 1.0  # the policy logit vs the search's visit shares
+    #: Mean score from the distributions vs the search's mean score for every
+    #: candidate it simulated (weight min(visits, cap) / cap; 0 under ``min_visits``).
+    score_weight: float = 0.5
+    visit_cap: int = 200
+    min_visits: int = 20
+    eval_every_minutes: float = 5.0
+    eval_deals: int = 128  # per evaluation mode (prior, score) vs 3 greedy
+    #: Stop after this many evaluations without a better validation loss (0: never).
+    patience: int = 8
+    max_minutes: float = 180.0  # total over resumes
+    resume: str | None = None
+    seed: int = 0
+    device: str = "auto"
+    rules: dict[str, Any] = field(default_factory=dict)
+    net: NetConfigV2 = field(default_factory=NetConfigV2)
+
+
+class _DataV2:
+    """Every shard of a folder in contiguous arrays (moved to the training device).
+
+    Per decision: ``states`` [D, STATE_LEN] u8, ``lo``/``count`` (its candidate rows),
+    ``chosen`` (the played candidate's global row), ``final_cards`` [D, 4]. Per
+    candidate: ``actions`` [N, ACTION_LEN] u8, ``visits``, ``score``. ``val`` marks
+    the decisions of held-out shards.
+    """
+
+    def __init__(self, data_dir: str, val_every: int, log: Any = print) -> None:
+        files = sorted(p for p in Path(data_dir).glob("*.npz") if not p.name.endswith(".tmp.npz"))
+        if not files:
+            raise RuntimeError(f"no shards in {data_dir}")
+        counts = [_shard_counts(p) for p in files]
+        d_total, n_total = sum(c[0] for c in counts), sum(c[1] for c in counts)
+        log(f"loading {len(files)} shards: {d_total:,} decisions, {n_total:,} candidates")
+        self.states = np.empty((d_total, STATE_LEN), dtype=np.uint8)
+        self.final_cards = np.empty((d_total, 4), dtype=np.int64)
+        self.lo = np.empty(d_total, dtype=np.int64)
+        self.count = np.empty(d_total, dtype=np.int64)
+        self.chosen = np.empty(d_total, dtype=np.int64)
+        self.val = np.zeros(d_total, dtype=bool)
+        self.actions = np.empty((n_total, ACTION_LEN), dtype=np.uint8)
+        self.visits = np.empty(n_total, dtype=np.float32)
+        self.score = np.empty(n_total, dtype=np.float32)
+        d0 = n0 = 0
+        for k, p in enumerate(files):
+            with np.load(p) as z:
+                shard_format = int(z["format"]) if "format" in z.files else 1
+                if shard_format != SHARD_FORMAT:
+                    raise ValueError(f"{p.name}: v2 training needs shard format {SHARD_FORMAT}")
+                d, n = len(z["states"]), len(z["owner"])
+                lo = np.searchsorted(z["owner"], np.arange(d), side="left")
+                hi = np.searchsorted(z["owner"], np.arange(d), side="right")
+                self.states[d0 : d0 + d] = z["states"]
+                self.final_cards[d0 : d0 + d] = z["final_cards"]
+                self.lo[d0 : d0 + d] = n0 + lo
+                self.count[d0 : d0 + d] = hi - lo
+                self.chosen[d0 : d0 + d] = n0 + lo + z["chosen"].astype(np.int64)
+                self.val[d0 : d0 + d] = k % val_every == 0
+                self.actions[n0 : n0 + n] = z["actions"]
+                self.visits[n0 : n0 + n] = z["visits"]
+                self.score[n0 : n0 + n] = z["score"]
+            d0, n0 = d0 + d, n0 + n
+        assert (d0, n0) == (d_total, n_total)
+        assert (self.count >= 1).all() and (self.chosen < self.lo + self.count).all()
+
+    def to(self, device: str) -> dict[str, torch.Tensor]:
+        """The arrays as tensors on ``device`` (features stay uint8 until a batch)."""
+        names = ("states", "final_cards", "lo", "count", "chosen", "actions", "visits", "score")
+        t = {k: torch.from_numpy(getattr(self, k)).to(device) for k in names}
+        val = torch.from_numpy(self.val)
+        t["train_ids"] = torch.nonzero(~val).squeeze(1).to(device)
+        t["val_ids"] = torch.nonzero(val).squeeze(1).to(device)
+        return t
+
+
+def _v2_batch(t: dict[str, torch.Tensor], d: torch.Tensor) -> dict[str, torch.Tensor]:
+    """The decisions ``d`` (global ids) with all their candidates, as float inputs."""
+    cnt = t["count"][d]
+    starts = torch.cumsum(cnt, 0) - cnt
+    index = torch.repeat_interleave(torch.arange(len(d), device=d.device), cnt)
+    rows = t["lo"][d][index] + torch.arange(len(index), device=d.device) - starts[index]
+    return {
+        "states": t["states"][d].float(),
+        "actions": t["actions"][rows].float(),
+        "index": index,
+        "chosen": starts + (t["chosen"][d] - t["lo"][d]),
+        "final_cards": t["final_cards"][d],
+        "visits": t["visits"][rows],
+        "score": t["score"][rows],
+    }
+
+
+def v2_losses(
+    net: QNetV2, b: dict[str, torch.Tensor], cfg: DistillV2Config
+) -> dict[str, torch.Tensor]:
+    """Per-head losses of one batch (see :func:`train_v2`), plus ``total`` and the
+    prior's top-1 agreement with the search's most-visited move (``prior_top1``)."""
+    groups = len(b["states"])
+    dist, prior = net(b["states"], b["actions"], b["index"])
+    played = dist[b["chosen"]]  # [B, 4, 14]
+    cards = b["final_cards"].clamp(0, MAX_CARDS)
+    actor = nn.functional.cross_entropy(played[:, 0], cards[:, 0])
+    seats = nn.functional.cross_entropy(
+        played[:, 1:].reshape(-1, MAX_CARDS + 1), cards[:, 1:].reshape(-1)
+    )
+    # Prior: cross-entropy against the visit shares within each decision.
+    logp = segment_log_softmax(prior, b["index"], groups)
+    vis = b["visits"]
+    total_vis = torch.zeros(groups, device=vis.device).index_add(0, b["index"], vis)
+    share = vis / total_vis.clamp(min=1.0)[b["index"]]
+    prior_ce = -(share * logp).sum() / groups
+    # Auxiliary: the tiered mean score from the distributions vs the search's mean score.
+    w = torch.where(vis >= cfg.min_visits, vis.clamp(max=cfg.visit_cap) / cfg.visit_cap, 0.0)
+    pred = seat_scores(dist.softmax(-1), "tiered")[:, 0]
+    score_mse = (w * ((pred - b["score"]) / SCORE_SCALE) ** 2).sum() / w.sum().clamp(min=1e-6)
+    total = (
+        cfg.actor_weight * actor
+        + cfg.seats_weight * seats
+        + cfg.prior_weight * prior_ce
+        + cfg.score_weight * score_mse
+    )
+    with torch.no_grad():
+        m = torch.full((groups,), -torch.inf, device=vis.device)
+        best_vis = m.scatter_reduce(0, b["index"], vis, reduce="amax")
+        best_pri = m.scatter_reduce(0, b["index"], prior, reduce="amax")
+        hit = (vis == best_vis[b["index"]]) & (prior == best_pri[b["index"]])
+        top1 = torch.zeros(groups, device=vis.device).index_add(0, b["index"], hit.float())
+    return {
+        "total": total,
+        "actor": actor,
+        "seats": seats,
+        "prior": prior_ce,
+        "score": score_mse,
+        "prior_top1": (top1 > 0).float().mean(),
+    }
+
+
+@torch.no_grad()
+def _validate(
+    net: QNetV2, t: dict[str, torch.Tensor], cfg: DistillV2Config, batch: int = 4096
+) -> dict[str, float]:
+    """Mean losses over the held-out decisions, weighted by batch size."""
+    net.eval()
+    ids = t["val_ids"]
+    sums: dict[str, float] = {}
+    for i in range(0, len(ids), batch):
+        d = ids[i : i + batch]
+        out = v2_losses(net, _v2_batch(t, d), cfg)
+        for k, v in out.items():
+            sums[k] = sums.get(k, 0.0) + float(v) * len(d)
+    net.train()
+    res = {f"val_{k}": v / len(ids) for k, v in sums.items()}
+    res["val_score_rms_points"] = math.sqrt(res["val_score"]) * SCORE_SCALE
+    return res
+
+
+def _save_v2(
+    path: Path,
+    net: QNetV2,
+    cfg: DistillV2Config,
+    info: dict[str, Any],
+    opt: torch.optim.Optimizer | None = None,
+) -> None:
+    payload: dict[str, Any] = {
+        "arch": "qnet_v2",
+        "model": {k: v.detach().cpu() for k, v in net.state_dict().items()},
+        "net_config": net.config_dict(),
+        "train_config": asdict(cfg),
+        "info": info,
+    }
+    if opt is not None:
+        payload["optimizer"] = opt.state_dict()
+    tmp = path.with_suffix(".tmp")
+    torch.save(payload, tmp)
+    tmp.replace(path)
+
+
+def load_qnet_v2(checkpoint: str | Path, device: str = "cpu") -> tuple[QNetV2, dict[str, Any]]:
+    """Loads a :func:`train_v2` checkpoint; returns ``(network in eval mode, checkpoint)``."""
+    ckpt = torch.load(str(checkpoint), map_location=device, weights_only=False)
+    if ckpt.get("arch") != "qnet_v2":
+        raise ValueError(f"{checkpoint} is not a v2 network checkpoint")
+    net = QNetV2(NetConfigV2(**ckpt["net_config"])).to(device)
+    net.load_state_dict(ckpt["model"])
+    net.eval()
+    return net, ckpt
+
+
+def train_v2(cfg: DistillV2Config, log: Any = print) -> Path:
+    """Trains :class:`QNetV2` on format-2 shards (Task 11's round-0 data).
+
+    Losses per decision: cross-entropy of the actor's cards-left distribution
+    (``actor``) and of the three opponents' (``seats``) for the move actually played
+    (the shards hold the real deal's outcome for that move only), cross-entropy of
+    the prior against the search's visit shares (``prior``), and the auxiliary
+    ``score`` loss (squared error, in units of :data:`SCORE_SCALE`, between the tiered
+    mean score of each candidate's distributions and the search's mean score,
+    weighted by visits): it gives the distributions of the moves not played a
+    low-noise target.
+
+    Every ``eval_every_minutes``: validation losses on held-out shards, two short
+    matches vs 3 greedy (playing by the prior, and by the expected score),
+    ``latest.pt``, ``progress.json``; ``best.pt`` when the validation total improves.
+    Ends after ``max_minutes`` (counting resumed time) or ``patience`` evaluations
+    without improvement, writing ``results.json``.
+    """
+    cfg = replace(cfg, device=resolve_device(cfg.device))
+    dev = cfg.device
+    run = Path(cfg.run_dir)
+    run.mkdir(parents=True, exist_ok=True)
+    (run / "config.json").write_text(json.dumps(asdict(cfg), indent=2))
+    torch.manual_seed(cfg.seed)
+    if dev == "cuda":
+        torch.backends.cuda.matmul.allow_tf32 = True
+    net = QNetV2(cfg.net).to(dev)
+    opt = torch.optim.AdamW(net.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
+    steps, prev_minutes, best, stale = 0, 0.0, math.inf, 0
+    history: list[dict[str, Any]] = []
+    if cfg.resume:
+        ckpt = torch.load(cfg.resume, map_location=dev, weights_only=False)
+        net.load_state_dict(ckpt["model"])
+        opt.load_state_dict(ckpt["optimizer"])
+        info = ckpt["info"]
+        steps, prev_minutes = int(info["steps"]), float(info["minutes"])
+        best, stale = float(info["best_val_total"]), int(info["stale"])
+        history = list(info.get("history", []))
+        torch.manual_seed(cfg.seed + steps)
+    params = sum(p.numel() for p in net.parameters())
+    t_load = time.time()
+    data = _DataV2(cfg.data_dir, cfg.val_every, log=log)
+    t = data.to(dev)
+    sizes = {
+        "decisions": len(data.states),
+        "candidates": len(data.actions),
+        "val_decisions": int(data.val.sum()),
+    }
+    del data
+    log(f"data on {dev} in {time.time() - t_load:.0f} s: {sizes}; {params:,} parameters")
+    adev = actor_device(dev)
+    actor = QNetV2(cfg.net).to(adev)
+    t0 = time.time()
+
+    def minutes() -> float:
+        return prev_minutes + (time.time() - t0) / 60
+
+    def lr_at(m: float) -> float:
+        warm = min(1.0, (steps + 1) / cfg.warmup_steps)
+        cos = 0.5 * (1 + math.cos(math.pi * min(1.0, m / cfg.max_minutes)))
+        return cfg.lr * warm * (0.05 + 0.95 * cos)
+
+    def write_progress(status: str, extra: dict[str, Any]) -> None:
+        state = {
+            "status": status,
+            "steps": steps,
+            "minutes": round(minutes(), 1),
+            "max_minutes": cfg.max_minutes,
+            "best_val_total": best,
+            "evals_without_improvement": stale,
+            "parameters": params,
+            **sizes,
+            **extra,
+            "updated": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "next": "nothing" if status == "done" else "more steps",
+        }
+        _write_json(run / ("results.json" if status == "done" else "progress.json"), state)
+        if status == "done":
+            _write_json(run / "progress.json", state)
+
+    write_progress("running", {"note": "data loaded, training"})
+    gen = torch.Generator(device=dev).manual_seed(cfg.seed + steps)
+    train_ids = t["train_ids"]
+    running: dict[str, list[float]] = {}
+    logf = (run / "log.jsonl").open("a")
+
+    def evaluate_and_save() -> None:
+        """Validation, matches vs greedy, checkpoints, progress (once per interval)."""
+        nonlocal best, stale
+        rec: dict[str, Any] = {
+            "step": steps,
+            "minutes": round(minutes(), 2),
+            "lr": lr_at(minutes()),
+            **{f"train_{k}": float(np.mean(v)) for k, v in running.items()},
+            **_validate(net, t, cfg),
+        }
+        running.clear()
+        actor.load_state_dict(net.state_dict())
+        actor.eval()
+        for mode in ("prior", "score"):
+            ev = evaluate_vs_greedy(
+                V2Scorer(actor, mode), cfg.eval_deals, seed=10_000, rules=cfg.rules, device=adev
+            )
+            rec[f"greedy_{mode}"] = round(ev["eval_score"], 3)
+            rec[f"greedy_{mode}_ci95"] = round(ev["eval_score_ci95"], 3)
+        improved = rec["val_total"] < best
+        if improved:
+            best, stale = rec["val_total"], 0
+        else:
+            stale += 1
+        rec["best"] = improved
+        history.append(rec)
+        info = {
+            "steps": steps,
+            "minutes": minutes(),
+            "best_val_total": best,
+            "stale": stale,
+            "history": history,
+            **rec,
+        }
+        if improved:
+            _save_v2(run / "best.pt", net, cfg, info)
+        _save_v2(run / "latest.pt", net, cfg, info, opt)
+        logf.write(json.dumps(rec) + "\n")
+        logf.flush()
+        log(rec)
+        write_progress("running", {"last": rec})
+
+    last_eval = time.time()
+    done_reason = "max_minutes"
+    trained_since_eval = False
+    try:
+        while minutes() < cfg.max_minutes:
+            for g in opt.param_groups:
+                g["lr"] = lr_at(minutes())
+            pick = torch.randint(len(train_ids), (cfg.batch_size,), device=dev, generator=gen)
+            out = v2_losses(net, _v2_batch(t, train_ids[pick]), cfg)
+            opt.zero_grad(set_to_none=True)
+            torch.autograd.backward(out["total"])
+            nn.utils.clip_grad_norm_(net.parameters(), 5.0)
+            opt.step()
+            steps += 1
+            trained_since_eval = True
+            if steps % 50 == 1:
+                for k, v in out.items():
+                    running.setdefault(k, []).append(float(v.detach()))
+            if time.time() - last_eval < 60 * cfg.eval_every_minutes:
+                continue
+            last_eval = time.time()
+            evaluate_and_save()
+            trained_since_eval = False
+            if cfg.patience and stale >= cfg.patience:
+                done_reason = f"no better validation loss in {stale} evaluations"
+                break
+        if trained_since_eval:  # the time ran out between two evaluations
+            evaluate_and_save()
+    finally:
+        logf.close()
+    best_rec = min(history, key=lambda r: r["val_total"]) if history else {}
+    write_progress(
+        "done",
+        {
+            "stopped": done_reason,
+            "best": best_rec,
+            "val_loss_per_head": {
+                k: best_rec.get(f"val_{k}") for k in ("actor", "seats", "prior", "score")
+            },
+            "last": history[-1] if history else {},
+        },
+    )
     return run
