@@ -517,7 +517,9 @@ def rl_distill_train(
     ] = "v1",
     patience: Annotated[
         int, typer.Option(help="v2: stop after this many evaluations without improvement.")
-    ] = 8,
+    ] = 6,
+    lr: Annotated[float | None, typer.Option(help="v2: peak learning rate.")] = None,
+    dropout: Annotated[float | None, typer.Option(help="v2: dropout while training.")] = None,
 ) -> None:
     """Train a Q-network on solver-labelled data."""
     from big2.rl.distill import DistillConfig, DistillV2Config, train, train_v2
@@ -535,6 +537,10 @@ def rl_distill_train(
             device=device,
             rules=Rules(last_card_duty=last_card_duty).kwargs(),
         )
+        if lr is not None:
+            cfg2.lr = lr
+        if dropout is not None:
+            cfg2.net.dropout = dropout
         _set_threads(threads)
         _show_device(device)
         train_v2(cfg2, log=lambda r: console.print(r))

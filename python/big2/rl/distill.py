@@ -542,8 +542,11 @@ class DistillV2Config:
 
     data_dir: str = "runs/round0/data"
     run_dir: str = "runs/net_r0"
-    lr: float = 1e-3
-    weight_decay: float = 1e-4
+    # Regularized after the first round-0 run (lr 1e-3, weight decay 1e-4, no dropout),
+    # whose distribution heads overfitted within 10 minutes (~7 passes over the data;
+    # the ~45 decisions of a deal share one outcome).
+    lr: float = 3e-4
+    weight_decay: float = 0.05
     warmup_steps: int = 500
     batch_size: int = 2048  # decisions per minibatch
     #: Every ``val_every``-th shard (by sorted name) is held out for validation.
@@ -559,13 +562,13 @@ class DistillV2Config:
     eval_every_minutes: float = 5.0
     eval_deals: int = 128  # per evaluation mode (prior, score) vs 3 greedy
     #: Stop after this many evaluations without a better validation loss (0: never).
-    patience: int = 8
+    patience: int = 6
     max_minutes: float = 180.0  # total over resumes
     resume: str | None = None
     seed: int = 0
     device: str = "auto"
     rules: dict[str, Any] = field(default_factory=dict)
-    net: NetConfigV2 = field(default_factory=NetConfigV2)
+    net: NetConfigV2 = field(default_factory=lambda: NetConfigV2(dropout=0.2))
 
 
 class _DataV2:
