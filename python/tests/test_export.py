@@ -273,3 +273,31 @@ def test_distilled_duty_network_in_rust_matches_pytorch(qnet_dump: Path, tmp_pat
     print(f"\nRust (mixed int8/f16) vs PyTorch on 1,000 positions: {m}")
     assert m["agreement"] >= 0.99, m
     assert m["rms_points"] < 0.05, m
+
+
+def test_puct_leaf_network_weight_through_analyze(tmp_path: Path) -> None:
+    """Task 15 fallback: ``leaf_network_weight`` reaches PUCT through ``analyze`` and the
+    ``puct:`` agent spec; 1 (the default) gives the network-only search exactly."""
+    from big2._core import Big2State, analyze
+    from big2.agents import make_agent
+
+    pknn = export_pknn(
+        small_v2_checkpoint(tmp_path / "small-v2.pt"), tmp_path / "v2.pknn", precision="f32"
+    )
+    state = Big2State.new_deal(3)
+    kw = {"algorithm": "puct", "iterations": 200, "seed": 5, "net": str(pknn)}
+    plain = analyze(state, **kw)
+    assert analyze(state, **kw, leaf_network_weight=1.0)["moves"] == plain["moves"]
+    mixed = analyze(state, **kw, leaf_network_weight=0.5, rollout_moves=0)
+    assert mixed["simulations"] == 200
+    assert sum(m["visits"] for m in mixed["moves"]) == 200
+    assert mixed["moves"] != plain["moves"]
+    short = analyze(state, **kw, leaf_network_weight=0.0, rollout_moves=4, rollout="structured")
+    assert short["simulations"] == 200
+    with pytest.raises(ValueError, match="between 0 and 1"):
+        analyze(state, **kw, leaf_network_weight=1.5)
+    with pytest.raises(ValueError, match="only supported with puct"):
+        analyze(state, iterations=10, leaf_network_weight=0.5)
+    agent = make_agent(f"puct:net={pknn},simulations=50,leaf_network_weight=0.5,c_puct=2.5")
+    legal = state.legal_actions()
+    assert agent.act(state) in legal

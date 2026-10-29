@@ -19,8 +19,8 @@ use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
 use big2_games::{Game, Policy};
 use big2_search::{
-    ismcts_with, pimc, puct, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective,
-    OracleSampler, PimcConfig, PolicyModel, PuctConfig, UniformSampler,
+    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf,
+    Objective, OracleSampler, PimcConfig, PolicyModel, PuctConfig, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -468,9 +468,12 @@ impl PyState {
 /// `anytime_first_ms` records the move it would have played after that many
 /// milliseconds as `first_answer`. `rollout` is `"greedy"` (default) or
 /// `"structured"` (`StructuredGreedy` with `rollout_plan_depth`), both with
-/// `rollout_epsilon`; PUCT plays no rollouts. The GIL is released while searching.
+/// `rollout_epsilon`. PUCT plays no rollouts unless `leaf_network_weight` (λ,
+/// default 1) is below 1: then a new leaf's value is `λ · network + (1 − λ) ·
+/// rollout`, the rollout playing `rollout_moves` moves (default 0 = to the end of
+/// the deal) with the same `rollout` policy. The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -496,6 +499,8 @@ fn analyze<'py>(
     net: Option<&str>,
     c_puct: Option<f64>,
     anytime_first_ms: Option<u64>,
+    leaf_network_weight: Option<f64>,
+    rollout_moves: Option<u32>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let player = state
         .inner
@@ -531,10 +536,20 @@ fn analyze<'py>(
             "belief and value are only supported with ismcts",
         ));
     }
-    if algorithm != "puct" && (net.is_some() || c_puct.is_some() || anytime_first_ms.is_some()) {
+    if algorithm != "puct"
+        && (net.is_some()
+            || c_puct.is_some()
+            || anytime_first_ms.is_some()
+            || leaf_network_weight.is_some()
+            || rollout_moves.is_some())
+    {
         return Err(value_error(
-            "net, c_puct and anytime_first_ms are only supported with puct",
+            "net, c_puct, anytime_first_ms, leaf_network_weight and rollout_moves are only \
+             supported with puct",
         ));
+    }
+    if leaf_network_weight.is_some_and(|w| !(0.0..=1.0).contains(&w)) {
+        return Err(value_error("leaf_network_weight must be between 0 and 1"));
     }
     let value_net = value.map(load_value_net).transpose()?;
     let mut belief_ess = None;
@@ -603,8 +618,12 @@ fn analyze<'py>(
                 endgame_threshold,
                 endgame_max_nodes,
                 anytime_first_ms,
+                leaf_network_weight: leaf_network_weight.unwrap_or(defaults.leaf_network_weight),
+                rollout_moves: rollout_moves.unwrap_or(defaults.rollout_moves),
             };
-            let r = py.detach(|| puct(&s, player, &cfg, &*net));
+            // With λ = 1 (the default) the rollout is never played: same result as `puct`.
+            let r =
+                py.detach(|| puct_with_rollout(&s, player, &cfg, &*net, &UniformSampler, &rollout));
             first_answer = r.first_answer.map(|a| a.cards());
             r.analysis
         }

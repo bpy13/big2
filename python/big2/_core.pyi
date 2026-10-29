@@ -143,6 +143,9 @@ def analyze(
     net: str | None = None,  # puct only: a .pknn policy-value network (required)
     c_puct: float | None = None,  # puct only, default 1.5
     anytime_first_ms: int | None = None,  # puct only
+    # puct only: leaf = λ·network + (1−λ)·rollout (default 1: no rollout)
+    leaf_network_weight: float | None = None,
+    rollout_moves: int | None = None,  # puct only: rollout length, 0 = to the end
 ) -> AnalysisResult: ...
 def sample_deals(
     state: Big2State,

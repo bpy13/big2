@@ -17,7 +17,12 @@
 //!    and the network evaluates the position it leads to: its prior becomes the
 //!    node's `P`, its per-player scores and win probabilities the leaf value. A
 //!    finished game gives its outcome; a small position is solved exactly by
-//!    [`crate::endgame`] when `endgame_threshold` allows. There are no rollouts.
+//!    [`crate::endgame`] when `endgame_threshold` allows. By default there are no
+//!    rollouts. With `leaf_network_weight = λ < 1` ([`puct_with_rollout`]) the leaf
+//!    value is `λ · network + (1 − λ) · rollout`: a rollout policy plays on from the
+//!    leaf, to the end of the deal or for `rollout_moves` moves, after which the
+//!    network values the position it stopped at. The prior still comes from the
+//!    network, so `λ = 0` is "the network orders the tries, rollouts value them".
 //! 4. **Backpropagate** — as in ISMCTS, every node on the path records the value for
 //!    the player who chose its action (multi-player: each player maximizes their
 //!    own result).
@@ -73,6 +78,15 @@ pub struct PuctConfig {
     /// Record the best move as of this many milliseconds into the search
     /// ([`PuctAnalysis::first_answer`]); `None` records nothing.
     pub anytime_first_ms: Option<u64>,
+    /// Weight `λ` of the network in a new leaf's value, `λ · network + (1 − λ) ·
+    /// rollout` (build plan Task 15's fallback). `1` (the default) plays no rollout
+    /// and leaves the search exactly as without this setting; below 1 the search
+    /// needs a rollout policy ([`puct_with_rollout`]).
+    pub leaf_network_weight: f64,
+    /// Moves the leaf rollout plays before it stops (`0` = to the end of the deal).
+    /// A rollout that stops early is valued by the network at the position it
+    /// reached (one more evaluation).
+    pub rollout_moves: u32,
 }
 
 impl Default for PuctConfig {
@@ -87,7 +101,19 @@ impl Default for PuctConfig {
             endgame_threshold: 0,
             endgame_max_nodes: 20_000,
             anytime_first_ms: None,
+            leaf_network_weight: 1.0,
+            rollout_moves: 0,
         }
+    }
+}
+
+/// Placeholder rollout type for searches that play no rollouts ([`puct`],
+/// [`puct_with`]); never called.
+pub struct NoRollout;
+
+impl<G: Game> Policy<G> for NoRollout {
+    fn choose<R: Rng + ?Sized>(&self, _state: &G, _legal: &[G::Action], _rng: &mut R) -> G::Action {
+        unreachable!("NoRollout is never called: leaf_network_weight < 1 needs puct_with_rollout")
     }
 }
 
@@ -155,6 +181,9 @@ where
 }
 
 /// [`puct`] with a custom determinization `sampler`.
+///
+/// # Panics
+/// Also panics if `cfg.leaf_network_weight < 1` (that needs [`puct_with_rollout`]).
 pub fn puct_with<G, N, S>(
     state: &G,
     observer: Player,
@@ -167,6 +196,52 @@ where
     N: PriorValue<G>,
     S: Sampler<G>,
 {
+    assert!(
+        cfg.leaf_network_weight >= 1.0,
+        "leaf_network_weight < 1 mixes in rollouts: use puct_with_rollout"
+    );
+    run(state, observer, cfg, net, sampler, None::<&NoRollout>)
+}
+
+/// [`puct_with`] plus a `rollout` policy for the leaf value
+/// `λ · network + (1 − λ) · rollout` (`λ = cfg.leaf_network_weight`). With `λ = 1`
+/// the rollout is never played and the result is identical to [`puct_with`]'s.
+pub fn puct_with_rollout<G, N, S, P>(
+    state: &G,
+    observer: Player,
+    cfg: &PuctConfig,
+    net: &N,
+    sampler: &S,
+    rollout: &P,
+) -> PuctAnalysis<G::Action>
+where
+    G: Transposable,
+    N: PriorValue<G>,
+    S: Sampler<G>,
+    P: Policy<G>,
+{
+    run(state, observer, cfg, net, sampler, Some(rollout))
+}
+
+fn run<G, N, S, P>(
+    state: &G,
+    observer: Player,
+    cfg: &PuctConfig,
+    net: &N,
+    sampler: &S,
+    rollout: Option<&P>,
+) -> PuctAnalysis<G::Action>
+where
+    G: Transposable,
+    N: PriorValue<G>,
+    S: Sampler<G>,
+    P: Policy<G>,
+{
+    assert!(
+        (0.0..=1.0).contains(&cfg.leaf_network_weight),
+        "leaf_network_weight must be in [0, 1], got {}",
+        cfg.leaf_network_weight
+    );
     assert_eq!(
         state.current_player(),
         Some(observer),
@@ -186,7 +261,12 @@ where
             cfg.seed
                 .wrapping_add((t as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)),
         );
-        let ctx = Ctx { cfg, net, sampler };
+        let ctx = Ctx {
+            cfg,
+            net,
+            sampler,
+            rollout,
+        };
         search_tree(state, observer, &ctx, sims, deadline, anytime, &mut rng)
     };
     // One thread: run on the calling thread so rayon's global pool is never built
@@ -239,17 +319,19 @@ where
 }
 
 /// What one search thread works with.
-struct Ctx<'a, N, S> {
+struct Ctx<'a, N, S, P> {
     cfg: &'a PuctConfig,
     net: &'a N,
     sampler: &'a S,
+    /// The leaf rollout policy; only played when `leaf_network_weight < 1`.
+    rollout: Option<&'a P>,
 }
 
 /// Runs one tree for `simulations` (or until `deadline`) and returns root-child sums.
-fn search_tree<G, N, S>(
+fn search_tree<G, N, S, P>(
     root: &G,
     observer: Player,
-    ctx: &Ctx<'_, N, S>,
+    ctx: &Ctx<'_, N, S, P>,
     simulations: u64,
     deadline: Option<Instant>,
     anytime: Option<Instant>,
@@ -259,6 +341,7 @@ where
     G: Transposable,
     N: PriorValue<G>,
     S: Sampler<G>,
+    P: Policy<G>,
 {
     let cfg = ctx.cfg;
     let mut tree: Vec<Node<G::Action>> = vec![Node::new(None, observer)];
@@ -309,7 +392,7 @@ where
                     tree.push(Node::new(Some(best), to_move));
                     tree[node].children.push(child);
                     path.push(child);
-                    break evaluate_leaf(&mut tree[child], &s, ctx, root, &mut endgame);
+                    break evaluate_leaf(&mut tree[child], &mut s, ctx, root, &mut endgame, rng);
                 }
             }
         };
@@ -336,11 +419,11 @@ where
 /// Asks the network for the prior of any legal action the node has not seen yet
 /// (always on the first visit; later only at opponent nodes whose sampled hand
 /// allows a new action). The node's value is set on the first call.
-fn ensure_priors<G, N, S>(
+fn ensure_priors<G, N, S, P>(
     node: &mut Node<G::Action>,
     s: &G,
     legal: &[G::Action],
-    ctx: &Ctx<'_, N, S>,
+    ctx: &Ctx<'_, N, S, P>,
     root: &G,
     to_move: Player,
 ) where
@@ -410,17 +493,21 @@ fn select<A: Copy + Eq>(tree: &[Node<A>], node: usize, legal: &[A], c: f64) -> A
 
 /// The value of a new node's position: the outcome if the game is over, the exact
 /// result if the position is small enough and solvable within budget, else the
-/// network's estimate (whose prior the node keeps for its own expansion).
-fn evaluate_leaf<G, N, S>(
+/// network's estimate (whose prior the node keeps for its own expansion), mixed
+/// with a rollout from `s` when `leaf_network_weight < 1` (`s` is then played on;
+/// the caller discards it).
+fn evaluate_leaf<G, N, S, P>(
     node: &mut Node<G::Action>,
-    s: &G,
-    ctx: &Ctx<'_, N, S>,
+    s: &mut G,
+    ctx: &Ctx<'_, N, S, P>,
     root: &G,
     endgame: &mut Endgame<G>,
+    rng: &mut SmallRng,
 ) -> Estimate
 where
     G: Transposable,
     N: PriorValue<G>,
+    P: Policy<G>,
 {
     let Some(to_move) = s.current_player() else {
         return Estimate::from(&s.outcome().expect("a finished game has an outcome"));
@@ -436,7 +523,54 @@ where
     debug_assert_eq!(prior.len(), legal.len(), "one prior per legal action");
     node.priors = legal.iter().copied().zip(prior).collect();
     node.value_to_move = cfg.objective.utility_estimate(root, &est, to_move);
-    est
+    let lambda = cfg.leaf_network_weight;
+    if lambda >= 1.0 {
+        // Today's behaviour: no rollout, and the random generator is not touched.
+        return est;
+    }
+    let rollout = ctx
+        .rollout
+        .expect("leaf_network_weight < 1 needs a rollout policy");
+    let played = short_rollout(s, cfg.rollout_moves, rollout, ctx.net, rng);
+    let mix = |net: &[f64], played: &[f64]| -> Vec<f64> {
+        net.iter()
+            .zip(played)
+            .map(|(n, p)| lambda * n + (1.0 - lambda) * p)
+            .collect()
+    };
+    Estimate {
+        scores: mix(&est.scores, &played.scores),
+        wins: mix(&est.wins, &played.wins),
+    }
+}
+
+/// Plays `s` on with `rollout` for every seat: to the end of the deal when
+/// `max_moves` is 0, else for at most `max_moves` moves, after which the network
+/// values the position reached.
+fn short_rollout<G, N, P>(
+    s: &mut G,
+    max_moves: u32,
+    rollout: &P,
+    net: &N,
+    rng: &mut SmallRng,
+) -> Estimate
+where
+    G: Game,
+    N: PriorValue<G>,
+    P: Policy<G>,
+{
+    let mut legal = Vec::new();
+    let mut moves = 0u32;
+    while s.current_player().is_some() {
+        s.legal_actions(&mut legal);
+        if max_moves > 0 && moves == max_moves {
+            return net.prior_value(s, &legal).1;
+        }
+        let a = rollout.choose(s, &legal, rng);
+        s.apply(a);
+        moves += 1;
+    }
+    Estimate::from(&s.outcome().expect("a finished game has an outcome"))
 }
 
 /// The most visited root child, ties by the objective's mean; `None` before any visit.
@@ -613,6 +747,133 @@ mod tests {
         assert_eq!(r.analysis.simulations, 101);
         assert_eq!(r.analysis.moves.iter().map(|m| m.visits).sum::<u64>(), 101);
         assert!(r.first_answer.is_none());
+    }
+
+    /// Positions and settings of the golden fingerprints: (deal seed, random moves
+    /// played, endgame threshold, threads) and the fingerprint of PUCT-400's analysis.
+    /// The fingerprints were printed by the code before `leaf_network_weight`
+    /// existed (2026-10-30), so equality proves λ = 1 changes nothing.
+    const GOLDEN: [(u64, usize, usize, usize, u64); 4] = [
+        (7, 5, 0, 1, 0x5d0c_27eb_3adc_0da6),
+        (4, 17, 20, 1, 0x4ba0_4ddf_8f80_187c),
+        (9, 3, 0, 2, 0xb3d6_27a9_f6a4_1b18),
+        (21, 30, 12, 1, 0xa979_79fc_5958_fff5),
+    ];
+
+    fn golden_cfg(seed: u64, endgame_threshold: usize, threads: usize) -> PuctConfig {
+        PuctConfig {
+            seed: seed + 100,
+            endgame_threshold,
+            threads,
+            ..cfg(400)
+        }
+    }
+
+    /// The default `leaf_network_weight = 1` is bit-identical to the search before
+    /// the setting existed, through `puct` and through `puct_with_rollout` (whose
+    /// rollout is then never played).
+    #[test]
+    fn puct_lambda_one_is_bit_identical_to_before() {
+        let net = tiny_net();
+        let greedy = Greedy { epsilon: 0.1 };
+        assert_eq!(PuctConfig::default().leaf_network_weight, 1.0);
+        for (seed, moves, eg, threads, want) in GOLDEN {
+            let s = mid_game(seed, moves);
+            let me = s.current_player().unwrap();
+            let c = golden_cfg(seed, eg, threads);
+            let plain = puct(&s, me, &c, &net);
+            assert_eq!(fingerprint(&plain.analysis), want, "puct, deal {seed}");
+            let with = puct_with_rollout(&s, me, &c, &net, &UniformSampler, &greedy);
+            assert_eq!(
+                fingerprint(&with.analysis),
+                want,
+                "puct_with_rollout, deal {seed}"
+            );
+        }
+    }
+
+    /// λ = 0.5 with a rollout: reproducible with a seed, every simulation counted,
+    /// and different from the network-only search.
+    #[test]
+    fn puct_rollout_leaf_is_reproducible_and_changes_the_search() {
+        let net = tiny_net();
+        let greedy = Greedy { epsilon: 0.1 };
+        let (seed, moves, eg, threads, want) = GOLDEN[0];
+        let s = mid_game(seed, moves);
+        let me = s.current_player().unwrap();
+        let c = PuctConfig {
+            leaf_network_weight: 0.5,
+            ..golden_cfg(seed, eg, threads)
+        };
+        let a = puct_with_rollout(&s, me, &c, &net, &UniformSampler, &greedy);
+        let b = puct_with_rollout(&s, me, &c, &net, &UniformSampler, &greedy);
+        assert_eq!(fingerprint(&a.analysis), fingerprint(&b.analysis));
+        assert_ne!(fingerprint(&a.analysis), want);
+        assert_eq!(a.analysis.moves.iter().map(|m| m.visits).sum::<u64>(), 400);
+        // A rollout cut after 3 moves (valued by the network there) differs from a full one.
+        let short = PuctConfig {
+            leaf_network_weight: 0.0,
+            rollout_moves: 3,
+            ..c.clone()
+        };
+        let full = PuctConfig {
+            rollout_moves: 0,
+            ..short.clone()
+        };
+        let x = puct_with_rollout(&s, me, &short, &net, &UniformSampler, &greedy);
+        let y = puct_with_rollout(&s, me, &full, &net, &UniformSampler, &greedy);
+        assert_ne!(fingerprint(&x.analysis), fingerprint(&y.analysis));
+        assert_eq!(x.analysis.simulations, 400);
+    }
+
+    /// With pure rollout values (λ = 0, full rollouts) every leaf value is a played-out
+    /// deal: each root move's wins are a whole number (a network value would give
+    /// fractions), and the immediate win is valued as one.
+    #[test]
+    fn puct_pure_rollout_values_are_played_out_deals() {
+        let net = tiny_net();
+        let rules = RuleSet::default();
+        let hands = [
+            parse_mask("2h 2s").unwrap(),
+            parse_mask("3c 4c 5c 6c 7c").unwrap(),
+            parse_mask("8d 9d Td Jd Qd Kd").unwrap(),
+            parse_mask("3h 4h 5h 6h 7h 8h 9h").unwrap(),
+        ];
+        let s = State::from_position(rules, hands, 0, None).unwrap();
+        let c = PuctConfig {
+            leaf_network_weight: 0.0,
+            ..cfg(200)
+        };
+        let r = puct_with_rollout(&s, 0, &c, &net, &UniformSampler, &Greedy { epsilon: 0.0 });
+        let pair = Action::Play(big2_big2::classify(parse_mask("2h 2s").unwrap(), &rules).unwrap());
+        // (Leading the single 2♠ also wins here once the others pass, so the most
+        // visited move may be either; the pair's own value must be a certain win.)
+        let m = r.analysis.moves.iter().find(|m| m.action == pair).unwrap();
+        assert_eq!(m.win_rate, 1.0, "{:?}", r.analysis.moves);
+        for m in &r.analysis.moves {
+            let wins = m.win_rate * m.visits as f64;
+            assert!((wins - wins.round()).abs() < 1e-9, "{m:?}");
+        }
+        // The same search with network values gives fractional wins somewhere.
+        let net_only = puct(&s, 0, &cfg(200), &net);
+        assert!(net_only.analysis.moves.iter().any(|m| {
+            let wins = m.win_rate * m.visits as f64;
+            (wins - wins.round()).abs() > 1e-6
+        }));
+    }
+
+    /// `puct_with` has no rollout policy, so λ < 1 is refused.
+    #[test]
+    #[should_panic(expected = "puct_with_rollout")]
+    fn puct_without_rollout_refuses_lambda_below_one() {
+        let net = tiny_net();
+        let s = mid_game(7, 5);
+        let me = s.current_player().unwrap();
+        let c = PuctConfig {
+            leaf_network_weight: 0.5,
+            ..cfg(10)
+        };
+        puct(&s, me, &c, &net);
     }
 
     /// The policy plays a legal move and finishes games against the greedy bot.

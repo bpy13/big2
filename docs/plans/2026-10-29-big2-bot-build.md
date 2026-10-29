@@ -423,7 +423,14 @@ to goes through bot-notes (Task 10).
   [−0.78, +0.56] in `1+3`, −1.78 [−2.42, −1.13] in `ABAB`; at 0.5 s per move −1.81 and −2.44.
   A10 fails: distribution head vs Task 7 qnet −1.34 (`ABAB`, tiered), −0.21 (`ABAB`, win_loss).
   `c_puct` 2.5 best, all negative. Fallback (proposal §10 row 2): calibration check and
-  `leaf = λ·network + (1−λ)·rollout` at 300 deals, `build-phase2.md` §6.)
+  `leaf = λ·network + (1−λ)·rollout` at 300 deals, `build-phase2.md` §6. Calibration done
+  2026-10-30 (§6.1): prior calibrated (ECE 0.005), value over-spread (slope 0.86) and +0.8
+  optimistic. `PuctConfig { leaf_network_weight, rollout_moves }` and `puct_with_rollout`
+  added; λ = 1 bit-identical to before (golden-fingerprint test). Fallback match job started
+  2026-10-30 01:34, headless, 6 workers: `runs\p2_fallback\run.ps1` = `build_phase2.py
+  rollout-leaf` (λ = 0.5 then 0, c_puct 2.5, 300 deals). Check:
+  `Get-Content C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\p2_fallback\progress.json`;
+  resume: rerun `run.ps1`.)
   (job started 2026-10-29 14:43, headless, 8 workers (13 cards and mahjong jobs share the CPU),
   `runs\p2_matches\run.ps1` = `experiments/build_phase2.py all --workers 8`, order a, d, c, b;
   expected end ≈ 19:00 (b, 0.5 s per move, is ~3.5 h of it). The script opts out of Windows power

@@ -7,6 +7,8 @@ Usage::
     python experiments/build_phase2.py c-puct --deals 300 --workers 8
     python experiments/build_phase2.py heads --deals 500 --workers 8
     python experiments/build_phase2.py equal-time --deals 1000 --seconds 0.5 --workers 8
+    python experiments/build_phase2.py calibration --device auto
+    python experiments/build_phase2.py rollout-leaf --leaf-weights 0.5 0.0 --workers 6
 
 One subcommand per experiment (plan ``docs/plans/2026-10-29-big2-bot-build.md``):
 
@@ -22,6 +24,10 @@ One subcommand per experiment (plan ``docs/plans/2026-10-29-big2-bot-build.md``)
   thread (``time_limit``, no simulation cap). Depends on CPU load: the results
   record the load at the start.
 * ``all``: the four above in the order a, d, c, b (cheap and fixed-count first).
+* ``rollout-leaf`` (e, Task 15's fallback): PUCT-2000 with the leaf value
+  ``λ·network + (1−λ)·rollout`` against ISMCTS-1000, one cell per λ.
+* ``calibration`` (f, Task 15's fallback): the round-0 network's prior and score
+  against the search's targets and the real outcomes on the held-out shards.
 
 Every match runs both lineups (``1+3`` and ``ABAB``) on duplicate deals through
 :func:`big2.eval.harness.play_match`, saved in blocks of ``--block`` deals under
@@ -374,6 +380,286 @@ def equal_time(args: argparse.Namespace, progress: Progress) -> None:
     )
 
 
+# (e) rollout-leaf (fallback) ----------------------------------------------------
+
+
+def rollout_leaf_cells(args: argparse.Namespace) -> list[str]:
+    return [f"e_rollout_leaf lambda={w}" for w in args.leaf_weights]
+
+
+def rollout_leaf(args: argparse.Namespace, progress: Progress) -> None:
+    """Task 15's fallback (proposal §10 row 2): the leaf value ``λ·network + (1−λ)·rollout``.
+
+    The rollout is ``analyze``'s default greedy policy (epsilon 0.1), the one
+    ISMCTS-1000 itself plays: Task 5's structured rollout did not beat it (A4).
+    ``λ = 0`` is the control: the network only orders the tries, rollouts value them.
+    """
+    name = "e_rollout_leaf"
+    if _done(args, name):
+        return
+    rows: dict[str, Any] = {}
+    for w in args.leaf_weights:
+        cand = (
+            f"{puct_spec(args.net, args.simulations, args.leaf_c_puct)},"
+            f"leaf_network_weight={w},rollout_moves={args.rollout_moves}"
+        )
+        rows[str(w)] = {
+            "candidate": cand,
+            "reports": play_cell(
+                args,
+                progress,
+                f"{name} lambda={w}",
+                cand,
+                ISMCTS_1000,
+                args.leaf_deals,
+                folder=f"{name}/lambda{w}",
+            ),
+        }
+    passed = {
+        w: {
+            lu: r["paired_diff"] >= A9_BAR and r["paired_ci95"][0] > 0
+            for lu, r in row["reports"].items()
+        }
+        for w, row in rows.items()
+    }
+    length = "to the end of the deal" if args.rollout_moves == 0 else f"{args.rollout_moves} moves"
+    lines = [
+        f"(e) PUCT-{args.simulations}, `c_puct = {args.leaf_c_puct}`, leaf value "
+        f"`λ·network + (1−λ)·rollout` (greedy rollout, epsilon 0.1, {length}) vs "
+        f"`{ISMCTS_1000}`, {args.leaf_deals:,} duplicate deals (seeds 0…{args.leaf_deals - 1}).",
+        "",
+        *TABLE_HEAD,
+        *(_row(f"λ = {w}", lu, r) for w, row in rows.items() for lu, r in row["reports"].items()),
+        "",
+        f"A9 bar as a {args.leaf_deals}-deal screen (paired diff ≥ +{A9_BAR:.1f}, interval "
+        "above 0): "
+        + "; ".join(
+            f"λ = {w}: " + ", ".join(f"{lu} {'passes' if ok else 'fails'}" for lu, ok in p.items())
+            for w, p in passed.items()
+        )
+        + ".",
+    ]
+    _finish(args, name, {"rows": rows, "a9_screen": passed}, lines)
+
+
+# calibration --------------------------------------------------------------------
+
+
+def calibration(args: argparse.Namespace, progress: Progress) -> None:
+    """How well the round-0 network's numbers match what they predict, on the shards
+    held out in training (every 50th by sorted name, as ``distill-train``).
+
+    * Prior: bins of the prior probability against the search's visit share and the
+      share of times the move was the most visited; mean entropies (is it too sharp?).
+    * Score: bins of the predicted tiered score (from the distributions) against the
+      search's mean score, for candidates simulated ≥ 20 times.
+    * Outcome: the played move's predicted score and probability of going out first
+      against the deal's real result (tiered settlement of every seat's cards left).
+    """
+    import numpy as np
+    import torch
+    from big2.rl.distill import (
+        DistillV2Config,
+        _DataV2,
+        _v2_batch,
+        load_qnet_v2,
+        v2_losses,
+    )
+    from big2.rl.model import MAX_CARDS, seat_scores, segment_log_softmax
+
+    name = "f_calibration"
+    if _done(args, name):
+        return
+    progress.update(name)
+    torch.set_num_threads(args.workers)
+    cfg = DistillV2Config()
+    files = sorted(p for p in Path(cfg.data_dir).glob("*.npz") if not p.name.endswith(".tmp.npz"))
+    held_out = [p for k, p in enumerate(files) if k % cfg.val_every == 0]
+    data = _DataV2(cfg.data_dir, 1, files=held_out)
+    device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
+    device = "cpu" if device == "auto" else device
+    t = data.to(device)
+    net, _ = load_qnet_v2(args.checkpoint, device)
+
+    keys = ("prior", "share", "top", "single", "pred", "search", "visits")
+    cand: dict[str, list[np.ndarray]] = {k: [] for k in keys}
+    dec: dict[str, list[np.ndarray]] = {
+        k: [] for k in ("pred", "real", "p_out", "out", "h_p", "h_v")
+    }
+    sums: dict[str, float] = {}
+    ids = t["val_ids"]
+    with torch.no_grad():
+        for i in range(0, len(ids), 4096):
+            d = ids[i : i + 4096]
+            b = _v2_batch(t, d)
+            for k, v in v2_losses(net, b, cfg).items():
+                sums[k] = sums.get(k, 0.0) + float(v) * len(d)
+            groups = len(d)
+            dist, logit = net(b["states"], b["actions"], b["index"])
+            probs = dist.softmax(-1)
+            logp = segment_log_softmax(logit, b["index"], groups)
+            p = logp.exp()
+            vis = b["visits"]
+            tot = torch.zeros(groups, device=device).index_add(0, b["index"], vis)
+            share = vis / tot.clamp(min=1.0)[b["index"]]
+            best = torch.full((groups,), -torch.inf, device=device).scatter_reduce(
+                0, b["index"], vis, reduce="amax"
+            )
+            count = torch.zeros(groups, device=device).index_add(
+                0, b["index"], torch.ones_like(vis)
+            )
+            pred = seat_scores(probs, "tiered")[:, 0]
+            cand["prior"].append(p.cpu().numpy())
+            cand["share"].append(share.cpu().numpy())
+            cand["top"].append((vis == best[b["index"]]).float().cpu().numpy())
+            cand["single"].append((count[b["index"]] == 1).cpu().numpy())
+            cand["pred"].append(pred.cpu().numpy())
+            cand["search"].append(b["score"].cpu().numpy())
+            cand["visits"].append(vis.cpu().numpy())
+            # Entropy of the prior and of the visit shares per decision.
+            h_p = torch.zeros(groups, device=device).index_add(0, b["index"], -(p * logp))
+            xlogx = torch.where(share > 0, share * share.clamp(min=1e-12).log(), 0.0)
+            h_v = torch.zeros(groups, device=device).index_add(0, b["index"], -xlogx)
+            # The played move against the deal's real result.
+            ch = b["chosen"]
+            onehot = torch.nn.functional.one_hot(
+                b["final_cards"].clamp(0, MAX_CARDS), MAX_CARDS + 1
+            ).float()
+            dec["pred"].append(pred[ch].cpu().numpy())
+            dec["real"].append(seat_scores(onehot, "tiered")[:, 0].cpu().numpy())
+            dec["p_out"].append(probs[ch, 0, 0].cpu().numpy())
+            dec["out"].append((b["final_cards"][:, 0] == 0).float().cpu().numpy())
+            multi = count > 1
+            dec["h_p"].append(torch.where(multi, h_p, torch.nan).cpu().numpy())
+            dec["h_v"].append(torch.where(multi, h_v, torch.nan).cpu().numpy())
+    c = {k: np.concatenate(v) for k, v in cand.items()}
+    e = {k: np.concatenate(v) for k, v in dec.items()}
+    n_dec = len(ids)
+    losses = {k: v / n_dec for k, v in sums.items()}
+
+    def bins_by(
+        x: np.ndarray, edges: np.ndarray, cols: dict[str, np.ndarray]
+    ) -> list[dict[str, float]]:
+        out = []
+        which = np.clip(np.digitize(x, edges[1:-1]), 0, len(edges) - 2)
+        for j in range(len(edges) - 1):
+            m = which == j
+            if m.sum() == 0:
+                continue
+            row = {"lo": float(edges[j]), "hi": float(edges[j + 1]), "n": int(m.sum())}
+            row["mean_x"] = float(x[m].mean())
+            for k, v in cols.items():
+                row[k] = float(v[m].mean())
+            out.append(row)
+        return out
+
+    # Prior reliability over decisions with a real choice (more than one candidate).
+    multi = ~c["single"].astype(bool)
+    pe = np.linspace(0, 1, 11)
+    prior_bins = bins_by(
+        c["prior"][multi], pe, {"share": c["share"][multi], "top": c["top"][multi]}
+    )
+    ece = sum(r["n"] * abs(r["mean_x"] - r["share"]) for r in prior_bins) / multi.sum()
+    # Score against the search's mean, for candidates with ≥ 20 simulations.
+    sm = c["visits"] >= 20
+    qe = np.quantile(c["pred"][sm], np.linspace(0, 1, 11))
+    score_bins = bins_by(c["pred"][sm], qe, {"search": c["search"][sm]})
+    diff = c["pred"][sm] - c["search"][sm]
+    slope = float(np.polyfit(c["pred"][sm], c["search"][sm], 1)[0])
+    # The played move against the real outcome.
+    qr = np.quantile(e["pred"], np.linspace(0, 1, 11))
+    real_bins = bins_by(e["pred"], qr, {"real": e["real"]})
+    out_bins = bins_by(e["p_out"], np.linspace(0, 1, 11), {"out": e["out"]})
+    res = {
+        "checkpoint": args.checkpoint,
+        "held_out_shards": len(held_out),
+        "decisions": n_dec,
+        "candidates": int(len(c["prior"])),
+        "losses": losses,
+        "prior": {
+            "ece_vs_visit_share": float(ece),
+            "mean_entropy_prior": float(np.nanmean(e["h_p"])),
+            "mean_entropy_visits": float(np.nanmean(e["h_v"])),
+            "bins": prior_bins,
+        },
+        "score_vs_search": {
+            "candidates": int(sm.sum()),
+            "bias": float(diff.mean()),
+            "rms": float(np.sqrt((diff**2).mean())),
+            "corr": float(np.corrcoef(c["pred"][sm], c["search"][sm])[0, 1]),
+            "slope_search_on_pred": slope,
+            "sd_pred": float(c["pred"][sm].std()),
+            "sd_search": float(c["search"][sm].std()),
+            "bins": score_bins,
+        },
+        "played_vs_outcome": {
+            "bias": float((e["pred"] - e["real"]).mean()),
+            "corr": float(np.corrcoef(e["pred"], e["real"])[0, 1]),
+            "mean_p_out": float(e["p_out"].mean()),
+            "real_out_rate": float(e["out"].mean()),
+            "score_bins": real_bins,
+            "out_bins": out_bins,
+        },
+    }
+
+    def table(rows: list[dict[str, float]], cols: list[tuple[str, str, str]]) -> list[str]:
+        head = "| Bin | n | " + " | ".join(h for _, h, _ in cols) + " |"
+        sep = "|---|---:|" + "---:|" * len(cols)
+        body = [
+            f"| [{r['lo']:.2f}, {r['hi']:.2f}) | {r['n']:,} | "
+            + " | ".join(format(r[k], f) for k, _, f in cols)
+            + " |"
+            for r in rows
+        ]
+        return [head, sep, *body]
+
+    s, o, pr = res["score_vs_search"], res["played_vs_outcome"], res["prior"]
+    lines = [
+        f"(f) Calibration of `{args.checkpoint}` on {len(held_out)} held-out shards: "
+        f"{n_dec:,} decisions, {res['candidates']:,} candidates. Losses: prior "
+        f"{losses['prior']:.3f} (top-1 {losses['prior_top1']:.1%}), actor {losses['actor']:.3f}, "
+        f"seats {losses['seats']:.3f}.",
+        "",
+        f"Prior vs the search's visit share (decisions with more than one candidate): "
+        f"expected calibration error {pr['ece_vs_visit_share']:.3f}; mean entropy "
+        f"{pr['mean_entropy_prior']:.3f} nats for the prior, {pr['mean_entropy_visits']:.3f} "
+        "for the visit shares.",
+        "",
+        *table(
+            prior_bins,
+            [
+                ("mean_x", "Mean prior", ".3f"),
+                ("share", "Mean visit share", ".3f"),
+                ("top", "Most visited", ".1%"),
+            ],
+        ),
+        "",
+        f"Predicted tiered score vs the search's mean score ({s['candidates']:,} candidates "
+        f"with ≥ 20 simulations): bias {s['bias']:+.2f}, RMS {s['rms']:.2f}, correlation "
+        f"{s['corr']:.3f}, slope of search on prediction {s['slope_search_on_pred']:.2f}; "
+        f"spread (SD) {s['sd_pred']:.2f} predicted, {s['sd_search']:.2f} search.",
+        "",
+        *table(
+            score_bins,
+            [("mean_x", "Mean predicted", "+.2f"), ("search", "Mean search score", "+.2f")],
+        ),
+        "",
+        f"Played move vs the deal's real result: bias {o['bias']:+.2f}, correlation "
+        f"{o['corr']:.3f}; mean predicted chance of going out first {o['mean_p_out']:.1%}, "
+        f"real {o['real_out_rate']:.1%}.",
+        "",
+        *table(
+            out_bins,
+            [
+                ("mean_x", "Mean predicted P(out first)", ".1%"),
+                ("out", "Real share out first", ".1%"),
+            ],
+        ),
+    ]
+    _finish(args, name, res, lines)
+    progress.update(None, done=name)
+
+
 # main ---------------------------------------------------------------------------
 
 COMMANDS: dict[str, Callable[[argparse.Namespace, Progress], None]] = {
@@ -381,7 +667,11 @@ COMMANDS: dict[str, Callable[[argparse.Namespace, Progress], None]] = {
     "c-puct": c_puct,
     "heads": heads,
     "equal-time": equal_time,
+    "rollout-leaf": rollout_leaf,
+    "calibration": calibration,
 }
+#: What ``all`` runs (Task 15's four matches); the fallback commands run on their own.
+ALL = ["puct-vs-ismcts", "c-puct", "heads", "equal-time"]
 CELLS = {
     "puct-vs-ismcts": ["a_puct_vs_ismcts"],
     "c-puct": [f"d_c_puct c={c}" for c in C_PUCT_VALUES],
@@ -393,6 +683,8 @@ RESULT_DIRS = {
     "c-puct": "d_c_puct",
     "heads": "c_heads",
     "equal-time": "b_equal_time",
+    "rollout-leaf": "e_rollout_leaf",
+    "calibration": "f_calibration",
 }
 
 
@@ -410,6 +702,17 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--out", default="p2_matches", help="folder under runs/")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument(
+        "--leaf-weights",
+        type=float,
+        nargs="+",
+        default=[0.5, 0.0],
+        help="λ values for rollout-leaf (network weight in the leaf value)",
+    )
+    ap.add_argument("--leaf-c-puct", type=float, default=2.5, help="c_puct for rollout-leaf")
+    ap.add_argument("--leaf-deals", type=int, default=300, help="deals per λ in rollout-leaf")
+    ap.add_argument("--rollout-moves", type=int, default=0, help="rollout length (0 = to the end)")
+    ap.add_argument("--device", default="auto", help="calibration: cpu, cuda or auto")
     args = ap.parse_args()
 
     # The tables hold ≥ and −; a redirected Windows console would otherwise use cp1252.
@@ -419,12 +722,18 @@ def main() -> None:
     os.environ.setdefault("OMP_NUM_THREADS", "1")
     out = ROOT / "runs" / args.out
     out.mkdir(parents=True, exist_ok=True)
-    names = list(COMMANDS) if args.command == "all" else [args.command]
-    todo = [f"{c} {lu}" for n in names for c in CELLS[n] for lu in LINEUPS]
-    progress = Progress(out, todo)
+    names = ALL if args.command == "all" else [args.command]
+
+    def cells(n: str) -> list[str]:
+        if n == "calibration":
+            return ["f_calibration"]
+        found = rollout_leaf_cells(args) if n == "rollout-leaf" else CELLS[n]
+        return [f"{c} {lu}" for c in found for lu in LINEUPS]
+
+    progress = Progress(out, [c for n in names for c in cells(n)])
     for n in names:  # finished subcommands count as done from the start
         if (out / RESULT_DIRS[n] / "results.json").exists():
-            progress.done += [f"{c} {lu}" for c in CELLS[n] for lu in LINEUPS]
+            progress.done += cells(n)
     for n in names:
         COMMANDS[n](args, progress)
     progress.update(None)
