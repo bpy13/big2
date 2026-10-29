@@ -476,6 +476,26 @@ to goes through bot-notes (Task 10).
 ## Phase 3 – Iterate, belief, exact endgames, external bars (opus; Tasks 19, 20 fable)
 
 - [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]**
+  (**round 1 prepared and queued 2026-10-30.** Per `docs/open-items.md`: teacher ISMCTS-5000
+  (beat ISMCTS-1000 +1.09 [+0.35, +1.87] in ladder v0; PUCT λ 0.5 only tied it at ~4× the
+  cost), 800,000 decisions (12 h cap; ~107 ms per decision per worker measured under load);
+  `train_v2` gains `init` (round 0's weights) and round 1 trains with score weight 100, prior
+  1, distributions 0.25 each (value on every candidate's search score); calibration slope check
+  (`build_phase2.py calibration --data-dir`); PUCT-2000 c 2.5 at λ 1 and 0.5 vs ISMCTS-1000,
+  300 deals each, the better λ at 1,000 (A9), r1 vs r0 at 1,000 only if A9 passes (A12).
+  `experiments/expert_iteration.py round 1`; tiny end-to-end run (tag `_tiny`) passed and was
+  deleted. **Queued job** `runs\b25_round1\run.ps1`, launched 04:24, PowerShell PID 29832
+  (conhost 9176), CPUs 4–19, Normal priority: waits for the mahjong Task 11 job (PID 10588),
+  then labels on 8 workers (~4–6 h with the 13 cards job beside it), then trains r1 on the GPU
+  while the CPU plays Tasks 18 and 20 (`build_phase3.py all`, ~4 h), then round 1's matches
+  (~3.5 h; ~8.5 h if A12 runs). Expected end ≈ 12–19 h after the mahjong job ends (≈ 05:00–
+  12:00 on 2026-10-31 if it ends at 17:00). Check: `Get-Content
+  C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\b25_round1\progress.json` (and
+  `run.log`; details in `runs\round1\label\progress.json`, `runs\net_r1\progress.json`,
+  `runs\p3_matches\progress.json`, `runs\round1\progress.json`). Resume: relaunch the same
+  `run.ps1` detached (command in its header); every step skips finished work. Then copy
+  `runs\round1\table.md` into `build-phase3.md` §1 and the two `runs\p3_matches\*\table.md` into
+  §2 and §4.)
   - Files: create `experiments/expert_iteration.py` (`round N`: label 4 M decisions with
     PUCT-500 using net r(N−1) on 14 workers → train net rN with `--resume` from r(N−1) → match
     PUCT-2000(rN) vs PUCT-2000(r(N−1)), 1,000 deals, both lineups → write
@@ -491,6 +511,13 @@ to goes through bot-notes (Task 10).
     If round 1 loses to round 0, do not run rounds 2–3; record it (proposal §10 row 3).
 
 - [ ] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
+  (**code done 2026-10-30, match queued.** `RulesMask` in `belief.rs` (rejection sampler,
+  counters, `Sampler::weight`), `Rewind::history_consistent` (State: one backward pass over
+  the history, tested equal to a full replay); `analyze(belief="rules")` for ISMCTS and PUCT
+  with `belief_rejection_share`/`belief_fallbacks`; spec `belief=rules`. `cargo test -p
+  big2-search rules_mask` passes (3 tests). Smoke: 13 % of decisions reject some draws, 38 %
+  of draws when they do. The 300-deal match PUCT-2000 (c 2.5, λ 0.5) with vs without is
+  `build_phase3.py rules-mask` in the queued job (Task 17 status); §2 then gets the table.)
   - Files: modify `crates/search/src/belief.rs` (`RulesMask`: a `Sampler` that rejects a sampled
     deal if replaying the history under it makes any observed action illegal: last-card duty
     singles, a `locked_out` pass, a play of cards the deal gives to someone else; counts
@@ -518,6 +545,16 @@ to goes through bot-notes (Task 10).
     gains nothing. Run after Task 17's round 1 exists; once per round at most.
 
 - [ ] **Task 20: Information-set exact endgame with forced proofs** `(fable)` `[parallel-ok]`
+  (**code done 2026-10-30, full run queued.** `infoset_endgame.rs` (`InfosetConfig { threshold
+  12, max_cards 10, max_nodes 1 M }`, `InfosetResult { exact, forced, deals, excluded }`,
+  `Forced { winner, plays }`), `Game::hidden_count`/`for_each_deal` (State enumerates every
+  split), hook at the root of ISMCTS and PUCT (`infoset_endgame` setting; golden fingerprints
+  unchanged), `analyze(infoset_endgame=…)` returns `exact`/`forced`. `cargo test -p
+  big2-search infoset` passes (6 tests incl. the hand-provable forced win and the 13-hidden
+  refusal). Finding: cost follows cards in play, not hidden cards (§4 probe; open item), hence
+  `max_cards`. `build_phase3.py endgame` (300 positions vs ISMCTS-100,000, native timing by
+  hidden and by cards in play, 300-deal match) is in the queued job; tiny run passed. Node
+  WebAssembly timing waits for Task 16's harness.)
   - Files: create `crates/search/src/infoset_endgame.rs` (when unseen cards ≤ `threshold`
     (default 12): enumerate every consistent deal (≤ 34,650), solve each by `Endgame::solve_actions`
     under a shared node cap, average per action by the sampler's weights; `forced: Option<Forced

@@ -3,6 +3,17 @@
 Pending work and questions for Brian. Newest first. The plan is
 `docs/plans/2026-10-29-big2-bot-build.md`; results are in `docs/study-results/`.
 
+## 2026-10-30 · Exact endgame is slow beyond 10 cards in play (Task 20)
+
+The information-set endgame solves each deal with plain max^n, which prunes nothing (about
+1 M positions per second natively under load). Positions with more than about 10 cards in all
+hands often need over 5 M positions (`build-phase3.md` §4), so the default `max_cards` is 10
+and the hook only fires in the last few tricks. Options, none started: (1) "paranoid" search
+(the observer against the other three as one side), which allows alpha-beta pruning but
+changes the model; (2) solve a random sample of deals once more than ~2,000 exist; (3) better
+move ordering plus a shared table across deals keyed on the observer's view. Non-blocking:
+the queued A15 run measures what the current solver does.
+
 ## 2026-10-30 · Next step after Task 15's fallback (PUCT ties ISMCTS)
 
 **Where things stand.** PUCT-2000 with the round-0 network fails A9 (`build-phase2.md` §1–§2).

@@ -565,6 +565,9 @@ class DistillV2Config:
     patience: int = 6
     max_minutes: float = 180.0  # total over resumes
     resume: str | None = None
+    #: Start from this v2 checkpoint's weights (expert iteration: round N starts from
+    #: round N-1's network) with a fresh optimizer and schedule; ignored by ``resume``.
+    init: str | None = None
     seed: int = 0
     device: str = "auto"
     rules: dict[str, Any] = field(default_factory=dict)
@@ -787,6 +790,15 @@ def train_v2(cfg: DistillV2Config, log: Any = print) -> Path:
         best, stale = float(info["best_val_total"]), int(info["stale"])
         history = list(info.get("history", []))
         torch.manual_seed(cfg.seed + steps)
+    elif cfg.init:
+        init_net, _ = load_qnet_v2(cfg.init, dev)
+        shape = {k: v for k, v in init_net.config_dict().items() if k != "dropout"}
+        if shape != {k: v for k, v in net.config_dict().items() if k != "dropout"}:
+            raise ValueError(f"{cfg.init}: network shape {shape} differs from cfg.net")
+        net.load_state_dict(init_net.state_dict())
+        net.train()
+        del init_net
+        log(f"weights from {cfg.init}")
     params = sum(p.numel() for p in net.parameters())
     t_load = time.time()
     data = _DataV2(cfg.data_dir, cfg.val_every, log=log)

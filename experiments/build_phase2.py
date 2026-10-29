@@ -472,7 +472,7 @@ def calibration(args: argparse.Namespace, progress: Progress) -> None:
         return
     progress.update(name)
     torch.set_num_threads(args.workers)
-    cfg = DistillV2Config()
+    cfg = DistillV2Config(data_dir=args.data_dir)
     files = sorted(p for p in Path(cfg.data_dir).glob("*.npz") if not p.name.endswith(".tmp.npz"))
     held_out = [p for k, p in enumerate(files) if k % cfg.val_every == 0]
     data = _DataV2(cfg.data_dir, 1, files=held_out)
@@ -713,6 +713,9 @@ def main() -> None:
     ap.add_argument("--leaf-deals", type=int, default=300, help="deals per λ in rollout-leaf")
     ap.add_argument("--rollout-moves", type=int, default=0, help="rollout length (0 = to the end)")
     ap.add_argument("--device", default="auto", help="calibration: cpu, cuda or auto")
+    ap.add_argument(
+        "--data-dir", default="runs/round0/data", help="calibration: shards (every 50th held out)"
+    )
     args = ap.parse_args()
 
     # The tables hold ≥ and −; a redirected Windows console would otherwise use cp1252.
