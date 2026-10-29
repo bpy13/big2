@@ -18,6 +18,7 @@ tournament runner create them::
     make_agent("ismcts:iterations=2000,exploration=0.25")
     make_agent("ismcts:iterations=1000,rollout=structured")
     make_agent("pimc:iterations=200")
+    make_agent("puct:simulations=2000,net=models/big2-pvnet-r0.pknn")
     make_agent("qnet:temperature=1.0")  # models/big2-qnet-duty.pknn unless path=…
     make_agent("dmc:checkpoint=runs/dmc/v1/best.pt")
     make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
@@ -88,11 +89,12 @@ class GreedyAgent:
 
 @dataclass
 class SearchAgent:
-    """Plays the solver's top move. ``algorithm`` is ``"ismcts"`` or ``"pimc"``.
+    """Plays the solver's top move. ``algorithm`` is ``"ismcts"``, ``"pimc"`` or
+    ``"puct"`` (``iterations`` are its simulations; ``options`` must hold ``net``).
 
     Extra keyword options are passed to :func:`big2._core.analyze`
     (``exploration``, ``threads``, ``time_limit``, ``objective``,
-    ``endgame_threshold``, ``rollout_epsilon``, ...).
+    ``endgame_threshold``, ``rollout_epsilon``, ``net``, ``c_puct``, ...).
     """
 
     algorithm: str = "ismcts"
@@ -136,6 +138,7 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
 
     Kinds: ``random``, ``greedy[:epsilon=…,structured=1,plan_depth=…]``,
     ``ismcts[:…,rollout=structured]``, ``pimc[:…]``,
+    ``puct:net=….pknn[,simulations=2000,c_puct=1.5,…]`` (the network inside the search),
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
     ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
@@ -160,6 +163,13 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         iterations = int(opts.pop("iterations", 1000 if kind == "ismcts" else 100))
         return SearchAgent(
             algorithm=kind, iterations=iterations, seed=seed or 0, options=opts, name=spec
+        )
+    if kind == "puct":
+        if "net" not in opts:
+            raise ValueError(f"puct needs net=<path to .pknn> in {spec!r}")
+        simulations = int(opts.pop("simulations", 2000))
+        return SearchAgent(
+            algorithm="puct", iterations=simulations, seed=seed or 0, options=opts, name=spec
         )
     if kind in ("patwa-greedy", "patwa-smart"):
         # Approximations of Patwa (2026)'s rule-based opponents (big2.agents.patwa).
@@ -189,7 +199,7 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(
         f"unknown agent kind {kind!r} in {spec!r} "
-        "(random, greedy, ismcts, pimc, patwa-greedy, patwa-smart, qnet, dmc, dmcsearch)"
+        "(random, greedy, ismcts, pimc, puct, patwa-greedy, patwa-smart, qnet, dmc, dmcsearch)"
     )
 
 

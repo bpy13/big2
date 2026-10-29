@@ -10,6 +10,9 @@
 //!   Monte Carlo"). A simpler baseline.
 //! * [`belief`] — opponent-aware determinization: weights sampled deals by how
 //!   well they explain the opponents' actions.
+//! * [`puct`] — the ISMCTS tree guided by a policy-value network
+//!   ([`big2_games::PriorValue`]): the network's prior orders the tries and its
+//!   value replaces the rollout.
 //! * [`endgame`] — exact max^n search of a fully known position, used inside
 //!   ISMCTS once few cards remain.
 //!
@@ -23,8 +26,10 @@ pub mod belief;
 pub mod endgame;
 pub mod ismcts;
 pub mod pimc;
+pub mod puct;
 
 pub use analysis::{Analysis, MoveStats, Objective};
 pub use belief::{Belief, BeliefConfig, OracleSampler, PolicyModel, Sampler, UniformSampler};
 pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
 pub use pimc::{pimc, PimcConfig};
+pub use puct::{puct, puct_with, PuctAnalysis, PuctConfig, PuctPolicy};

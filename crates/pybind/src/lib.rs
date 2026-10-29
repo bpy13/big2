@@ -14,12 +14,13 @@
 use big2_big2::bots::{Greedy, StructuredGreedy, DEFAULT_PLAN_DEPTH};
 use big2_big2::card::{format_mask, parse_mask};
 use big2_big2::plan;
+use big2_big2::pvnet::PvNet;
 use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
 use big2_games::{Game, Policy};
 use big2_search::{
-    ismcts_with, pimc, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective,
-    OracleSampler, PimcConfig, PolicyModel, UniformSampler,
+    ismcts_with, pimc, puct, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf, Objective,
+    OracleSampler, PimcConfig, PolicyModel, PuctConfig, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -46,6 +47,20 @@ fn load_value_net(path: &str) -> PyResult<Arc<ValueNet>> {
     let bytes = std::fs::read(path).map_err(|e| value_error(format!("{path}: {e}")))?;
     let net =
         Arc::new(ValueNet::from_bytes(&bytes).map_err(|e| value_error(format!("{path}: {e}")))?);
+    cache.insert(path.to_string(), net.clone());
+    Ok(net)
+}
+
+/// Loads a `.pknn` policy-value network (`big2 rl export` of a network v2
+/// checkpoint) once per path and keeps it for later calls.
+fn load_pvnet(path: &str) -> PyResult<Arc<PvNet>> {
+    static CACHE: OnceLock<Mutex<HashMap<String, Arc<PvNet>>>> = OnceLock::new();
+    let mut cache = CACHE.get_or_init(Default::default).lock().unwrap();
+    if let Some(net) = cache.get(path) {
+        return Ok(net.clone());
+    }
+    let bytes = std::fs::read(path).map_err(|e| value_error(format!("{path}: {e}")))?;
+    let net = Arc::new(PvNet::from_bytes(&bytes).map_err(|e| value_error(format!("{path}: {e}")))?);
     cache.insert(path.to_string(), net.clone());
     Ok(net)
 }
@@ -446,12 +461,16 @@ impl PyState {
 ///             "win_rate": float, "win_ci95": float}, ...]}   # best first
 /// ```
 ///
-/// `algorithm` is `"ismcts"` (default) or `"pimc"`. For PIMC, `iterations` is the
-/// number of sampled deals. `rollout` is `"greedy"` (default) or `"structured"`
-/// (`StructuredGreedy` with `rollout_plan_depth`), both with `rollout_epsilon`.
-/// The GIL is released while searching.
+/// `algorithm` is `"ismcts"` (default), `"pimc"` or `"puct"`. For PIMC, `iterations`
+/// is the number of sampled deals; for PUCT, the simulations (each one network
+/// evaluation), and `net` (a `.pknn` policy-value network from `big2 rl export`) is
+/// required; `c_puct` (default 1.5) is its exploration constant and
+/// `anytime_first_ms` records the move it would have played after that many
+/// milliseconds as `first_answer`. `rollout` is `"greedy"` (default) or
+/// `"structured"` (`StructuredGreedy` with `rollout_plan_depth`), both with
+/// `rollout_epsilon`; PUCT plays no rollouts. The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -474,6 +493,9 @@ fn analyze<'py>(
     belief_min_ess: f64,
     value: Option<&str>,
     value_rollout_weight: f64,
+    net: Option<&str>,
+    c_puct: Option<f64>,
+    anytime_first_ms: Option<u64>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let player = state
         .inner
@@ -509,8 +531,14 @@ fn analyze<'py>(
             "belief and value are only supported with ismcts",
         ));
     }
-    let net = value.map(load_value_net).transpose()?;
+    if algorithm != "puct" && (net.is_some() || c_puct.is_some() || anytime_first_ms.is_some()) {
+        return Err(value_error(
+            "net, c_puct and anytime_first_ms are only supported with puct",
+        ));
+    }
+    let value_net = value.map(load_value_net).transpose()?;
     let mut belief_ess = None;
+    let mut first_answer: Option<u64> = None;
     let result: Analysis<Action> = match algorithm {
         "ismcts" => {
             let defaults = IsmctsConfig::default();
@@ -528,7 +556,7 @@ fn analyze<'py>(
                 candidates: belief_candidates,
                 min_ess: belief_min_ess,
             };
-            let leaf = net.as_deref().map(|n| Leaf {
+            let leaf = value_net.as_deref().map(|n| Leaf {
                 evaluator: n,
                 rollout_weight: value_rollout_weight,
             });
@@ -560,9 +588,29 @@ fn analyze<'py>(
             };
             py.detach(|| pimc(&s, player, &cfg, &rollout))
         }
+        "puct" => {
+            let net = load_pvnet(net.ok_or_else(|| {
+                value_error("puct needs net=<path to a .pknn policy-value network>")
+            })?)?;
+            let defaults = PuctConfig::default();
+            let cfg = PuctConfig {
+                simulations: iterations,
+                time_limit: time_limit.map(Duration::from_secs_f64),
+                c_puct: c_puct.unwrap_or(defaults.c_puct),
+                threads,
+                seed,
+                objective,
+                endgame_threshold,
+                endgame_max_nodes,
+                anytime_first_ms,
+            };
+            let r = py.detach(|| puct(&s, player, &cfg, &*net));
+            first_answer = r.first_answer.map(|a| a.cards());
+            r.analysis
+        }
         other => {
             return Err(value_error(format!(
-                "unknown algorithm {other:?} (use \"ismcts\" or \"pimc\")"
+                "unknown algorithm {other:?} (use \"ismcts\", \"pimc\" or \"puct\")"
             )))
         }
     };
@@ -571,6 +619,7 @@ fn analyze<'py>(
     d.set_item("simulations", result.simulations)?;
     d.set_item("seconds", result.elapsed.as_secs_f64())?;
     d.set_item("belief_ess", belief_ess)?;
+    d.set_item("first_answer", first_answer)?;
     let moves = result
         .moves
         .iter()

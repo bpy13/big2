@@ -20,6 +20,8 @@ class AnalysisResult(TypedDict):
     player: int
     simulations: int
     seconds: float
+    belief_ess: float | None
+    first_answer: int | None  # puct with anytime_first_ms: the move as of that time
     moves: list[MoveStats]
 
 def parse_cards(text: str) -> int: ...
@@ -138,6 +140,9 @@ def analyze(
     belief_min_ess: float = 0.25,
     value: str | None = None,
     value_rollout_weight: float = 0.0,
+    net: str | None = None,  # puct only: a .pknn policy-value network (required)
+    c_puct: float | None = None,  # puct only, default 1.5
+    anytime_first_ms: int | None = None,  # puct only
 ) -> AnalysisResult: ...
 def sample_deals(
     state: Big2State,
