@@ -301,3 +301,9 @@ def test_puct_leaf_network_weight_through_analyze(tmp_path: Path) -> None:
     agent = make_agent(f"puct:net={pknn},simulations=50,leaf_network_weight=0.5,c_puct=2.5")
     legal = state.legal_actions()
     assert agent.act(state) in legal
+    # Task 18: the rules mask as PUCT's sampler.
+    masked = analyze(state, **kw, belief="rules")
+    assert masked["simulations"] == 200 and masked["belief_fallbacks"] == 0
+    assert masked["belief_rejection_share"] is not None
+    agent = make_agent(f"puct:net={pknn},simulations=50,belief=rules")
+    assert agent.act(state) in legal

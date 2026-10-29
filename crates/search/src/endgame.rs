@@ -67,6 +67,48 @@ impl<G: Transposable> Endgame<G> {
         Some(out)
     }
 
+    /// [`Endgame::solve_actions`] drawing on a node `budget` shared across calls
+    /// (the information-set endgame solves many deals under one cap): the
+    /// positions expanded are taken off `budget`. `None` once it is used up.
+    pub fn solve_actions_within(
+        &mut self,
+        state: &G,
+        budget: &mut u64,
+    ) -> Option<Vec<(G::Action, Outcome)>> {
+        if self.table.len() > self.max_table {
+            self.table.clear();
+        }
+        let r = self.solve_actions(state, *budget);
+        *budget = budget.saturating_sub(self.nodes);
+        r
+    }
+
+    /// Moves until the deal ends when every player follows the max^n choice
+    /// (the first best action, as [`Endgame::solve`] breaks ties), expanding
+    /// positions from `budget` when they are not in the table yet.
+    pub fn line_length(&mut self, state: &G, budget: &mut u64) -> Option<u32> {
+        let mut s = state.clone();
+        let mut moves = 0u32;
+        while s.outcome().is_none() {
+            let player = s.current_player().expect("not terminal");
+            let mut best: Option<(f64, G::Action)> = None;
+            for a in s.legal_actions_vec() {
+                let mut child = s.clone();
+                child.apply(a);
+                self.nodes = 0;
+                let o = self.search(&child, *budget);
+                *budget = budget.saturating_sub(self.nodes);
+                let u = self.objective.utility(&s, &o?, player);
+                if best.as_ref().is_none_or(|(bu, _)| u > *bu) {
+                    best = Some((u, a));
+                }
+            }
+            s.apply(best.expect("a non-terminal state has a legal action").1);
+            moves += 1;
+        }
+        Some(moves)
+    }
+
     fn search(&mut self, state: &G, max_nodes: u64) -> Option<Outcome> {
         if let Some(o) = state.outcome() {
             return Some(o);

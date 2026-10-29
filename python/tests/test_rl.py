@@ -516,6 +516,58 @@ def test_belief_search_runs_and_reports_ess() -> None:
     assert agent.act(s) in s.legal_actions()
 
 
+def test_rules_belief_through_analyze() -> None:
+    """Task 18: ``belief="rules"`` (the rules' hard constraints) reaches ISMCTS through
+    ``analyze``, the agent spec and ``sample_deals``, and reports its rejection share."""
+    from big2._core import analyze, sample_deals
+
+    s = Rules().new_deal(seed=6)
+    for _ in range(30):
+        s.apply(s.greedy_action())
+    me = s.current_player
+    assert me is not None
+    r = analyze(s, iterations=300, belief="rules", seed=2)
+    assert r["belief_rejection_share"] is not None
+    assert 0.0 <= r["belief_rejection_share"] < 1.0
+    assert r["belief_fallbacks"] == 0
+    assert sum(m["visits"] for m in r["moves"]) == 300
+    plain = analyze(s, iterations=50)
+    assert plain["belief_rejection_share"] is None and plain["belief_fallbacks"] is None
+    deals = sample_deals(s, 20, belief="rules", seed=1)
+    assert all(d[me] == s.hand(me) for d in deals)
+    assert all([bin(h).count("1") for h in d] == s.hand_sizes for d in deals)
+    with pytest.raises(ValueError, match="rules"):
+        analyze(s, algorithm="pimc", iterations=10, belief="rules")
+    agent = make_agent("ismcts:iterations=100,belief=rules", seed=1)
+    assert agent.act(s) in s.legal_actions()
+
+
+def test_infoset_endgame_through_analyze() -> None:
+    """Task 20: ``infoset_endgame`` solves every deal at the root through ``analyze``
+    and the agent spec, and reports ``exact`` and ``forced``."""
+    from big2._core import Big2State, analyze, parse_cards
+
+    hands = [parse_cards(h) for h in ("2s 5c 5d", "3d", "9h", "Kc")]
+    s = Big2State.from_position(hands, 0)
+    r = analyze(s, iterations=300, infoset_endgame=12)
+    assert r["exact"] is True
+    assert r["forced"] == (0, 5)  # seat 0 goes out in 5 moves whatever the others hold
+    assert r["simulations"] == 6  # 3 hidden cards, one each: 3! deals
+    assert r["moves"][0]["win_rate"] == 1.0
+    plain = analyze(s, iterations=300)
+    assert plain["exact"] is None and plain["simulations"] == 300
+    # 13 hidden cards: above the threshold, the search runs as usual.
+    t = Rules().new_deal(seed=4)
+    for _ in range(8):
+        t.apply(t.greedy_action())
+    big = analyze(t, iterations=100, infoset_endgame=12)
+    assert big["exact"] is None and big["simulations"] == 100
+    with pytest.raises(ValueError, match="infoset_endgame"):
+        analyze(s, algorithm="pimc", iterations=10, infoset_endgame=12)
+    agent = make_agent("ismcts:iterations=100,infoset_endgame=12,belief=rules", seed=1)
+    assert agent.act(s) in s.legal_actions()
+
+
 def test_distill_data_skips_files_renamed_while_listing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

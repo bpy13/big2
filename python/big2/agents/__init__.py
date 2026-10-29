@@ -147,7 +147,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     ``ismcts[:…,rollout=structured]``, ``pimc[:…]``,
     ``puct:net=….pknn[,simulations=2000,c_puct=1.5,…]`` (the network inside the search;
     ``leaf_network_weight=0.5`` mixes a rollout into the leaf value, ``rollout_moves=…``
-    cuts it short, ``rollout=…`` picks its policy as for ISMCTS),
+    cuts it short, ``rollout=…`` picks its policy as for ISMCTS; ``belief=rules`` samples
+    only the deals the rules allow, for PUCT and ISMCTS alike),
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
     ``pvnet:checkpoint=….pt[,mode=score|prior,scoring=…]`` (a network v2 played greedily,

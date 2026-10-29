@@ -516,12 +516,7 @@ impl Game for State {
     /// player to act is known to hold 3♦.
     fn determinize<R: Rng + ?Sized>(&self, observer: Player, rng: &mut R) -> State {
         let mut s = self.clone();
-        let mut fixed = [0u64; NUM_PLAYERS];
-        let mut unknown = FULL_DECK & !self.played & !self.hands[observer];
-        if self.opening && self.current as usize != observer {
-            fixed[self.current as usize] = 1 << THREE_OF_DIAMONDS;
-            unknown &= !(1 << THREE_OF_DIAMONDS);
-        }
+        let (unknown, fixed) = self.hidden_pool(observer);
         let mut pool: Vec<u8> = mask::bits(unknown).collect();
         pool.shuffle(rng);
         let mut next = pool.into_iter();
@@ -536,6 +531,37 @@ impl Game for State {
             s.hands[p] = h;
         }
         s
+    }
+
+    /// Cards in the other three hands (the observer sees only their count).
+    fn hidden_count(&self, observer: Player) -> Option<usize> {
+        Some(
+            (0..NUM_PLAYERS)
+                .filter(|&p| p != observer)
+                .map(|p| self.hands[p].count_ones() as usize)
+                .sum(),
+        )
+    }
+
+    /// Every way to split the hidden cards among the other three seats with their
+    /// hand sizes (and 3♦ with the opener before the opening play): at most
+    /// 12! / (4!·4!·4!) = 34,650 deals for 12 hidden cards, 13!/(5!·4!·4!) = 90,090 for 13.
+    fn for_each_deal(&self, observer: Player, f: &mut dyn FnMut(&State)) -> bool {
+        let (unknown, fixed) = self.hidden_pool(observer);
+        let others: Vec<usize> = (0..NUM_PLAYERS).filter(|&p| p != observer).collect();
+        let need = |p: usize| self.hands[p].count_ones() - fixed[p].count_ones();
+        let mut s = self.clone();
+        for_each_subset(unknown, need(others[0]), &mut |a| {
+            for_each_subset(unknown & !a, need(others[1]), &mut |b| {
+                let c = unknown & !a & !b;
+                debug_assert_eq!(c.count_ones(), need(others[2]));
+                s.hands[others[0]] = a | fixed[others[0]];
+                s.hands[others[1]] = b | fixed[others[1]];
+                s.hands[others[2]] = c | fixed[others[2]];
+                f(&s);
+            });
+        });
+        true
     }
 }
 
@@ -553,6 +579,67 @@ impl Rewind for State {
         let start = State::from_hands(self.rules, hands).ok()?;
         Some((start, self.history.iter().map(|t| t.action).collect()))
     }
+
+    /// The one rule that ties an action to the hidden cards is the last-card duty
+    /// (rules §5): a single played while the next player held one card was the
+    /// player's highest card then. Everything else a determinization keeps by
+    /// construction (played cards go back to whoever played them; 3♦ to the
+    /// opener). So this walks the history backwards, adding each play back to its
+    /// player's hand, and checks only those singles: the same answer as replaying
+    /// the deal ([`big2_games::replay_consistent`]), without building any move list.
+    /// Positions from [`State::from_position`] are checked from their own start.
+    fn history_consistent(&self) -> bool {
+        if !self.rules.last_card_duty {
+            return true;
+        }
+        let mut hands = self.hands;
+        for t in self.history.iter().rev() {
+            let p = t.player as usize;
+            hands[p] |= t.action.cards();
+            // `hands` is now the position just before this turn.
+            if let Action::Play(c) = t.action {
+                if c.kind == Kind::Single
+                    && hands[(p + 1) % NUM_PLAYERS].count_ones() == 1
+                    && highest_card(hands[p]).map(|h| 1u64 << h) != Some(c.cards)
+                {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+}
+
+impl State {
+    /// The cards hidden from `observer` that are free to be re-dealt, and the cards
+    /// each seat is known to hold among them (3♦ before the opening play).
+    fn hidden_pool(&self, observer: Player) -> (u64, [u64; NUM_PLAYERS]) {
+        let mut fixed = [0u64; NUM_PLAYERS];
+        let mut unknown = FULL_DECK & !self.played & !self.hands[observer];
+        if self.opening && self.current as usize != observer {
+            fixed[self.current as usize] = 1 << THREE_OF_DIAMONDS;
+            unknown &= !(1 << THREE_OF_DIAMONDS);
+        }
+        (unknown, fixed)
+    }
+}
+
+/// Calls `f` with every subset of `pool` that has `k` cards.
+fn for_each_subset(pool: u64, k: u32, f: &mut dyn FnMut(u64)) {
+    fn go(bits: &[u8], k: u32, acc: u64, f: &mut dyn FnMut(u64)) {
+        if k == 0 {
+            f(acc);
+            return;
+        }
+        if (bits.len() as u32) < k {
+            return;
+        }
+        // Either the first card is in the subset or it is not.
+        go(&bits[1..], k - 1, acc | 1 << bits[0], f);
+        go(&bits[1..], k, acc, f);
+    }
+    let bits: Vec<u8> = mask::bits(pool).collect();
+    go(&bits, k, 0, f);
 }
 
 /// Everything that determines the future of a position (the history does not).

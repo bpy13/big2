@@ -19,8 +19,9 @@ use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
 use big2_games::{Game, Policy};
 use big2_search::{
-    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, IsmctsConfig, Leaf,
-    Objective, OracleSampler, PimcConfig, PolicyModel, PuctConfig, UniformSampler,
+    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, InfosetConfig,
+    IsmctsConfig, Leaf, Objective, OracleSampler, PimcConfig, PolicyModel, PuctConfig, RulesMask,
+    Sampler, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -471,9 +472,16 @@ impl PyState {
 /// `rollout_epsilon`. PUCT plays no rollouts unless `leaf_network_weight` (λ,
 /// default 1) is below 1: then a new leaf's value is `λ · network + (1 − λ) ·
 /// rollout`, the rollout playing `rollout_moves` moves (default 0 = to the end of
-/// the deal) with the same `rollout` policy. The GIL is released while searching.
+/// the deal) with the same `rollout` policy. `belief="rules"` (ISMCTS and PUCT)
+/// samples only deals the rules allow (`RulesMask`: the last-card duty) and reports
+/// `belief_rejection_share` and `belief_fallbacks`; `"greedy"` and `"oracle"` are
+/// ISMCTS only. `infoset_endgame=<threshold>` (ISMCTS and PUCT) solves the position
+/// exactly over every deal of the hidden cards once at most that many are hidden
+/// and at most `infoset_max_cards` are in all hands (`infoset_max_nodes` positions
+/// at most; then the search runs) and reports `exact`
+/// and `forced` (`(winner, plays)`). The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None, infoset_endgame=None, infoset_max_cards=10, infoset_max_nodes=1_000_000))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -501,6 +509,9 @@ fn analyze<'py>(
     anytime_first_ms: Option<u64>,
     leaf_network_weight: Option<f64>,
     rollout_moves: Option<u32>,
+    infoset_endgame: Option<usize>,
+    infoset_max_cards: usize,
+    infoset_max_nodes: u64,
 ) -> PyResult<Bound<'py, PyDict>> {
     let player = state
         .inner
@@ -519,22 +530,27 @@ fn analyze<'py>(
     let s = state.inner.clone();
     // "oracle" sees the true hidden cards: a diagnostic upper bound, not fair play.
     let oracle = belief == Some("oracle");
+    // "rules": uniform deals minus those the rules exclude (last-card duty; Task 18).
+    let rules_mask = (belief == Some("rules")).then(RulesMask::default);
     let model = match belief {
-        None | Some("none") | Some("oracle") => None,
+        None | Some("none") | Some("oracle") | Some("rules") => None,
         Some("greedy") => Some(PolicyModel {
             policy: Greedy { epsilon: 0.0 },
             epsilon: belief_epsilon,
         }),
         Some(other) => {
             return Err(value_error(format!(
-                "unknown belief model {other:?} (use \"greedy\", \"oracle\" or none)"
+                "unknown belief model {other:?} (use \"rules\", \"greedy\", \"oracle\" or none)"
             )))
         }
     };
     if algorithm != "ismcts" && (model.is_some() || oracle || value.is_some()) {
         return Err(value_error(
-            "belief and value are only supported with ismcts",
+            "belief (other than \"rules\") and value are only supported with ismcts",
         ));
+    }
+    if algorithm == "pimc" && rules_mask.is_some() {
+        return Err(value_error("belief=\"rules\" works with ismcts and puct"));
     }
     if algorithm != "puct"
         && (net.is_some()
@@ -551,93 +567,151 @@ fn analyze<'py>(
     if leaf_network_weight.is_some_and(|w| !(0.0..=1.0).contains(&w)) {
         return Err(value_error("leaf_network_weight must be between 0 and 1"));
     }
+    if algorithm == "pimc" && infoset_endgame.is_some() {
+        return Err(value_error("infoset_endgame works with ismcts and puct"));
+    }
     let value_net = value.map(load_value_net).transpose()?;
     let mut belief_ess = None;
     let mut first_answer: Option<u64> = None;
-    let result: Analysis<Action> = match algorithm {
-        "ismcts" => {
-            let defaults = IsmctsConfig::default();
-            let cfg = IsmctsConfig {
-                iterations,
-                time_limit: time_limit.map(Duration::from_secs_f64),
-                exploration: exploration.unwrap_or(defaults.exploration),
-                threads,
-                seed,
-                objective,
-                endgame_threshold,
-                endgame_max_nodes,
+    // Task 20: with few hidden cards, every deal is solved exactly at the root
+    // (weighted by the rules mask with belief="rules", else uniform); the search
+    // below runs only when that does not apply or its node budget runs out.
+    let mut exact: Option<bool> = None;
+    let mut forced: Option<(usize, u32)> = None;
+    let solved: Option<Analysis<Action>> = match infoset_endgame {
+        Some(threshold) if !oracle => {
+            let ic = InfosetConfig {
+                threshold,
+                max_cards: infoset_max_cards,
+                max_nodes: infoset_max_nodes,
             };
-            let bcfg = BeliefConfig {
-                candidates: belief_candidates,
-                min_ess: belief_min_ess,
-            };
-            let leaf = value_net.as_deref().map(|n| Leaf {
-                evaluator: n,
-                rollout_weight: value_rollout_weight,
+            let r = py.detach(|| match &rules_mask {
+                Some(m) => big2_search::infoset_endgame(&s, player, &ic, objective, m),
+                None => big2_search::infoset_endgame(&s, player, &ic, objective, &UniformSampler),
             });
-            let (analysis, ess) = py.detach(|| {
-                let mut rng = SmallRng::seed_from_u64(seed ^ 0xB3_11EF);
-                let weighted = model.and_then(|m| Belief::new(&s, player, &m, &bcfg, &mut rng));
-                let ess = weighted.as_ref().map(|b| b.ess);
-                let a = match &weighted {
-                    _ if oracle => {
-                        ismcts_with(&s, player, &cfg, &rollout, &OracleSampler, leaf.as_ref())
-                    }
-                    Some(b) => ismcts_with(&s, player, &cfg, &rollout, b, leaf.as_ref()),
-                    None => ismcts_with(&s, player, &cfg, &rollout, &UniformSampler, leaf.as_ref()),
+            r.and_then(|r| {
+                exact = Some(r.exact);
+                forced = r.forced.map(|f| (f.winner, f.plays));
+                r.exact.then_some(r.analysis)
+            })
+        }
+        _ => None,
+    };
+    let result: Analysis<Action> = if let Some(a) = solved {
+        a
+    } else {
+        match algorithm {
+            "ismcts" => {
+                let defaults = IsmctsConfig::default();
+                let cfg = IsmctsConfig {
+                    iterations,
+                    time_limit: time_limit.map(Duration::from_secs_f64),
+                    exploration: exploration.unwrap_or(defaults.exploration),
+                    threads,
+                    seed,
+                    objective,
+                    endgame_threshold,
+                    endgame_max_nodes,
+                    infoset_endgame: None, // solved above when asked for
                 };
-                (a, ess)
-            });
-            belief_ess = ess;
-            analysis
-        }
-        "pimc" => {
-            let cfg = PimcConfig {
-                determinizations: iterations,
-                threads,
-                seed,
-                objective,
-                endgame_threshold,
-                endgame_max_nodes,
-                ..Default::default()
-            };
-            py.detach(|| pimc(&s, player, &cfg, &rollout))
-        }
-        "puct" => {
-            let net = load_pvnet(net.ok_or_else(|| {
-                value_error("puct needs net=<path to a .pknn policy-value network>")
-            })?)?;
-            let defaults = PuctConfig::default();
-            let cfg = PuctConfig {
-                simulations: iterations,
-                time_limit: time_limit.map(Duration::from_secs_f64),
-                c_puct: c_puct.unwrap_or(defaults.c_puct),
-                threads,
-                seed,
-                objective,
-                endgame_threshold,
-                endgame_max_nodes,
-                anytime_first_ms,
-                leaf_network_weight: leaf_network_weight.unwrap_or(defaults.leaf_network_weight),
-                rollout_moves: rollout_moves.unwrap_or(defaults.rollout_moves),
-            };
-            // With λ = 1 (the default) the rollout is never played: same result as `puct`.
-            let r =
-                py.detach(|| puct_with_rollout(&s, player, &cfg, &*net, &UniformSampler, &rollout));
-            first_answer = r.first_answer.map(|a| a.cards());
-            r.analysis
-        }
-        other => {
-            return Err(value_error(format!(
-                "unknown algorithm {other:?} (use \"ismcts\", \"pimc\" or \"puct\")"
-            )))
+                let bcfg = BeliefConfig {
+                    candidates: belief_candidates,
+                    min_ess: belief_min_ess,
+                };
+                let leaf = value_net.as_deref().map(|n| Leaf {
+                    evaluator: n,
+                    rollout_weight: value_rollout_weight,
+                });
+                let (analysis, ess) = py.detach(|| {
+                    let mut rng = SmallRng::seed_from_u64(seed ^ 0xB3_11EF);
+                    let weighted = model.and_then(|m| Belief::new(&s, player, &m, &bcfg, &mut rng));
+                    let ess = weighted.as_ref().map(|b| b.ess);
+                    let a = match &weighted {
+                        _ if oracle => {
+                            ismcts_with(&s, player, &cfg, &rollout, &OracleSampler, leaf.as_ref())
+                        }
+                        _ if rules_mask.is_some() => ismcts_with(
+                            &s,
+                            player,
+                            &cfg,
+                            &rollout,
+                            rules_mask.as_ref().unwrap(),
+                            leaf.as_ref(),
+                        ),
+                        Some(b) => ismcts_with(&s, player, &cfg, &rollout, b, leaf.as_ref()),
+                        None => {
+                            ismcts_with(&s, player, &cfg, &rollout, &UniformSampler, leaf.as_ref())
+                        }
+                    };
+                    (a, ess)
+                });
+                belief_ess = ess;
+                analysis
+            }
+            "pimc" => {
+                let cfg = PimcConfig {
+                    determinizations: iterations,
+                    threads,
+                    seed,
+                    objective,
+                    endgame_threshold,
+                    endgame_max_nodes,
+                    ..Default::default()
+                };
+                py.detach(|| pimc(&s, player, &cfg, &rollout))
+            }
+            "puct" => {
+                let net = load_pvnet(net.ok_or_else(|| {
+                    value_error("puct needs net=<path to a .pknn policy-value network>")
+                })?)?;
+                let defaults = PuctConfig::default();
+                let cfg = PuctConfig {
+                    simulations: iterations,
+                    time_limit: time_limit.map(Duration::from_secs_f64),
+                    c_puct: c_puct.unwrap_or(defaults.c_puct),
+                    threads,
+                    seed,
+                    objective,
+                    endgame_threshold,
+                    endgame_max_nodes,
+                    anytime_first_ms,
+                    leaf_network_weight: leaf_network_weight
+                        .unwrap_or(defaults.leaf_network_weight),
+                    rollout_moves: rollout_moves.unwrap_or(defaults.rollout_moves),
+                    infoset_endgame: None, // solved above when asked for
+                };
+                // With λ = 1 (the default) the rollout is never played: same result as `puct`.
+                let r = py.detach(|| match &rules_mask {
+                    Some(m) => puct_with_rollout(&s, player, &cfg, &*net, m, &rollout),
+                    None => puct_with_rollout(&s, player, &cfg, &*net, &UniformSampler, &rollout),
+                });
+                first_answer = r.first_answer.map(|a| a.cards());
+                r.analysis
+            }
+            other => {
+                return Err(value_error(format!(
+                    "unknown algorithm {other:?} (use \"ismcts\", \"pimc\" or \"puct\")"
+                )))
+            }
         }
     };
     let d = PyDict::new(py);
+    // infoset_endgame: None when it did not apply (too many hidden cards), else
+    // whether every deal was solved; `forced` = (winner, plays) when they all agree.
+    d.set_item("exact", exact)?;
+    d.set_item("forced", forced)?;
     d.set_item("player", result.player)?;
     d.set_item("simulations", result.simulations)?;
     d.set_item("seconds", result.elapsed.as_secs_f64())?;
     d.set_item("belief_ess", belief_ess)?;
+    // belief="rules": the share of drawn deals the rules excluded, and how many
+    // samples gave up (after 1,000 rejections in a row) and used an excluded deal.
+    let mask_stats = rules_mask.as_ref().map(RulesMask::stats);
+    d.set_item(
+        "belief_rejection_share",
+        mask_stats.map(|m| m.rejection_share()),
+    )?;
+    d.set_item("belief_fallbacks", mask_stats.map(|m| m.fallbacks))?;
     d.set_item("first_answer", first_answer)?;
     let moves = result
         .moves
@@ -658,8 +732,9 @@ fn analyze<'py>(
 }
 
 /// Hidden-card samples as the search would draw them: `n` deals (each a list of
-/// four hand masks) for the player to act, uniform (`belief=None`) or weighted by
-/// the opponent model (`belief="greedy"`). For studying belief models.
+/// four hand masks) for the player to act, uniform (`belief=None`), uniform among
+/// the deals the rules allow (`belief="rules"`) or weighted by the opponent model
+/// (`belief="greedy"`). For studying belief models.
 #[pyfunction]
 #[pyo3(signature = (state, n, *, belief=None, candidates=256, epsilon=0.2, min_ess=0.25, seed=0))]
 #[allow(clippy::too_many_arguments)]
@@ -677,6 +752,12 @@ fn sample_deals(
         .current_player()
         .ok_or_else(|| value_error("the deal is over"))?;
     let mut rng = SmallRng::seed_from_u64(seed);
+    if belief == Some("rules") {
+        let mask = RulesMask::default();
+        return Ok((0..n)
+            .map(|_| mask.sample(s, player, &mut rng).hands())
+            .collect());
+    }
     let weighted = match belief {
         None => None,
         Some("greedy") => {

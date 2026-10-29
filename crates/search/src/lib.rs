@@ -9,12 +9,16 @@
 //! * [`pimc`] — flat Monte Carlo over determinizations ("perfect-information
 //!   Monte Carlo"). A simpler baseline.
 //! * [`belief`] — opponent-aware determinization: weights sampled deals by how
-//!   well they explain the opponents' actions.
+//!   well they explain the opponents' actions; [`RulesMask`] keeps only the deals
+//!   the rules allow (the hard constraints, no opponent model).
 //! * [`puct`] — the ISMCTS tree guided by a policy-value network
 //!   ([`big2_games::PriorValue`]): the network's prior orders the tries and its
 //!   value replaces the rollout (or is mixed with one: [`puct_with_rollout`]).
 //! * [`endgame`] — exact max^n search of a fully known position, used inside
 //!   ISMCTS once few cards remain.
+//! * [`infoset_endgame`] — the same exact search from the observer's point of
+//!   view: every deal of the hidden cards solved and averaged, with forced results
+//!   (`IsmctsConfig::infoset_endgame`, `PuctConfig::infoset_endgame`).
 //!
 //! Both Monte Carlo solvers reason about hidden cards the same way: they sample
 //! full deals consistent with what the observer has seen
@@ -24,12 +28,17 @@
 pub mod analysis;
 pub mod belief;
 pub mod endgame;
+pub mod infoset_endgame;
 pub mod ismcts;
 pub mod pimc;
 pub mod puct;
 
 pub use analysis::{Analysis, MoveStats, Objective};
-pub use belief::{Belief, BeliefConfig, OracleSampler, PolicyModel, Sampler, UniformSampler};
+pub use belief::{
+    Belief, BeliefConfig, OracleSampler, PolicyModel, RulesMask, RulesMaskStats, Sampler,
+    UniformSampler,
+};
+pub use infoset_endgame::{infoset_endgame, Forced, InfosetConfig, InfosetResult};
 pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
 pub use pimc::{pimc, PimcConfig};
 pub use puct::{

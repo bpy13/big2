@@ -70,6 +70,21 @@ pub trait Game: Clone + Send + Sync + Debug {
         usize::MAX
     }
 
+    /// How many cards (or other hidden items) `observer` cannot see, if the game
+    /// can list every deal consistent with what they see ([`Game::for_each_deal`]);
+    /// `None` (the default) if it cannot.
+    fn hidden_count(&self, _observer: Player) -> Option<usize> {
+        None
+    }
+
+    /// Calls `f` once for every full state that `observer` cannot tell apart from
+    /// this one, each distinct deal of the hidden cards exactly once (the support
+    /// of [`Game::determinize`]). Returns `false` if the game cannot enumerate
+    /// (the default; `f` is then never called).
+    fn for_each_deal(&self, _observer: Player, _f: &mut dyn FnMut(&Self)) -> bool {
+        false
+    }
+
     /// `true` once the game is over.
     fn is_terminal(&self) -> bool {
         self.current_player().is_none()
@@ -131,6 +146,35 @@ pub trait Rewind: Game {
     /// taken since, in order. `None` if the start is unknown (e.g. a position set
     /// up mid-game).
     fn rewind(&self) -> Option<(Self, Vec<Self::Action>)>;
+
+    /// `false` if some action in the history would have been illegal for the
+    /// player who took it, had the hidden cards been the ones in this state (for a
+    /// determinized state: the sampled ones). The hard constraints the rules put on
+    /// the hidden cards (`big2_search::belief::RulesMask`).
+    ///
+    /// The default replays the game with [`replay_consistent`]; a game can answer
+    /// faster from what it knows about its rules (Big Two only checks last-card
+    /// duty singles), as long as the answer is the same.
+    fn history_consistent(&self) -> bool {
+        replay_consistent(self)
+    }
+}
+
+/// Replays `state`'s history from its start ([`Rewind::rewind`]) and checks every
+/// action against [`Game::legal_actions`]. `true` when the start is unknown.
+pub fn replay_consistent<G: Rewind>(state: &G) -> bool {
+    let Some((mut s, actions)) = state.rewind() else {
+        return true;
+    };
+    let mut legal = Vec::new();
+    for a in actions {
+        s.legal_actions(&mut legal);
+        if !legal.contains(&a) {
+            return false;
+        }
+        s.apply(a);
+    }
+    true
 }
 
 /// A model of how players choose actions: the log-probability that the player

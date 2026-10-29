@@ -21,6 +21,10 @@ class AnalysisResult(TypedDict):
     simulations: int
     seconds: float
     belief_ess: float | None
+    belief_rejection_share: float | None  # belief="rules": share of draws excluded
+    belief_fallbacks: int | None  # belief="rules": samples that gave up
+    exact: bool | None  # infoset_endgame: None = did not apply; False = budget ran out
+    forced: tuple[int, int] | None  # infoset_endgame: (winner, plays) in every deal
     first_answer: int | None  # puct with anytime_first_ms: the move as of that time
     moves: list[MoveStats]
 
@@ -134,7 +138,8 @@ def analyze(
     rollout_epsilon: float = 0.1,
     rollout: str = "greedy",  # "greedy" | "structured" (StructuredGreedy, Task 5)
     rollout_plan_depth: int = 8,
-    belief: str | None = None,  # None | "greedy" | "oracle" (cheats; diagnostics only)
+    # None | "rules" (ismcts, puct) | "greedy" | "oracle" (cheats; diagnostics only)
+    belief: str | None = None,
     belief_candidates: int = 256,
     belief_epsilon: float = 0.2,
     belief_min_ess: float = 0.25,
@@ -146,12 +151,16 @@ def analyze(
     # puct only: leaf = λ·network + (1−λ)·rollout (default 1: no rollout)
     leaf_network_weight: float | None = None,
     rollout_moves: int | None = None,  # puct only: rollout length, 0 = to the end
+    # ismcts and puct: solve every deal exactly once at most this many cards are hidden
+    infoset_endgame: int | None = None,
+    infoset_max_cards: int = 10,  # ... and at most this many cards in all hands
+    infoset_max_nodes: int = 1_000_000,
 ) -> AnalysisResult: ...
 def sample_deals(
     state: Big2State,
     n: int,
     *,
-    belief: str | None = None,
+    belief: str | None = None,  # None | "rules" | "greedy"
     candidates: int = 256,
     epsilon: float = 0.2,
     min_ess: float = 0.25,
