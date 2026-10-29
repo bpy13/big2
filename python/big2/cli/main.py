@@ -507,9 +507,40 @@ def rl_distill_train(
     last_card_duty: Annotated[
         bool, typer.Option(help="Rules of the data, for the evaluation games.")
     ] = DEFAULT_RULES.last_card_duty,
+    model: Annotated[
+        str,
+        typer.Option(
+            help="v1: score and win heads (picks up new shards as they appear). "
+            "v2: cards-left distributions for all seats and a prior (format-2 shards, "
+            "loaded once; docs/rl.md §3.3)."
+        ),
+    ] = "v1",
+    patience: Annotated[
+        int, typer.Option(help="v2: stop after this many evaluations without improvement.")
+    ] = 8,
 ) -> None:
-    """Train a Q-network on solver-labelled data (picks up new shards as they appear)."""
-    from big2.rl.distill import DistillConfig, train
+    """Train a Q-network on solver-labelled data."""
+    from big2.rl.distill import DistillConfig, DistillV2Config, train, train_v2
+
+    if model == "v2":
+        if init is not None:
+            raise typer.BadParameter("--init is not supported with --model v2")
+        cfg2 = DistillV2Config(
+            data_dir=data_dir,
+            run_dir=run_dir,
+            max_minutes=minutes,
+            batch_size=batch_size,
+            resume=resume,
+            patience=patience,
+            device=device,
+            rules=Rules(last_card_duty=last_card_duty).kwargs(),
+        )
+        _set_threads(threads)
+        _show_device(device)
+        train_v2(cfg2, log=lambda r: console.print(r))
+        return
+    if model != "v1":
+        raise typer.BadParameter(f"--model must be v1 or v2, not {model!r}")
 
     def log(r: dict[str, Any]) -> None:
         console.print(
@@ -574,10 +605,11 @@ def rl_export(
         typer.Option("--f32", help="Store exact f32 weights instead of int8/f16 (3x larger)."),
     ] = False,
 ) -> None:
-    """Export a Q-network for the Rust engine (big2_big2::qnet; see docs/rl.md §4)."""
-    from big2.rl.export import export_qnet_pknn
+    """Export a Q-network (big2_big2::qnet) or a network v2 (big2_big2::pvnet) for the
+    Rust engine; see docs/rl.md §4."""
+    from big2.rl.export import export_pknn
 
-    path = export_qnet_pknn(checkpoint, out, precision="f32" if f32 else "mixed")
+    path = export_pknn(checkpoint, out, precision="f32" if f32 else "mixed")
     console.print(f"Wrote {path} ({path.stat().st_size / 1e6:.2f} MB)")
 
 
