@@ -12,7 +12,7 @@
 //!   well they explain the opponents' actions.
 //! * [`puct`] — the ISMCTS tree guided by a policy-value network
 //!   ([`big2_games::PriorValue`]): the network's prior orders the tries and its
-//!   value replaces the rollout.
+//!   value replaces the rollout (or is mixed with one: [`puct_with_rollout`]).
 //! * [`endgame`] — exact max^n search of a fully known position, used inside
 //!   ISMCTS once few cards remain.
 //!
@@ -32,4 +32,6 @@ pub use analysis::{Analysis, MoveStats, Objective};
 pub use belief::{Belief, BeliefConfig, OracleSampler, PolicyModel, Sampler, UniformSampler};
 pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
 pub use pimc::{pimc, PimcConfig};
-pub use puct::{puct, puct_with, PuctAnalysis, PuctConfig, PuctPolicy};
+pub use puct::{
+    puct, puct_with, puct_with_rollout, NoRollout, PuctAnalysis, PuctConfig, PuctPolicy,
+};

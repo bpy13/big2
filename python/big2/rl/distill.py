@@ -580,8 +580,15 @@ class _DataV2:
     the decisions of held-out shards.
     """
 
-    def __init__(self, data_dir: str, val_every: int, log: Any = print) -> None:
-        files = sorted(p for p in Path(data_dir).glob("*.npz") if not p.name.endswith(".tmp.npz"))
+    def __init__(
+        self, data_dir: str, val_every: int, log: Any = print, files: list[Path] | None = None
+    ) -> None:
+        """``files`` (default: every shard of ``data_dir``) picks the shards to load;
+        ``val_every`` then counts within that list."""
+        if files is None:
+            files = sorted(
+                p for p in Path(data_dir).glob("*.npz") if not p.name.endswith(".tmp.npz")
+            )
         if not files:
             raise RuntimeError(f"no shards in {data_dir}")
         counts = [_shard_counts(p) for p in files]

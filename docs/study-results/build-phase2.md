@@ -118,4 +118,81 @@ Every value loses to ISMCTS-1000. The first 300 deals were worse for PUCT than t
 
 ## 6. Fallback: calibration and a rollout in the leaf (proposal §10 row 2)
 
-(in progress)
+Proposal §10 row 2: when PUCT only ties ISMCTS, check the prior's calibration and the leaf
+value first, then try a value plus a short rollout. §6.1 is the check, §6.2 the match.
+
+### 6.1 Calibration of the round-0 network (f)
+
+`experiments/build_phase2.py calibration` (GPU, 1 minute), on the 101 shards that training held
+out: 55,046 decisions and 276,502 candidates from ISMCTS-1000 self-play (Task 11). Losses agree
+with Task 12's: prior 1.259 (top-1 68.5 %), actor 1.576, seats 1.818. Raw output:
+`runs/p2_matches/f_calibration/`.
+
+**Prior against the search's visit shares** (decisions with more than one candidate; "most
+visited": how often a move in the bin was the search's choice):
+
+| Prior bin | Candidates | Mean prior | Mean visit share | Most visited |
+|---|---:|---:|---:|---:|
+| [0.0, 0.1) | 99,114 | 0.058 | 0.057 | 2.1 % |
+| [0.1, 0.2) | 79,947 | 0.144 | 0.139 | 11.7 % |
+| [0.2, 0.3) | 40,342 | 0.245 | 0.240 | 24.0 % |
+| [0.3, 0.4) | 22,416 | 0.345 | 0.345 | 38.8 % |
+| [0.4, 0.5) | 13,485 | 0.446 | 0.457 | 53.9 % |
+| [0.5, 0.6) | 8,400 | 0.546 | 0.564 | 74.1 % |
+| [0.6, 0.7) | 5,184 | 0.647 | 0.683 | 90.5 % |
+| [0.7, 0.8) | 3,753 | 0.747 | 0.785 | 96.8 % |
+| [0.8, 0.9) | 2,467 | 0.844 | 0.864 | 98.8 % |
+| [0.9, 1.0) | 1,394 | 0.942 | 0.955 | 99.9 % |
+
+Expected calibration error 0.005. Mean entropy 1.28 nats for the prior, 1.19 for the visit
+shares: the prior is slightly *flatter* than the search, not sharper. **The prior is well
+calibrated**; it is not why PUCT loses.
+
+**Predicted tiered score against the search's mean score** (262,595 candidates simulated ≥ 20
+times; ten equal-count bins of the prediction):
+
+| Predicted bin | Mean predicted | Mean search score |
+|---|---:|---:|
+| 1 (lowest) | −21.17 | −18.27 |
+| 2 | −6.91 | −7.02 |
+| 3 | −3.19 | −3.59 |
+| 4 | −0.85 | −1.31 |
+| 5 | +1.08 | +0.57 |
+| 6 | +2.97 | +2.20 |
+| 7 | +4.99 | +3.94 |
+| 8 | +7.46 | +5.93 |
+| 9 | +11.21 | +9.04 |
+| 10 (highest) | +22.97 | +19.19 |
+
+Correlation 0.92, RMS 4.82 points, bias +0.79 points, slope of the search's score on the
+prediction 0.86 (spread 12.2 predicted against 11.3 searched). **The value is good but
+over-spread and optimistic**: a move predicted +11 is worth +9 to the search, one predicted −21
+is worth −18. Inside PUCT the leaf values are therefore about 15 % too extreme and about
+0.8 points too high, by the search's own measure.
+
+**Played move against the deal's real result**: bias +0.38 points, correlation 0.67. The
+chance of going out first is calibrated below 50 % and over-confident above it:
+
+| Predicted P(out first) | Decisions | Mean predicted | Real share |
+|---|---:|---:|---:|
+| [0.0, 0.1) | 16,491 | 4.7 % | 5.6 % |
+| [0.2, 0.3) | 6,524 | 24.6 % | 26.0 % |
+| [0.4, 0.5) | 3,908 | 44.8 % | 44.6 % |
+| [0.6, 0.7) | 2,514 | 64.8 % | 59.6 % |
+| [0.7, 0.8) | 2,063 | 74.8 % | 68.3 % |
+| [0.8, 0.9) | 1,878 | 84.9 % | 78.0 % |
+| [0.9, 1.0) | 3,550 | 97.4 % | 94.3 % |
+
+(Every bin is in `runs/p2_matches/f_calibration/table.md`; the omitted rows follow the same
+pattern.) Overall predicted 31.2 %, real 30.9 %.
+
+**Verdict.** Calibration does not explain the gap on its own. The prior is as good as a
+distilled prior gets at 68.5 % top-1. The value is the weaker part: over-spread, slightly
+optimistic, and over-confident about going out once a seat is ahead. These are all measured on
+ISMCTS self-play positions; PUCT visits other positions too. The value is also a copy of
+ISMCTS-1000's own estimate (RMS 4.8 points from it), so a search on it cannot see further than
+ISMCTS-1000 does: the rollout mix in §6.2 adds real play-outs back into the leaf.
+
+### 6.2 Leaf value `λ · network + (1 − λ) · rollout` (e)
+
+(job running; see the plan's Task 15 status line)
