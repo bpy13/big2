@@ -10,6 +10,13 @@ Every response carries `"api": 0`. Every error is
 The engine returns keys and numbers only, never display text: cards are ids such as `"3d"`,
 combinations are `combo.*`, actions `action.*`, reasons `reason.*`, events `event.*`.
 
+## Optional contract fields not emitted yet
+
+`quality` (on `Hint` and `ReviewItem`), `interval` (on `ReviewItem` and `Grade`) and the `unclear`
+grade are optional fields of the contract (`docs/engine-interface.md` in hk-games). This crate
+does not emit them yet, so the app treats a missing `quality` or `interval` as "no information"
+and never sees `unclear`. `API_VERSION` (in `shapes.rs`, now `0`) is the `"api"` number in every response.
+
 ## Build and test
 
 ```powershell
