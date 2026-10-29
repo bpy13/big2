@@ -311,6 +311,43 @@ def test_qnet_v2_shapes_and_size() -> None:
     assert torch.equal(drop(st, ac, index)[1], drop(st, ac, index)[1])
 
 
+def test_pvnet_agent_plays_a_v2_checkpoint_under_each_scoring(tmp_path: Path) -> None:
+    """Task 15 (c): ``pvnet:checkpoint=…`` plays a v2 network greedily, scoring moves
+    by the game's own scoring (``tiered`` or ``win_loss``), or by the prior."""
+    from dataclasses import asdict
+
+    from big2.rl.model import NetConfigV2, QNetV2, V2Scorer
+
+    cfg = NetConfigV2(state_hidden=32, state_out=16, action_out=16, head_hidden=32)
+    net = QNetV2(cfg)
+    ckpt = tmp_path / "v2.pt"
+    torch.save({"arch": "qnet_v2", "net_config": asdict(cfg), "model": net.state_dict()}, ckpt)
+    net.eval()
+    for scoring in ("tiered", "win_loss"):
+        agent = make_agent(f"pvnet:checkpoint={ckpt}")
+        s = Rules(scoring=scoring).new_deal(seed=3)
+        # The agent's move is the argmax of the actor's expected score under this scoring.
+        s_enc, a_enc, legal = encode(s)
+        st = torch.from_numpy(np.frombuffer(s_enc, np.uint8).reshape(1, -1).astype(np.float32))
+        ac = torch.from_numpy(
+            np.frombuffer(a_enc, np.uint8).reshape(-1, ACTION_LEN).astype(np.float32)
+        )
+        with torch.no_grad():
+            score, _ = V2Scorer(net, "score", scoring)(
+                st, ac, torch.zeros(len(legal), dtype=torch.long)
+            )
+        assert agent.act(s) == legal[int(score.argmax())]
+        final = play_game(s, [agent, make_agent("greedy"), agent, make_agent("greedy")])
+        assert final.is_terminal
+    assert make_agent(f"pvnet:checkpoint={ckpt},mode=prior").act(Rules().new_deal(1)) in (
+        Rules().new_deal(1).legal_actions()
+    )
+    with pytest.raises(ValueError):
+        make_agent(f"pvnet:checkpoint={ckpt},mode=bad")
+    with pytest.raises(ValueError):
+        make_agent("pvnet")
+
+
 def test_v2_payoff_reproduces_the_rules_settlement() -> None:
     """Task 12: the tiered payoff is rules §7.1's penalty table; one-hot distributions
     of a finished deal give exactly the engine's scores under every scoring."""
