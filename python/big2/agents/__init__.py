@@ -121,6 +121,13 @@ class SearchAgent:
         )
 
     def act(self, state: Big2State) -> int:
+        legal = state.legal_actions()
+        if len(legal) == 1:
+            # A forced move (usually a pass) needs no search; under a time limit it
+            # would otherwise cost the full budget. The call still counts, so every
+            # later search gets the same seed as before this shortcut existed.
+            self._calls += 1
+            return int(legal[0])
         return self.analyze(state)["moves"][0]["cards"]
 
 
@@ -141,6 +148,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     ``puct:net=….pknn[,simulations=2000,c_puct=1.5,…]`` (the network inside the search),
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
+    ``pvnet:checkpoint=….pt[,mode=score|prior,scoring=…]`` (a network v2 played greedily,
+    see :class:`big2.rl.agent.PvNetAgent`),
     ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
     """
     kind, _, rest = spec.partition(":")
@@ -186,6 +195,12 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
             seed=seed,
             name=spec,
         )
+    if kind == "pvnet":
+        if "checkpoint" not in opts:
+            raise ValueError(f"pvnet needs checkpoint=<path to a v2 .pt> in {spec!r}")
+        from big2.rl.agent import PvNetAgent
+
+        return PvNetAgent(str(opts.pop("checkpoint")), name=spec, **opts)
     if kind in ("dmc", "dmcsearch"):
         if "checkpoint" not in opts:
             raise ValueError(f"{kind} needs checkpoint=<path to .pt> in {spec!r}")
@@ -199,7 +214,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(
         f"unknown agent kind {kind!r} in {spec!r} "
-        "(random, greedy, ismcts, pimc, puct, patwa-greedy, patwa-smart, qnet, dmc, dmcsearch)"
+        "(random, greedy, ismcts, pimc, puct, patwa-greedy, patwa-smart, qnet, pvnet, dmc, "
+        "dmcsearch)"
     )
 
 

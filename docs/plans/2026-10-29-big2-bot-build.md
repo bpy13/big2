@@ -418,6 +418,15 @@ to goes through bot-notes (Task 10).
     1.0 and 2.5 on 300 deals and keeps the best.
 
 - [ ] **Task 15: Phase 2 matches** **[long: ~4 h CPU, headless]** (after 14)
+  (job started 2026-10-29 14:35, headless, 8 workers (13 cards and mahjong jobs share the CPU),
+  `runs\p2_matches\run.ps1` = `experiments/build_phase2.py all --workers 8`, order a, d, c, b;
+  expected end ≈ 19:00 (b, 0.5 s per move, is ~3.5 h of it). Check:
+  `Get-Content C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\p2_matches\progress.json`
+  (moves every 100-deal block; `runs\p2_matches\results.json` appears at the end). Resume: rerun
+  `run.ps1` (finished subcommands skipped, saved blocks read back). Then copy the four
+  `runs\p2_matches\*\table.md` into `build-phase2.md` §1–§4 with verdicts. New agent
+  `pvnet:checkpoint=…` (v2 network played greedily, game's scoring) for (c); search agents now
+  play a forced move without searching (same seeds as before).)
   - Files: create `experiments/build_phase2.py` (subcommands `puct-vs-ismcts`, `equal-time`,
     `heads`); create `docs/study-results/build-phase2.md`; `runs/p2_matches/run.ps1`.
   - Done when: `build-phase2.md` holds, each with mean ± 95 % and win rate in both lineups:

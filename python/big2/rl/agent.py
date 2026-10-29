@@ -11,7 +11,7 @@ import torch
 from torch import nn
 
 from big2._core import Big2State, encode
-from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
+from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet, QNetV2, V2Scorer
 
 torch.set_num_threads(1)  # many agents run in parallel processes during tournaments
 
@@ -84,3 +84,45 @@ class DMCAgent:
         moves = evaluate_moves(self.net, state)
         key = "mean_score" if self.objective == "score" else "win_rate"
         return int(max(moves, key=lambda m: m[key])["cards"])
+
+
+_V2_CACHE: dict[str, QNetV2] = {}
+
+
+def load_v2_model(path: str | Path) -> QNetV2:
+    """Loads (and caches per process) a network v2 checkpoint from ``distill-train --model v2``."""
+    from big2.rl.distill import load_qnet_v2
+
+    key = str(Path(path).resolve())
+    if key not in _V2_CACHE:
+        _V2_CACHE[key], _ = load_qnet_v2(key)
+    return _V2_CACHE[key]
+
+
+@dataclass
+class PvNetAgent:
+    """Plays a network v2 checkpoint greedily, without search.
+
+    ``mode="score"`` plays the move whose cards-left distributions give the actor the
+    best expected score under ``scoring``; ``mode="prior"`` plays the top policy
+    logit. ``scoring=""`` (the default) uses the game's own scoring, read from the
+    state each move, so the same agent follows ``tiered`` and ``win_loss`` games.
+    """
+
+    checkpoint: str
+    mode: str = "score"
+    scoring: str = ""
+    name: str = ""
+    net: QNetV2 = field(init=False, repr=False)
+    _scorers: dict[str, nn.Module] = field(default_factory=dict, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.net = load_v2_model(self.checkpoint)
+        V2Scorer(self.net, self.mode)  # fail fast on a bad mode
+        self.name = self.name or f"pvnet:checkpoint={self.checkpoint}"
+
+    def act(self, state: Big2State) -> int:
+        scoring = self.scoring or str(state.rules()["scoring"])
+        if scoring not in self._scorers:
+            self._scorers[scoring] = V2Scorer(self.net, self.mode, scoring)
+        return int(evaluate_moves(self._scorers[scoring], state)[0]["cards"])

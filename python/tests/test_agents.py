@@ -106,6 +106,18 @@ def test_patwa_smart_avoids_breaking_a_five_card_hand() -> None:
     assert PatwaSmart().act(s) == cards("Kd")
 
 
+def test_search_agent_plays_a_forced_move_without_searching(monkeypatch) -> None:
+    # 3d cannot beat a 2s: pass is the only legal move. The agent returns it without a
+    # search (a time-limited search would spend its whole budget) but still counts the
+    # call, so the seeds of later searches do not move.
+    s = _position("3d 4c", "2s")
+    assert s.legal_actions() == [PASS]
+    agent = make_agent("ismcts:iterations=50,time_limit=5")
+    monkeypatch.setattr(agent, "analyze", lambda state: pytest.fail("searched a forced move"))
+    assert agent.act(s) == PASS
+    assert agent._calls == 1
+
+
 def test_search_agent_accepts_large_seeds() -> None:
     # Regression: the web server uses 48-bit deal seeds; derived seeds must fit a u64.
     agent = make_agent("ismcts:iterations=20", seed=2**48 + 3)
