@@ -426,11 +426,12 @@ to goes through bot-notes (Task 10).
   `leaf = λ·network + (1−λ)·rollout` at 300 deals, `build-phase2.md` §6. Calibration done
   2026-10-30 (§6.1): prior calibrated (ECE 0.005), value over-spread (slope 0.86) and +0.8
   optimistic. `PuctConfig { leaf_network_weight, rollout_moves }` and `puct_with_rollout`
-  added; λ = 1 bit-identical to before (golden-fingerprint test). Fallback match job started
-  2026-10-30 01:34, headless, 6 workers: `runs\p2_fallback\run.ps1` = `build_phase2.py
-  rollout-leaf` (λ = 0.5 then 0, c_puct 2.5, 300 deals). Check:
-  `Get-Content C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\p2_fallback\progress.json`;
-  resume: rerun `run.ps1`.)
+  added; λ = 1 bit-identical to before (golden-fingerprint test). Fallback match done
+  2026-10-30 03:07 (`runs\p2_fallback`, §6.2): PUCT-2000, c_puct 2.5, λ = 0.5 vs ISMCTS-1000 at
+  300 deals +0.30 [−0.84, +1.41] `1+3`, +0.61 [−0.56, +1.73] `ABAB` (λ = 1: −1.28, −1.39);
+  λ = 0 −0.65, +0.62. Fallback fails the bar too: a tie. Next step (one more round, then
+  ISMCTS ships as `expert` if PUCT still ties) in `docs/open-items.md`. Task 15 stays open
+  only for A9; Task 16's WebAssembly timing waits for a free CPU.)
   (job started 2026-10-29 14:43, headless, 8 workers (13 cards and mahjong jobs share the CPU),
   `runs\p2_matches\run.ps1` = `experiments/build_phase2.py all --workers 8`, order a, d, c, b;
   expected end ≈ 19:00 (b, 0.5 s per move, is ~3.5 h of it). The script opts out of Windows power
