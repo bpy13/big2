@@ -350,11 +350,15 @@ to goes through bot-notes (Task 10).
   - Notes: duty on, tiered, default rules. Use the rollout that won Task 5. 25 % of the time the
     generator plays a random top-3 move (today's behaviour), keep that.
 
-- [ ] **Task 12: Network v2: cards-left distribution, all-seat and prior heads** **[GPU: 2–4 h]**
-  (code dfef495, `pytest -k v2` passes; job started 2026-10-29 12:58, headless, `runs\net_r0\run.ps1`;
-  check `runs\net_r0\progress.json`; resume: rerun `run.ps1` (adds `--resume runs\net_r0\latest.pt`).
-  Adds a 0.5-weight auxiliary loss: tiered score from the distributions vs the search's mean score
-  per candidate, since cards-left targets exist only for the played move. Tick once `results.json` exists.)
+- [x] **Task 12: Network v2: cards-left distribution, all-seat and prior heads** **[GPU: 2–4 h]**
+  (code dfef495, `pytest -k v2` passes. Adds a 0.5-weight auxiliary loss: tiered score from the
+  distributions vs the search's mean score per candidate, since cards-left targets exist only for
+  the played move. Done 2026-10-29 14:10: patience stop after 50 min (62,398 steps; no better
+  validation loss in 6 evaluations); `best.pt` is step 21,049 at 20 min. Validation loss per head
+  on 55,046 held-out decisions: actor 1.576, seats 1.818, prior 1.259, score 0.0083 (total 4.657);
+  prior top-1 68.5 %, score RMS 4.56 points. `test_export.py -k v2` on the final `best.pt`: prior
+  argmax 99.9 %, distributions L1 mean 0.0013 (99th percentile 0.0068) on 1,000 positions. Export:
+  `runs/net_r0/pvnet-r0.pknn` (1.17 MB). Extension rebuilt (`pip install -e ".[dev,rl]"`).)
   - Files: modify `python/big2/rl/model.py` (`QNetV2`: shared state tower; per candidate a
     14-way cards-left distribution for the actor and for each of the three opponents (4 × 14),
     plus a policy logit; the mean-score output is `distribution · payoff(scoring)` computed in the
