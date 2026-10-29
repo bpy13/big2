@@ -351,6 +351,10 @@ to goes through bot-notes (Task 10).
     generator plays a random top-3 move (today's behaviour), keep that.
 
 - [ ] **Task 12: Network v2: cards-left distribution, all-seat and prior heads** **[GPU: 2–4 h]**
+  (code dfef495, `pytest -k v2` passes; job started 2026-10-29 12:58, headless, `runs\net_r0\run.ps1`;
+  check `runs\net_r0\progress.json`; resume: rerun `run.ps1` (adds `--resume runs\net_r0\latest.pt`).
+  Adds a 0.5-weight auxiliary loss: tiered score from the distributions vs the search's mean score
+  per candidate, since cards-left targets exist only for the played move. Tick once `results.json` exists.)
   - Files: modify `python/big2/rl/model.py` (`QNetV2`: shared state tower; per candidate a
     14-way cards-left distribution for the actor and for each of the three opponents (4 × 14),
     plus a policy logit; the mean-score output is `distribution · payoff(scoring)` computed in the
@@ -366,7 +370,12 @@ to goes through bot-notes (Task 10).
   - Notes: ≈ 0.8–1.0 M parameters; keep the state tower 512–256 as today so Task 7's export path
     stays. Three heads' loss weights 1 : 1 : 1 (open question 3 for Brian lists the alternative).
 
-- [ ] **Task 13: Policy-value network in Rust** `[parallel-ok with 12 once the v2 shapes are fixed]`
+- [x] **Task 13: Policy-value network in Rust** `[parallel-ok with 12 once the v2 shapes are fixed]`
+  (done: on `runs/net_r0/best.pt` at 5 min of training, prior argmax 99.9 %, distributions L1 mean
+  0.0016 (99th percentile 0.007) on 1,000 positions; `pvnet_evaluate_opening` 39 µs native, recorded in
+  `docs/rl.md` §4.1. Rerun `pytest python/tests/test_export.py -k v2` on the final `best.pt`.
+  `lead_value` rebuilds positions with `State::from_position` (no history); an additive `State`
+  method would keep the history.)
   - Files: create `crates/big2/src/pvnet.rs` (`PvNet::from_bytes`, `evaluate(state, candidates)
     -> PvOutput { prior: Vec<f32>, dist: [[f32; 14]; 4], score: f32 }`, `score_for(scoring)`,
     `plays_to_out` passthrough from the planner, `lead_value` = score if actor leads next minus

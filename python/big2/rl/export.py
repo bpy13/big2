@@ -13,6 +13,11 @@ so the exporter plays a few self-play games with the network and adds that shift
 back into the layer's bias ("bias correction"), measured on those positions.
 Per-row int8 everywhere (0.85 MB) was tried first: its scores were 0.75 points RMS
 from PyTorch's and it picked a different move in 7 % of positions.
+
+**Network v2** (:func:`export_pvnet_pknn`, plan Task 13): the same three towers of a
+:class:`big2.rl.model.QNetV2`, kind ``big2-pvnet``, read by
+``crates/big2/src/pvnet.rs`` (``PvNet::from_bytes``). ``big2 rl export`` picks the
+right exporter from the checkpoint (:func:`export_pknn`).
 """
 
 from __future__ import annotations
@@ -25,7 +30,16 @@ import numpy as np
 import torch
 from torch import nn
 
-from big2.rl.model import ACTION_LEN, SCORE_SCALE, STATE_LEN, NetConfig, QNet
+from big2.rl.model import (
+    ACTION_LEN,
+    SCORE_SCALE,
+    STATE_LEN,
+    NetConfig,
+    NetConfigV2,
+    QNet,
+    QNetV2,
+    V2Scorer,
+)
 
 QNET_KIND = "big2-qnet"
 QNET_FEATURES = "big2-state-v1"
@@ -46,6 +60,8 @@ def load_qnet(checkpoint: str | Path) -> tuple[QNet, dict[str, Any]]:
     ckpt = torch.load(str(checkpoint), map_location="cpu", weights_only=False)
     if ckpt.get("arch") == "ppo":
         raise ValueError("a PPO policy is not a Q-network; export a DMC or distilled checkpoint")
+    if ckpt.get("arch") == "qnet_v2":
+        raise ValueError("a network v2 checkpoint: use export_pvnet_pknn / load_pvnet")
     net = QNet(NetConfig(**ckpt["net_config"]))
     net.load_state_dict(ckpt["model"])
     net.eval()
@@ -131,8 +147,9 @@ def write_pknn_v2(
 
 
 @torch.no_grad()
-def calibration_states(net: QNet, positions: int = 2000, seed: int = 12345) -> np.ndarray:
-    """State features of ``positions`` decisions from self-play with ``net`` (5 % random
+def calibration_states(net: nn.Module, positions: int = 2000, seed: int = 12345) -> np.ndarray:
+    """State features of ``positions`` decisions from self-play with ``net`` (a
+    Q-network, or anything whose ``forward`` returns ``(score, _)``; 5 % random
     moves), under the default rules. Used to measure the bias correction."""
     from big2._core import Big2VecEnv
     from big2.rl.dmc import choose
@@ -161,16 +178,30 @@ def export_qnet_pknn(checkpoint: str | Path, out: str | Path, precision: str = "
     if precision not in ("mixed", "f32"):
         raise ValueError(f"precision must be 'mixed' or 'f32', not {precision!r}")
     net, ckpt = load_qnet(checkpoint)
-    rules = (ckpt.get("train_config") or {}).get("rules") or {}
     meta: dict[str, Any] = {
         "kind": QNET_KIND,
         "features": QNET_FEATURES,
         "score_scale": SCORE_SCALE,
+        **_common_meta(checkpoint, ckpt, precision),
+    }
+    _write_towers(net, net, out, meta, precision)
+    return Path(out)
+
+
+def _common_meta(checkpoint: str | Path, ckpt: dict[str, Any], precision: str) -> dict[str, Any]:
+    rules = (ckpt.get("train_config") or {}).get("rules") or {}
+    return {
         "precision": precision,
         "source": Path(checkpoint).name,
         # "default" means the trainer ran with its default rules (no overrides).
         "rules": ";".join(f"{k}:{v}" for k, v in sorted(rules.items())) or "default",
     }
+
+
+def _write_towers(
+    net: QNet | QNetV2, player: nn.Module, out: str | Path, meta: dict[str, Any], precision: str
+) -> None:
+    """Writes ``net``'s three towers; ``player`` plays the calibration games."""
     mixed = precision == "mixed"
     towers: list[tuple[str, list[Layer]]] = [
         (name, [(lin, F16 if mixed else F32, None) for lin in _linears(seq)])
@@ -183,11 +214,53 @@ def export_qnet_pknn(checkpoint: str | Path, out: str | Path, precision: str = "
     if mixed:
         first = towers[0][1][0][0]
         w = first.weight.detach().numpy().astype(np.float32)
-        mean_x = calibration_states(net).astype(np.float32).mean(axis=0)
+        mean_x = calibration_states(player).astype(np.float32).mean(axis=0)
         # Keep each hidden unit's average input unchanged after rounding the weights.
         bias = first.bias.detach().numpy() - (stored_weight(w, INT8) - w) @ mean_x
         towers[0][1][0] = (first, INT8, bias)
-    out = Path(out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    write_pknn_v2(out, towers, meta)
-    return out
+    path = Path(out)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_pknn_v2(path, towers, meta)
+
+
+PVNET_KIND = "big2-pvnet"
+"""Must match ``PVNET_KIND`` in ``crates/big2/src/pvnet.rs`` (features as the Q-network)."""
+
+
+def load_pvnet(checkpoint: str | Path) -> tuple[QNetV2, dict[str, Any]]:
+    """Loads a network v2 checkpoint (``big2 rl distill-train --model v2``) on the CPU."""
+    ckpt = torch.load(str(checkpoint), map_location="cpu", weights_only=False)
+    if ckpt.get("arch") != "qnet_v2":
+        raise ValueError(f"{checkpoint} is not a network v2 checkpoint")
+    net = QNetV2(NetConfigV2(**ckpt["net_config"]))
+    net.load_state_dict(ckpt["model"])
+    net.eval()
+    return net, ckpt
+
+
+def export_pvnet_pknn(checkpoint: str | Path, out: str | Path, precision: str = "mixed") -> Path:
+    """Exports a network v2 checkpoint to ``out`` for ``big2_big2::pvnet::PvNet``.
+
+    Same towers, precisions and bias correction as :func:`export_qnet_pknn` (the
+    calibration games play by the prior); the head has 57 outputs (``4 × 14``
+    distribution logits, then the prior logit) and the kind is ``big2-pvnet``.
+    """
+    if precision not in ("mixed", "f32"):
+        raise ValueError(f"precision must be 'mixed' or 'f32', not {precision!r}")
+    net, ckpt = load_pvnet(checkpoint)
+    meta: dict[str, Any] = {
+        "kind": PVNET_KIND,
+        "features": QNET_FEATURES,
+        "outputs": "dist4x14,prior",
+        **_common_meta(checkpoint, ckpt, precision),
+    }
+    _write_towers(net, V2Scorer(net, "prior"), out, meta, precision)
+    return Path(out)
+
+
+def export_pknn(checkpoint: str | Path, out: str | Path, precision: str = "mixed") -> Path:
+    """Exports a Q-network or a network v2 checkpoint, whichever ``checkpoint`` holds."""
+    arch = torch.load(str(checkpoint), map_location="cpu", weights_only=False).get("arch")
+    if arch == "qnet_v2":
+        return export_pvnet_pknn(checkpoint, out, precision)
+    return export_qnet_pknn(checkpoint, out, precision)
