@@ -387,7 +387,14 @@ to goes through bot-notes (Task 10).
   - Notes: the file goes to `models/big2-pvnet-r0.pknn` with a gitignore exception once Task 15
     picks a winner; until then under `runs/`.
 
-- [ ] **Task 14: PUCT with the network inside** `(fable)` (after 13)
+- [x] **Task 14: PUCT with the network inside** `(fable)` (after 13)
+  (done 2026-10-29: `big2_search::puct` (`puct`, `puct_with`, `PuctConfig`, `PuctAnalysis { analysis,
+  first_answer }`, generic `PuctPolicy`), trait `big2_games::PriorValue` implemented by `PvNet`;
+  `analyze(algorithm="puct", net=…, c_puct=…, anytime_first_ms=…)` and spec `puct:net=…,simulations=…`
+  (pybind not rebuilt: the trainer runs). Scoring comes from the state's rules, not a `scoring_payoff`
+  field (the search crate knows no game). Quick check with the 15-minute `best.pt`
+  (`runs/p2_puct/pvnet-r0-early.pknn`), 60 deals vs 3 greedy, one thread under a CPU job: PUCT-300
+  +0.6 ± 5.0 at 15 ms per move; PUCT-2000 −1.0 ± 5.8 at 100 ms per move. Task 15 measures properly.)
   - Files: create `crates/search/src/puct.rs` (`PuctConfig { simulations, time_limit, c_puct,
     threads, seed, objective, scoring_payoff, endgame_threshold, endgame_max_nodes,
     anytime_first_ms }`; information-set tree over public actions as `ismcts.rs`, but the

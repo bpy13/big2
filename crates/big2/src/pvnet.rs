@@ -21,7 +21,7 @@
 
 use std::collections::BTreeMap;
 
-use big2_games::Game;
+use big2_games::{Estimate, Game, PriorValue};
 use big2_nn::{Dense, Graph, Mlp};
 use rand::Rng;
 
@@ -345,6 +345,30 @@ impl PvNet {
     }
 }
 
+/// The network inside the search (`big2_search::puct`): the prior over `legal` and,
+/// from the position's distributions, every seat's expected score under the
+/// state's scoring and probability of going out (finishing with 0 cards), both in
+/// absolute seat order. One file serves `tiered`, `original` and `win_loss`: the
+/// scoring comes from the state's rules.
+impl PriorValue<State> for PvNet {
+    fn prior_value(&self, state: &State, legal: &[Action]) -> (Vec<f64>, Estimate) {
+        let me = state.current_player().expect("game not over");
+        let out = self.evaluate(state, legal);
+        let rel_scores = out.seat_scores(state.rules().scoring);
+        let mut scores = vec![0.0; NUM_PLAYERS];
+        let mut wins = vec![0.0; NUM_PLAYERS];
+        for (rel, (score, dist)) in rel_scores.iter().zip(&out.dist).enumerate() {
+            let seat = (me + rel) % NUM_PLAYERS;
+            scores[seat] = f64::from(*score);
+            wins[seat] = f64::from(dist[0]);
+        }
+        (
+            out.prior.iter().map(|&p| f64::from(p)).collect(),
+            Estimate { scores, wins },
+        )
+    }
+}
+
 /// A policy-value graph with the given sizes and pseudo-random weights in
 /// ±`1/√n_in`, for tests and benchmarks (a real network comes from `big2 rl export`).
 #[doc(hidden)]
@@ -521,6 +545,26 @@ mod tests {
         let lv = |st: &State| net.lead_value(st, 4, &mut SmallRng::seed_from_u64(7));
         assert_eq!(lv(&s), lv(&d));
         assert!(lv(&s).is_finite());
+    }
+
+    #[test]
+    fn pvnet_prior_value_rotates_seats_to_absolute_order() {
+        let net = PvNet::from_bytes(&tiny_file(Precision::F32)).unwrap();
+        let s = mid_game(5, 6);
+        let me = s.current_player().unwrap();
+        let legal = s.legal_actions_vec();
+        let (prior, est) = net.prior_value(&s, &legal);
+        let out = net.evaluate(&s, &legal);
+        assert_eq!(prior.len(), legal.len());
+        assert!((prior.iter().sum::<f64>() - 1.0).abs() < 1e-5);
+        assert_eq!(est.scores.len(), NUM_PLAYERS);
+        let rel = out.seat_scores(Scoring::Tiered);
+        for (r, (score, dist)) in rel.iter().zip(&out.dist).enumerate() {
+            assert_eq!(est.scores[(me + r) % NUM_PLAYERS], f64::from(*score));
+            assert_eq!(est.wins[(me + r) % NUM_PLAYERS], f64::from(dist[0]));
+        }
+        assert_eq!(est.scores[me], f64::from(out.score));
+        assert!(est.scores.iter().sum::<f64>().abs() < 1e-3);
     }
 
     #[test]

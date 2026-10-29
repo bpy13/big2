@@ -16,3 +16,5 @@ web-time.workspace = true
 
 [dev-dependencies]
 big2-big2.workspace = true
+# The PUCT tests build a synthetic policy-value network file.
+big2-nn.workspace = true

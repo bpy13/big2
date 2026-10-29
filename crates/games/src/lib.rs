@@ -164,3 +164,13 @@ pub trait Evaluator<G: Game>: Send + Sync {
     /// Estimate for a non-terminal `state`.
     fn evaluate(&self, state: &G) -> Estimate;
 }
+
+/// A policy-value network for search (`big2_search::puct`): for the player to act
+/// in a non-terminal `state`, a prior over `legal` (one probability per action, in
+/// the same order, summing to 1) and an [`Estimate`] of every player's result.
+///
+/// The network must see only what the player to act can see: the search calls it
+/// on sampled deals, never on the true hidden cards.
+pub trait PriorValue<G: Game>: Send + Sync {
+    fn prior_value(&self, state: &G, legal: &[G::Action]) -> (Vec<f64>, Estimate);
+}
