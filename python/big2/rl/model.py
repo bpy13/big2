@@ -140,6 +140,9 @@ class NetConfigV2:
     state_out: int = 256
     action_out: int = 128
     head_hidden: int = 256
+    #: Dropout after each hidden ReLU of the state tower and the head, in training
+    #: only (the exported file and the Rust reader have no dropout).
+    dropout: float = 0.0
 
 
 class QNetV2(nn.Module):
@@ -157,18 +160,22 @@ class QNetV2(nn.Module):
         super().__init__()
         self.cfg = cfg or NetConfigV2()
         c = self.cfg
+
+        def act() -> list[nn.Module]:
+            return [nn.ReLU(), nn.Dropout(c.dropout)] if c.dropout > 0 else [nn.ReLU()]
+
         self.state_tower = nn.Sequential(
             nn.Linear(STATE_LEN, c.state_hidden),
-            nn.ReLU(),
+            *act(),
             nn.Linear(c.state_hidden, c.state_out),
-            nn.ReLU(),
+            *act(),
         )
         self.action_tower = nn.Sequential(nn.Linear(ACTION_LEN + 52, c.action_out), nn.ReLU())
         self.head = nn.Sequential(
             nn.Linear(c.state_out + c.action_out, c.head_hidden),
-            nn.ReLU(),
+            *act(),
             nn.Linear(c.head_hidden, c.head_hidden // 2),
-            nn.ReLU(),
+            *act(),
             nn.Linear(c.head_hidden // 2, V2_OUTPUTS),
         )
 

@@ -123,8 +123,12 @@ folder once into GPU memory (round 0: 2.74 M decisions, 13.8 M candidates, about
 The search gives no per-move cards-left counts, so the distributions learn from the
 one move played; the auxiliary score loss gives the other moves' distributions a
 low-noise target. Weights 1 : 1 : 1 for the three heads (build plan open question 8)
-and 0.5 for `score` (`DistillV2Config`). AdamW, learning rate 1e-3 with warm-up and a
-cosine decay over `--minutes`, 2,048 decisions per step. Every 5 minutes: validation
+and 0.5 for `score` (`DistillV2Config`). AdamW, learning rate 3e-4 with warm-up and a
+cosine decay over `--minutes`, weight decay 0.05, dropout 0.2 in training, 2,048
+decisions per step. A first run without dropout (learning rate 1e-3, weight decay 1e-4)
+overfitted within 10 minutes: about 7 passes over the data, and the ~45 decisions of a
+deal share one outcome, so the distributions learned to recognise deals (validation
+cross-entropy of the actor 1.58 at 5 minutes, 1.62 at 10, while training fell to 1.50). Every 5 minutes: validation
 losses, two 128-deal matches vs 3 greedy (playing by the prior, and by the expected
 tiered score), `latest.pt`, `progress.json`; `best.pt` when the validation total drops.
 It stops at `--minutes` (counting resumed time) or after `--patience` evaluations

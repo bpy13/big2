@@ -302,6 +302,13 @@ def test_qnet_v2_shapes_and_size() -> None:
     for mode in ("prior", "score"):
         score, zero = V2Scorer(net, mode)(st, ac, index)
         assert score.shape == (7,) and not zero.any()
+    # Dropout adds no parameters and is off in eval mode (the Rust reader has none).
+    from big2.rl.model import NetConfigV2
+
+    drop = QNetV2(NetConfigV2(dropout=0.2))
+    assert sum(p.numel() for p in drop.parameters()) == params
+    drop.eval()
+    assert torch.equal(drop(st, ac, index)[1], drop(st, ac, index)[1])
 
 
 def test_v2_payoff_reproduces_the_rules_settlement() -> None:
