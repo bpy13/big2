@@ -478,7 +478,24 @@ to goes through bot-notes (Task 10).
 - [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]**
   (**Round 1 done 2026-10-30, A9 fails** (`build-phase3.md` §1): r1 PUCT-2000 λ 0.5 vs
   ISMCTS-1000 at 1,000 deals +0.46 [−0.18, +1.13] 1+3, +0.16 [−0.47, +0.81] ABAB (round 0:
-  −0.12 / −1.78); calibration slope 1.03; A12 not run. **Round 2 running** (rounds 1–3
+  −0.12 / −1.78); calibration slope 1.03; A12 not run. **Round 2 done 2026-10-31, A9 fails
+  the +1.0 bar but is significant** (`build-phase3.md` §1): r2 λ 0.5 vs ISMCTS-1000 at 1,000
+  deals +0.76 [+0.13, +1.37] 1+3, +0.86 [+0.29, +1.50] ABAB; calibration slope 1.05; A12 not
+  run; no r2-vs-ISMCTS-5000 number, so the teacher stays. **Round 3 running** (the last
+  approved round): teacher ISMCTS-5000; r3 from r2's weights on round-1 + 2 + 3 labels;
+  calibration; λ screen; A9 at 1,000 deals; A12 (r3 vs r2) only if A9 passes; then r3 vs
+  ISMCTS-5000 at 1,000 deals (`expert_iteration.py --stages teacher`, `runs\round3\vs_teacher`)
+  for Brian's teacher rule. Job `runs\b25_round3\run.ps1`, launched 2026-10-31 02:50 detached,
+  PowerShell PID 2632 (conhost 18520), CPUs 4–19, Normal priority; labelling at ~6,200
+  decisions/min on 8 workers after 9 min (other games' jobs share the CPU). Expected end
+  ≈ 09:00–10:00 on 2026-10-31 (≈ 12:00 if A12 runs). Check: `Get-Content
+  C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\b25_round3\progress.json` and
+  `run.log` (details `runs\round3\label\progress.json`, `runs\net_r3\progress.json`,
+  `runs\round3\progress.json`, `runs\round3\vs_teacher\progress.json`). Resume: relaunch the
+  same `run.ps1` detached (command in its header); every step skips finished work. Then copy
+  `runs\round3\table.md` and `runs\round3\vs_teacher\table.md` into §1 and apply the stop
+  rule (open items). Round-2 history follows.)
+  (**Round 2** (rounds 1–3
   approved): same teacher ISMCTS-5000 (Brian 2026-10-30: "use teacher unless distilled model
   wins significantly"; r1 does not beat it); r2 from r1's weights on round-1 + round-2 labels
   (`DistillV2Config.extra_data_dirs`, `expert_iteration.py --extra-data`, default rounds
@@ -751,9 +768,11 @@ stream can call it from `crates/app-api` without us touching their crate.
   about ± 3, so nothing is decided yet. **Full run done 2026-10-30** (500 deals per pair,
   777 s; `build-phase4.md` §3): easy vs random +6.56 ± 0.50, medium vs easy +3.15 ± 0.56,
   hard vs medium +3.08 ± 0.46, **expert vs hard −0.03 ± 0.38**. A23 not met at the top; the
-  plan's knobs (temperature, rates) only reach easy and medium. Probes with `hard` =
-  ISMCTS-500 / 1,000 run in the round-2 job (`runs/p4_ladder_h500`, `runs/p4_ladder_h1000`);
-  which `hard`/`expert` ship is Brian's call (`docs/open-items.md`). **Not ticked.**)
+  plan's knobs (temperature, rates) only reach easy and medium. **Probes done 2026-10-30**
+  (round-2 job; `build-phase4.md` §3): `hard` = ISMCTS-1,000: hard vs medium +2.76 ± 0.46,
+  expert vs hard +0.31 ± 0.40 (order not strict); `hard` = ISMCTS-500: +2.72 ± 0.49 and
+  **+1.02 ± 0.40** (strict order, top gap short of 1.5). Which `hard`/`expert` ship is Brian's
+  call (`docs/open-items.md`). **Not ticked.**)
   - Files: create `crates/big2/src/bots/error_model.rs` (`ErrorModel { hold_two_too_long,
     break_pair_for_single, miss_safe_single }` rates; wraps any `Policy<State>` and applies a
     named mistake with its rate, returning which key fired so review can show it); the five

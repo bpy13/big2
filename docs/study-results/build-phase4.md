@@ -6,8 +6,9 @@ the crate `crates/teach` (package `big2-teach`); its key table, grade lines and 
 `big2-teach` program (no rebuild of the Python extension needed).
 
 Status 2026-10-30: Task 26 done; Task 27's code and run done, its repeatability bar not met
-(§1, open item); Task 30 done (scaffold). Tasks 28 and 29: code and tiny runs done, their full
-runs pending (§2, §3; plan status lines give the commands).
+(§1, open item); Task 30 done (scaffold). Tasks 28 and 29: code and full runs done (§2, §3).
+2026-10-31: Task 29's `hard` probes done (§3): `hard` = ISMCTS-500 gives a strict order, but
+`expert` leads it by +1.02, short of A23's 1.5; the budgets are Brian's call.
 
 ## 0. Reason keys and the audit file (Task 26)
 
@@ -175,9 +176,24 @@ Mistakes fired on 23.3 % of `easy`'s decisions with a choice and 5.5 % of `mediu
 **Verdict A23: not met.** The lower four levels order strictly with gaps of 3 points or more.
 `expert` (ISMCTS-10,000 + endgame) does not beat `hard` (ISMCTS-2,000) at all. The plan's tuning
 knobs (temperature, mistake rates) only touch `easy` and `medium`, so they cannot open this gap.
-A probe with a weaker `hard` (ISMCTS-500 and ISMCTS-1,000 against the same `expert`) runs in the
-round-2 job's training window (`runs/p4_ladder_h500`, `runs/p4_ladder_h1000`); which `hard` and
-`expert` ship is Brian's call (`docs/open-items.md`). Task 29 is not ticked.
+Which `hard` and `expert` ship is Brian's call (`docs/open-items.md`). Task 29 is not ticked.
+
+**Probes with a weaker `hard` (2026-10-30, round-2 job).** Same run, same `expert`
+(ISMCTS-10,000 + endgame), `hard` = ISMCTS-500 or ISMCTS-1,000; 6 threads, 710 s and 756 s.
+Source: `runs/p4_ladder_h500/`, `runs/p4_ladder_h1000/` (`table.md`, `results.json`).
+
+| `hard` | hard vs medium | expert vs hard | Strict order | Every gap ≥ 1.5 |
+|---|---:|---:|---|---|
+| ISMCTS-2,000 (full run above) | +3.08 ± 0.46 | −0.03 ± 0.38 | no | no |
+| ISMCTS-1,000 | +2.76 ± 0.46 | +0.31 ± 0.40 | no (interval covers 0) | no |
+| ISMCTS-500 | +2.72 ± 0.49 | **+1.02 ± 0.40** | yes | no |
+
+The lower pairs do not change (easy vs random +6.56, medium vs easy +3.15). With `hard` =
+ISMCTS-500, all five levels order strictly and `hard` stays 2.7 points above `medium`. `expert`
+is then 1.02 points ahead: clearly ahead, but short of 1.5. ISMCTS gains little past a few
+thousand iterations, so no `hard` budget probed reaches the 1.5 gap below `expert`. A weaker
+`hard` (for example ISMCTS-250) or a stronger `expert` (a PUCT round that passes A9) are the
+remaining levers; neither was run.
 
 Tiny run (8 deals, `hard` ISMCTS-100 and `expert` ISMCTS-300 instead of 2,000 and 10,000;
 `runs/p4_ladder_tiny/`): easy vs random +3.97 ± 3.35, medium vs easy +2.56 ± 3.10, hard vs

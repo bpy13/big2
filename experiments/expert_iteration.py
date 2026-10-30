@@ -34,6 +34,11 @@ labels are left out); each folder holds out its own every 50th shard, so the cal
 round N's held-out shards uses decisions no round trained on. Matches as in round 1, and
 A12 plays round N against round N-1.
 
+``--stages teacher`` (after ``match``): round N's PUCT-2000 at the chosen λ against the teacher
+itself (ISMCTS-5000), ``--deals`` deals, into ``runs/round<N>/vs_teacher/``, so Brian's rule
+can be applied to the teacher directly (the network replaces it only if the paired interval is
+above 0 in both lineups).
+
 Every stage resumes: labelling counts the shards already written, training continues from
 ``latest.pt``, matches reuse their saved blocks; a stage whose results exist is skipped.
 ``runs/round<N>/stages.json`` says which stages are done; ``progress.json`` there moves
@@ -339,11 +344,89 @@ def match(args: argparse.Namespace, p: dict[str, Path]) -> None:
     stage_done(out, "match")
 
 
+# teacher ------------------------------------------------------------------------
+
+
+def beats_teacher(reports: dict[str, Any]) -> dict[str, bool]:
+    """Brian's rule (2026-10-30): "use teacher unless distilled model wins significantly",
+    i.e. the paired 95 % interval against the teacher lies above 0 (per lineup)."""
+    return {lu: r["paired_ci95"][0] > 0 for lu, r in reports.items()}
+
+
+def teacher(args: argparse.Namespace, p: dict[str, Path]) -> None:
+    """Round N's PUCT-2000 (at the λ the match stage chose) against the labelling teacher
+    ISMCTS-<teacher_iterations>, ``--deals`` duplicate deals, both lineups. Results in
+    ``runs/round<N>/vs_teacher/`` (``results.json``, ``table.md``); the next round keeps the
+    teacher unless both lineups pass :func:`beats_teacher`."""
+    out = p["base"]
+    folder = out / "vs_teacher"
+    if (folder / "results.json").exists():
+        log("teacher: results.json exists, skipped")
+        return
+    round_results = out / "results.json"
+    if not round_results.exists():
+        raise SystemExit("teacher: run the match stage first (it picks the leaf weight λ)")
+    best = float(json.loads(round_results.read_text())["best_lambda"])
+    folder.mkdir(parents=True, exist_ok=True)
+    cand = puct(p["pknn"], best)
+    opp = f"ismcts:iterations={args.teacher_iterations}"
+    margs = argparse.Namespace(
+        out=out.name, block=100, seed=0, workers=args.workers, deals=args.deals
+    )
+    progress = Progress(folder, [f"vs teacher {lu}" for lu in ("1+3", "ABAB")])
+    stage_progress(
+        out, "teacher", f"r{args.n} vs ISMCTS-{args.teacher_iterations}, see vs_teacher/"
+    )
+    reports = play_cell(margs, progress, "vs teacher", cand, opp, args.deals, folder="vs_teacher")
+    passes = beats_teacher(reports)
+    verdict = (
+        f"r{args.n} beats the teacher: it may label the next round"
+        if all(passes.values())
+        else f"the teacher (ISMCTS-{args.teacher_iterations}) stays"
+    )
+    lines = [
+        f"Round {args.n} vs its teacher: PUCT-2000 λ = {best} against "
+        f"ISMCTS-{args.teacher_iterations} (greedy rollout), {args.deals:,} duplicate deals.",
+        "",
+        *TABLE_HEAD,
+        *(
+            _row(f"r{args.n} λ = {best} vs ISMCTS-{args.teacher_iterations}", lu, r)
+            for lu, r in reports.items()
+        ),
+        "",
+        "Brian's rule (paired interval above 0): "
+        + ", ".join(f"{lu} {'passes' if ok else 'fails'}" for lu, ok in passes.items())
+        + f". Verdict: {verdict}.",
+    ]
+    table = "\n".join(lines) + "\n"
+    (folder / "table.md").write_text(table, encoding="utf-8")
+    _write_json(
+        folder / "results.json",
+        {
+            "round": args.n,
+            "candidate": cand,
+            "teacher": opp,
+            "reports": reports,
+            "beats_teacher": passes,
+            "verdict": verdict,
+            "finished": time.strftime("%Y-%m-%d %H:%M:%S"),
+        },
+    )
+    print(table, flush=True)
+    progress.update(None)
+    stage_done(out, "teacher")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0] if __doc__ else None)
     ap.add_argument("command", choices=["round"])
     ap.add_argument("n", type=int, help="round number (1 = first round after round 0)")
-    ap.add_argument("--stages", nargs="+", default=["label", "train", "match"])
+    ap.add_argument(
+        "--stages",
+        nargs="+",
+        choices=["label", "train", "match", "teacher"],
+        default=["label", "train", "match"],
+    )
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--teacher-iterations", type=int, default=TEACHER_ITERATIONS)
     ap.add_argument("--target-decisions", type=int, default=800_000)
@@ -370,7 +453,7 @@ def main() -> None:
     p = paths(args.n, args.tag)
     p["base"].mkdir(parents=True, exist_ok=True)
     for stage in args.stages:
-        {"label": label, "train": train, "match": match}[stage](args, p)
+        {"label": label, "train": train, "match": match, "teacher": teacher}[stage](args, p)
 
 
 if __name__ == "__main__":
