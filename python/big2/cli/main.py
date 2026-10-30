@@ -619,6 +619,68 @@ def rl_export(
     console.print(f"Wrote {path} ({path.stat().st_size / 1e6:.2f} MB)")
 
 
+# teach ------------------------------------------------------------------------
+
+teach = typer.Typer(
+    help="Teaching layer: drills, mistake clusters, convention gaps.", no_args_is_help=True
+)
+app.add_typer(teach, name="teach")
+
+
+@teach.command("convention-gap")
+def teach_convention_gap(
+    log: Annotated[str, typer.Argument(help="Review log: JSON list of reviewed decisions.")],
+    band_width: int = 200,
+    min_items: int = 30,
+) -> None:
+    """Group disagreements with the solver by reason-key set and rating band; key sets whose
+    disagreement rate does not fall with rating are tagged "convention"."""
+    from big2.teach.convention_gap import GapConfig, analyse, format_report, load_log
+
+    reports = analyse(load_log(log), GapConfig(band_width=band_width, min_items=min_items))
+    typer.echo(format_report(reports))
+
+
+@teach.command("mine-drills")
+def teach_mine_drills(
+    run_dir: str = "runs/p4_mine",
+    games: int = 400,
+    threads: int = 8,
+    out: str = "drills/big2.json",
+    audit: str = "runs/p4_audit/drills-50.json",
+    deals: Annotated[int, typer.Option(help="Paired deals per move table.")] = 600,
+) -> None:
+    """Mine drills from self-play by the ladder levels (native `big2-teach mine`, resumable),
+    then write the drill file and a 50-drill audit sample."""
+    import json
+
+    from big2.teach.drills import run_miner, write_drills
+
+    raw = run_miner(run_dir, games, threads, ["--deals", str(deals)])
+    typer.echo(json.dumps(write_drills(raw, out, audit), indent=1))
+
+
+@teach.command("cluster")
+def teach_cluster(
+    raw: Annotated[str, typer.Argument(help="raw.jsonl written by `big2-teach mine`.")],
+    min_size: int = 5,
+    app_drills: Annotated[
+        str, typer.Option(help="The app's drill file, for its skill list ('' = built-in list).")
+    ] = "",
+) -> None:
+    """Group graded mistakes by the best move's reason keys; print skill candidates."""
+    import json
+    from pathlib import Path
+
+    from big2.teach.cluster import clusters, format_clusters
+    from big2.teach.drills import read_raw
+
+    skills = None
+    if app_drills:
+        skills = sorted({d["skill"] for d in json.loads(Path(app_drills).read_text("utf-8"))})
+    typer.echo(format_clusters(clusters(read_raw(raw), min_size), skills))
+
+
 # serve ------------------------------------------------------------------------
 
 

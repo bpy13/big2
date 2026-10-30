@@ -6,9 +6,12 @@
 //! * [`Greedy`] — shed the weakest cards first.
 //! * [`StructuredGreedy`] — the same, but keeps the hand's best plan (pairs,
 //!   triples, five-card groups) together, using the [`crate::plan`] planner.
+//! * [`ErrorModel`] — wraps any policy with named human mistakes (ladder v2).
 
+pub mod error_model;
 mod structured;
 
+pub use error_model::{ErrorModel, Mistake};
 pub use structured::{StructuredGreedy, DEFAULT_PLAN_DEPTH};
 
 use crate::state::{Action, State};

@@ -96,7 +96,26 @@ seed at 300 → 1,200 deals, 97.6 % a compatible one; the plan's bar is 95 % (op
 `Ledger::steps` lists each decision's contribution. `Ledger::from_tables` builds the ledger
 from tables a review has already computed.
 
+## Ladder v2
+
+`big2_teach::ladder::LadderBot` (implements `Policy<State>`; `choose_explained` also returns the
+mistake that fired, whose key a review can show):
+
+| Level | Constructor | Mechanism |
+|---|---|---|
+| `random` | `LadderBot::random()` | a random legal move |
+| `easy` | `LadderBot::easy()` | `StructuredGreedy` ε 0.1 + `ErrorModel` at 0.5 / 0.5 / 0.5 |
+| `medium` | `LadderBot::medium(net)` | the distilled Q-network (`models/big2-qnet-duty.pknn`) sampled at temperature 1.0 + `ErrorModel` at 0.15 each |
+| `hard` | `LadderBot::hard()` | ISMCTS, 2,000 simulations |
+| `expert` | `LadderBot::expert()` | ISMCTS, 10,000 simulations + the exact information-set endgame |
+
+The error model (`big2_big2::bots::ErrorModel`) has three named mistakes, each a key:
+`mistake.hold_two_too_long` (keeps a 2 the policy would play), `mistake.break_pair_for_single`
+(beats a single with a card from a pair), `mistake.miss_safe_single` (does not play a single
+nobody can beat). The rates are first values; Task 29's 500-deal round tunes them
+(`build-phase4.md` §3).
+
 ## Command-line runner
 
-`cargo run --release -p big2-teach -- audit|regrade --out FILE` (see `src/main.rs`); used by
-`experiments/build_phase4.py`.
+`cargo run --release -p big2-teach -- audit|regrade|ladder|mine --out PATH` (see
+`src/main.rs`); used by `experiments/build_phase4.py` and `big2 teach mine-drills`.

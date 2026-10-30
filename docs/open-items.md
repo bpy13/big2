@@ -3,6 +3,29 @@
 Pending work and questions for Brian. Newest first. The plan is
 `docs/plans/2026-10-29-big2-bot-build.md`; results are in `docs/study-results/`.
 
+## 2026-10-30 · Phase 4 full runs waiting for a free CPU (Tasks 28, 29)
+
+Code and tiny runs are done; the full runs were not started while the round-1 job runs.
+Both use the native `big2-teach` program, so neither needs the Python extension rebuilt.
+
+1. Task 28: `python experiments/build_phase4.py mine --threads 8` (700 deals, ~20 min,
+   estimate; resumes from `runs\p4_mine\progress.json`). Writes `drills/big2.json` and the
+   50-drill audit file.
+2. Task 29: `python experiments/build_phase4.py ladder --threads 8` (500 deals per adjacent
+   pair, ~45 min, estimate).
+
+Two choices were made without Brian (non-blocking, easy to change):
+- The ladder's `hard` and `expert` are ISMCTS-2,000 and ISMCTS-10,000 + exact endgame, not
+  the plan's PUCT-300 / PUCT-2,000, following the 2026-10-30 item below ("bot levels stay on
+  ISMCTS"). Drill positions come from ISMCTS self-play for the same reason.
+- The ladder lives in `crates/teach/src/ladder.rs`, not `crates/big2/src/bots/ladder.rs`:
+  `big2-big2` cannot depend on `big2-search`.
+
+Risk for A22: the seed rating `1000 + 400·share − 100·log2(gap)` may not spread over 600
+points, because a candidate already has easy and medium wrong and expert right (share about
+0.4–0.8). If the full run shows a narrow spread, the default fix is to rate by the gap alone
+within each share band; that is a formula change for Brian to accept.
+
 ## 2026-10-30 · Grade repeatability misses the 95 % bar (Task 27)
 
 The paired grader gives the same grade word on a re-grade with a new seed on 90.2 % of 1,386

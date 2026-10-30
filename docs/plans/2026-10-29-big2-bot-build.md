@@ -685,6 +685,21 @@ stream can call it from `crates/app-api` without us touching their crate.
     tables are in `crates/teach/README.md`.
 
 - [ ] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27)
+  (**code done 2026-10-30, tiny run only; the full run is pending.** Miner in Rust:
+  `big2-teach mine` (self-play by easy, medium, hard, hard; paired table of 600 deals per
+  decision; candidate = gap ≥ 2 with interval above 0, easy and medium wrong on ≥ half of 16
+  samples, expert right; every graded mistake with the best move's keys; `raw.jsonl`,
+  resumes from `progress.json`). Python: `big2/teach/drills.py` (Drill shape, rating formula,
+  skill from keys, validation, audit sample), `big2/teach/cluster.py`, CLI `big2 teach
+  mine-drills` / `big2 teach cluster`; `pytest python/tests/test_drills.py` 7 passed
+  (incl. a native 4-deal run validated against the §6 shape). Positions come from ISMCTS
+  self-play, not PUCT (open items). Tiny runs: 8 deals → 4 drills, 79 mistakes (~0.5 drills
+  per deal, ratings 991–1085). **Remaining:** `python experiments/build_phase4.py mine
+  --threads 8` (700 deals, ~20 min at 8 threads by the tiny run's pace, estimate) → 
+  `drills/big2.json`, `runs/p4_audit/drills-50.json`, `runs/p4_mine/clusters.txt`, then §2.
+  Check: `Get-Content runs\p4_mine\progress.json`; resume: rerun the same command. Risk: the
+  formula's spread may stay under 600 points (A22): the share of levels wrong only spans
+  about 0.4–0.8.)
   - Files: create `python/big2/teach/drills.py` (mine positions from PUCT self-play where the
     ladder disagrees: `easy` and `medium` wrong, `expert` right, value gap ≥ 2 points; rating =
     1000 + 400 × (share of levels wrong) − 100 × log2(gap); emit the engine-interface `Drill`
@@ -703,6 +718,21 @@ stream can call it from `crates/app-api` without us touching their crate.
     Human solve rates (Spearman) arrive only after release: open item, not a task.
 
 - [ ] **Task 29: Error model and ladder v2** **[long: ~45 min CPU]** (after 26)
+  (**code done 2026-10-30, tiny run only; the 500-deal round is pending.**
+  `crates/big2/src/bots/error_model.rs` (`ErrorModel<P>`, `Mistake` with keys
+  `mistake.hold_two_too_long`, `mistake.break_pair_for_single`, `mistake.miss_safe_single`,
+  `choose_explained` returns the mistake). `cargo test -p big2-big2 error_model` 6 passed
+  (each rate ± 1 % over 100,000 draws; 300 noisy deals, every move legal, every mistake
+  fires). Ladder in `crates/teach/src/ladder.rs`, not `crates/big2` (`hard`/`expert` need
+  `big2-search`, which `big2-big2` cannot depend on): `random`, `easy` (StructuredGreedy ε 0.1
+  + rates 0.5), `medium` (Q-net T 1.0 + rates 0.15), `hard` ISMCTS-2,000, `expert`
+  ISMCTS-10,000 + exact endgame (ISMCTS, not PUCT, per open items). `cargo test -p big2-teach
+  ladder` 2 passed. `big2-teach ladder` / `build_phase4.py ladder`. Tiny run (8 deals, small
+  searches): every upper level ahead of the one below (+3.97, +2.56, +1.41, +0.34), intervals
+  about ± 3, so nothing is decided yet. **Remaining:** `python
+  experiments/build_phase4.py ladder --threads 8` (500 deals, adjacent pairs; ~45 min,
+  estimate) → §3; then tune rates/temperature if a gap is short. Expert vs hard is likely
+  short: ladder v0 had ISMCTS-1000 → 5000 at +0.55.)
   - Files: create `crates/big2/src/bots/error_model.rs` (`ErrorModel { hold_two_too_long,
     break_pair_for_single, miss_safe_single }` rates; wraps any `Policy<State>` and applies a
     named mistake with its rate, returning which key fired so review can show it); the five
@@ -717,7 +747,13 @@ stream can call it from `crates/app-api` without us touching their crate.
   - Notes: the blind ranking by a strong player (proposal §7, phase 4) needs Brian's time: open
     question 5; the measured gaps are the evidence this plan can give.
 
-- [ ] **Task 30: Convention-gap check (scaffold)** `[parallel-ok]`
+- [x] **Task 30: Convention-gap check (scaffold)** `[parallel-ok]`
+  (done 2026-10-30: `python/big2/teach/convention_gap.py` (key set per decision, 200-point
+  rating bands, weighted slope of the disagreement rate per 100 points; tags `convention`
+  (flat, rate ≥ 15 %), `skill` (falls ≥ 1 point per 100), `rare`, `too_few`), CLI
+  `big2 teach convention-gap <log>`; `pytest python/tests/test_convention_gap.py` 4 passed
+  (the synthetic log's flat set is `convention`, the falling one `skill`). Waits for real logs
+  (B13).)
   - Files: create `python/big2/teach/convention_gap.py` (reads a game log in the hk-games review
     shape: list of `{position, played, best, loss, rating}`; groups disagreements by reason-key set
     and by player rating band; prints the sets whose disagreement rate does not fall with rating,

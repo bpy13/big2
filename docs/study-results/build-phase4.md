@@ -6,7 +6,8 @@ the crate `crates/teach` (package `big2-teach`); its key table, grade lines and 
 `big2-teach` program (no rebuild of the Python extension needed).
 
 Status 2026-10-30: Task 26 done; Task 27's code and run done, its repeatability bar not met
-(§1, open item). Tasks 28–30 follow (plan status lines).
+(§1, open item); Task 30 done (scaffold). Tasks 28 and 29: code and tiny runs done, their full
+runs pending (§2, §3; plan status lines give the commands).
 
 ## 0. Reason keys and the audit file (Task 26)
 
@@ -94,3 +95,25 @@ with greedy rollouts as the model, most of a deal's result is how the hidden car
 play differed from the rollouts. The terms are exact by construction; what they explain is
 modest. A stronger evaluator (the round-1 network or ISMCTS) inside the tables would shrink the
 residual at a higher cost.
+
+## 2. Drills and mistake clusters (Task 28)
+
+Pending: `python experiments/build_phase4.py mine --threads 8` (700 self-play deals). It writes
+`drills/big2.json`, `runs/p4_audit/drills-50.json` and `runs/p4_mine/clusters.txt`.
+
+Tiny run (6 deals, `runs/p4_mine_tiny3/`): 2 drills (ratings 991 and 1085; skills
+`keep_the_plan`, `saving_twos`), 57 graded mistakes. Largest clusters by the best move's keys:
+`plan.keeps + tempo.plays_to_out + value.score_vs_win` (7), `plan.breaks` (5),
+`plan.keeps + tempo.plays_to_out` (5). New-skill candidates so far: `skill.keep_the_plan`,
+`skill.score_vs_win`. App skills with no cluster yet: `endgame_counting`, `finish_in_two`,
+`saving_twos` (too few deals to say anything).
+
+## 3. Ladder v2 (Task 29)
+
+Pending: `python experiments/build_phase4.py ladder --threads 8` (500 duplicate deals per
+adjacent pair, A B A B, each deal 4× with the hands rotated).
+
+Tiny run (8 deals, `hard` ISMCTS-100 and `expert` ISMCTS-300 instead of 2,000 and 10,000;
+`runs/p4_ladder_tiny/`): easy vs random +3.97 ± 3.35, medium vs easy +2.56 ± 3.10, hard vs
+medium +1.41 ± 3.26, expert vs hard +0.34 ± 3.12. Mistakes fired on 25.4 % of `easy`'s
+decisions with a choice and 6.2 % of `medium`'s. Nothing is decided at 8 deals.

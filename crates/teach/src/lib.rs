@@ -12,6 +12,8 @@
 //! * [`grade`] — the paired grader: loss against the best move with a 95 %
 //!   interval, thresholds as multiples of σ, and an `unclear` grade when the
 //!   interval crosses a line.
+//! * [`ladder`] — ladder v2: the five bot levels (`random` … `expert`), the
+//!   weaker ones with named mistakes (`big2_big2::bots::ErrorModel`).
 //! * [`ledger`] — the luck ledger: a seat's result split into deal strength,
 //!   the opponents' errors, its own errors and a residual, summing exactly.
 //!
@@ -22,6 +24,7 @@
 //! Everything runs on the calling thread (no rayon), so it works in WebAssembly.
 
 pub mod grade;
+pub mod ladder;
 pub mod ledger;
 pub mod reasons;
 pub mod table;
