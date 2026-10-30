@@ -5,6 +5,12 @@ Usage::
     python experiments/build_phase4.py audit                 # Task 26: runs/p4_audit/hints-50.json
     python experiments/build_phase4.py regrade --threads 8   # Task 27: runs/p4_regrade/results.json
     python experiments/build_phase4.py regrade --reviewed 4 --out p4_regrade_tiny  # smoke run
+    python experiments/build_phase4.py ladder --threads 8    # Task 29: runs/p4_ladder/results.json
+    python experiments/build_phase4.py ladder --deals 8 --hard-iterations 100 \
+        --expert-iterations 300 --out p4_ladder_tiny                 # smoke run
+    python experiments/build_phase4.py mine --threads 8      # Task 28: drills/big2.json
+    python experiments/build_phase4.py mine --games 8 --out p4_mine_tiny \
+        --drills runs/p4_mine_tiny/big2.json                         # smoke run
 
 * ``audit`` (Task 26, A20): 50 positions from noisy greedy self-play; on each, the paired
   move table (every legal move on the same 300 sampled deals), its best move as the hint and
@@ -17,7 +23,16 @@ Usage::
   phone-vs-10x agreement (bar >= 90 %) and the ledger's largest sum error (bar 1e-9), and
   writes a Markdown table for build-phase4.md §1 beside the JSON.
 
-Both run the native ``big2-teach`` program (``crates/teach/src/main.rs``), built here with
+* ``ladder`` (Task 29, A23): ladder v2 (``crates/teach/src/ladder.rs``), each pair of
+  adjacent levels on ``--deals`` duplicate deals, lineup A B A B, each deal 4x with the hands
+  rotated; A23: strict order and every adjacent gap >= 1.5 points. Resume: none needed per pair
+  (about 45 min in all at 8 threads with the default budgets, estimate); rerun to redo.
+* ``mine`` (Task 28, A22): ``big2-teach mine`` over ``--games`` self-play deals (resumes from
+  ``runs/<out>/progress.json``), then ``drills/big2.json`` (``big2.teach.drills``), the
+  50-drill audit sample ``runs/p4_audit/drills-50.json`` and the mistake clusters beside the
+  app's skill list (``big2.teach.cluster``).
+
+All run the native ``big2-teach`` program (``crates/teach/src/main.rs``), built here with
 ``cargo build --release -p big2-teach``, so the experiments need no rebuild of the Python
 extension.
 """
@@ -135,6 +150,53 @@ def regrade(ns: argparse.Namespace) -> None:
     print(table)
 
 
+def ladder(ns: argparse.Namespace) -> None:
+    out_dir = ROOT / "runs" / ns.out
+    out = out_dir / "results.json"
+    args = ["ladder", "--out", str(out), "--deals", str(ns.deals), "--threads", str(ns.threads)]
+    if ns.hard_iterations:
+        args += ["--hard-iterations", str(ns.hard_iterations)]
+    if ns.expert_iterations:
+        args += ["--expert-iterations", str(ns.expert_iterations)]
+    run(args)
+    r = json.loads(out.read_text(encoding="utf-8"))
+    lines = [
+        "| Upper vs lower | Mean (points per game) | 95 % | Upper wins | Gap ≥ 1.5 |",
+        "|---|---|---|---|---|",
+    ]
+    for p in r["pairs"]:
+        ok = "yes" if p["mean"] >= 1.5 and p["mean"] - p["ci95"] > 0 else "no"
+        lines.append(
+            f"| {p['upper']} vs {p['lower']} | {p['mean']:+.2f} | ± {p['ci95']:.2f} "
+            f"| {100 * p['upper_win_rate']:.1f} % | {ok} |"
+        )
+    shares = ", ".join(f"{m['level']} {100 * m['share']:.1f} %" for m in r["mistake_share"])
+    lines += ["", f"Mistakes fired per decision with a choice: {shares}."]
+    lines += [f"Strict order: {r['strict_order']}; every gap ≥ 1.5: {r['gaps_at_least_1_5']}."]
+    table = "\n".join(lines) + "\n"
+    (out_dir / "table.md").write_text(table, encoding="utf-8")
+    print(table)
+
+
+def mine(ns: argparse.Namespace) -> None:
+    sys.path.insert(0, str(ROOT / "python"))
+    from big2.teach.cluster import clusters, format_clusters
+    from big2.teach.drills import read_raw, run_miner, write_drills
+
+    run_dir = ROOT / "runs" / ns.out
+    raw = run_miner(run_dir, ns.games, ns.threads, ["--deals", str(ns.deals)])
+    summary = write_drills(raw, ROOT / ns.drills, ROOT / ns.audit)
+    app = ROOT.parent / "hk-games" / "app" / "src" / "drills" / "big2.json"
+    skills = None
+    if app.exists():
+        skills = sorted({d["skill"] for d in json.loads(app.read_text(encoding="utf-8"))})
+    text = format_clusters(clusters(read_raw(raw), ns.min_cluster), skills)
+    (run_dir / "clusters.txt").write_text(text + "\n", encoding="utf-8")
+    (run_dir / "summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps(summary, indent=1))
+    print(text)
+
+
 def main() -> None:
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -155,6 +217,22 @@ def main() -> None:
     g.add_argument("--threads", type=int, default=8)
     g.add_argument("--out", default="p4_regrade")
     g.set_defaults(func=regrade)
+    lad = sub.add_parser("ladder", help="Task 29: ladder v2 round of adjacent levels")
+    lad.add_argument("--deals", type=int, default=500)
+    lad.add_argument("--threads", type=int, default=8)
+    lad.add_argument("--hard-iterations", type=int, default=0, help="0 = the level's default")
+    lad.add_argument("--expert-iterations", type=int, default=0, help="0 = the level's default")
+    lad.add_argument("--out", default="p4_ladder")
+    lad.set_defaults(func=ladder)
+    m = sub.add_parser("mine", help="Task 28: drill miner and mistake clusters")
+    m.add_argument("--games", type=int, default=700)
+    m.add_argument("--deals", type=int, default=600)
+    m.add_argument("--threads", type=int, default=8)
+    m.add_argument("--min-cluster", type=int, default=10)
+    m.add_argument("--out", default="p4_mine")
+    m.add_argument("--drills", default="drills/big2.json")
+    m.add_argument("--audit", default="runs/p4_audit/drills-50.json")
+    m.set_defaults(func=mine)
     ns = p.parse_args()
     ns.func(ns)
 
