@@ -99,6 +99,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "big2-teach"
+version = "0.1.0"
+dependencies = [
+ "big2-big2",
+ "big2-cards",
+ "big2-games",
+ "big2-search",
+ "rand 0.8.8",
+ "rand_chacha",
+ "rayon",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

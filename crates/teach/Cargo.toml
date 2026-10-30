@@ -1,0 +1,27 @@
+[package]
+name = "big2-teach"
+description = "The teaching layer over the Big Two engine: reason keys from the move table, the paired grader and the luck ledger."
+version.workspace = true
+edition.workspace = true
+
+[lib]
+bench = false
+
+[[bin]]
+name = "big2-teach"
+path = "src/main.rs"
+bench = false
+
+[dependencies]
+big2-cards.workspace = true
+big2-big2.workspace = true
+big2-games.workspace = true
+big2-search.workspace = true
+rand.workspace = true
+# Same random stream on every platform (SmallRng differs on wasm32), so a review
+# graded on the phone repeats on a PC from its stored seed.
+rand_chacha = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# The command-line runner only (src/main.rs): the library never builds a thread pool.
+rayon.workspace = true
