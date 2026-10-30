@@ -426,6 +426,52 @@ def test_distill_train_v2_writes_results_and_resumes(tmp_path: Path, device: str
         distill.load_qnet_v2(_v1_checkpoint(tmp_path / "v1.pt"))
 
 
+def test_distill_v2_trains_on_several_folders(tmp_path: Path) -> None:
+    """Task 17 round 2: ``extra_data_dirs`` adds earlier rounds' shards to training, and
+    each folder holds out the same shards as when it is loaded alone (so round 1's
+    held-out shards stay unseen in round 2)."""
+    import json
+    import shutil
+
+    from big2.rl import distill
+
+    seed = tmp_path / "seed"
+    distill.generate(str(seed), workers=1, minutes=0, iterations=50, shard_games=1)
+    (shard,) = seed.glob("*.npz")
+    r1, r2 = tmp_path / "r1", tmp_path / "r2"
+    for folder, n in ((r1, 3), (r2, 2)):
+        folder.mkdir()
+        for k in range(n):
+            shutil.copy(shard, folder / f"s{k}.npz")
+    with np.load(shard) as z:
+        per_shard = len(z["states"])
+
+    both = distill._DataV2([str(r2), str(r1)], 2, log=lambda m: None)
+    alone = [distill._DataV2(str(f), 2, log=lambda m: None) for f in (r2, r1)]
+    assert len(both.states) == 5 * per_shard
+    assert both.val.tolist() == alone[0].val.tolist() + alone[1].val.tolist()
+    # Held out: r2's s0, r1's s0 and s2 (every 2nd shard of each folder, from 0).
+    assert int(both.val.sum()) == 3 * per_shard
+
+    cfg = distill.DistillV2Config(
+        data_dir=str(r2),
+        extra_data_dirs=[str(r1)],
+        run_dir=str(tmp_path / "run"),
+        max_minutes=0.02,
+        eval_every_minutes=0.01,
+        eval_deals=2,
+        batch_size=16,
+        val_every=2,
+        warmup_steps=5,
+        device="cpu",
+        net=distill.NetConfigV2(state_hidden=32, state_out=16, action_out=16, head_hidden=32),
+    )
+    run = distill.train_v2(cfg, log=lambda r: None)
+    results = json.loads((run / "results.json").read_text())
+    assert results["decisions"] == 5 * per_shard
+    assert results["val_decisions"] == 3 * per_shard
+
+
 def _v1_checkpoint(path: Path) -> Path:
     torch.save({"model": QNet().state_dict(), "net_config": QNet().config_dict()}, path)
     return path

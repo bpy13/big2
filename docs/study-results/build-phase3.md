@@ -4,9 +4,9 @@ Plan: `docs/plans/2026-10-29-big2-bot-build.md`, phase 3 (Tasks 17–25). Match 
 `build-phase2.md`: duplicate deals (each deal 4×, seats rotated), last-card duty on, tiered
 scoring, no four-card plays, lineups `1+3` and `ABAB`, 95 % bootstrap intervals over deals.
 
-Status 2026-10-30: code for Tasks 17 (round-1 preparation), 18 and 20 is in; their long runs
-are queued in one detached job (`runs\b25_round1\run.ps1`, see the plan's Task 17 status).
-Sections fill in from that job's `table.md` files.
+Status 2026-10-30 (evening): round 1 of Task 17 done (A9 fails, §1); round 2 queued
+(`runs\b25_round2\run.ps1`, plan Task 17 status). Task 18 done (A13 met, §2). Task 20's runs
+done (§4; A15 missed at 94.2 %, Node WebAssembly timing waits for Task 16's harness).
 
 ## 1. Expert iteration (Task 17)
 
@@ -26,7 +26,42 @@ Sections fill in from that job's `table.md` files.
   ISMCTS-1000, 300 deals each; the better λ at 1,000 deals (A9); round 1 vs round 0 at
   1,000 deals only if A9 passes (A12).
 
-Results: `runs/round1/table.md` (pending).
+### Round 1 results (2026-10-30)
+
+Source: `runs/round1/results.json`, `runs/round1/table.md`; calibration
+`runs/round1/f_calibration/results.json`; training `runs/net_r1/results.json`.
+
+- **Labels:** 807,251 decisions (4.1 M candidates, 1,542 shards) in 128 min on 8 workers.
+- **Training:** from round 0's weights; stopped after 60 min (no better validation loss in 6
+  evaluations); best at 30 min: validation prior top-1 74.8 %, score RMS 2.32 points.
+- **Calibration** on the 31 held-out shards (16,506 decisions): slope of the search's score on
+  the prediction **1.03** (round 0: 0.86), bias +0.11, RMS 2.53, correlation 0.977. Prior vs
+  visit share: expected calibration error 0.006. The value is no longer over-spread.
+
+| Match | Lineup | Deals | Candidate mean (95 % CI) | Candidate win rate | Paired diff (95 % CI) | s per move cand / opp |
+|---|---|---:|---:|---:|---:|---:|
+| r1 PUCT-2000 λ = 1 vs ISMCTS-1000 | 1+3 | 300 | +0.26 [−0.59, +1.06] | 22.8 % | +0.35 [−0.75, +1.50] | 0.169 / 0.010 |
+| r1 PUCT-2000 λ = 1 vs ISMCTS-1000 | ABAB | 300 | +0.11 [−0.46, +0.68] | 23.5 % | +0.22 [−0.91, +1.39] | 0.179 / 0.011 |
+| r1 PUCT-2000 λ = 0.5 vs ISMCTS-1000 | 1+3 | 300 | +0.45 [−0.42, +1.28] | 24.0 % | +0.59 [−0.51, +1.75] | 0.332 / 0.019 |
+| r1 PUCT-2000 λ = 0.5 vs ISMCTS-1000 | ABAB | 300 | +0.29 [−0.26, +0.84] | 24.1 % | +0.58 [−0.52, +1.74] | 0.294 / 0.017 |
+| **r1 λ = 0.5 vs ISMCTS-1000 (A9)** | 1+3 | 1,000 | +0.35 [−0.13, +0.83] | 24.0 % | **+0.46 [−0.18, +1.13]** | 0.280 / 0.016 |
+| **r1 λ = 0.5 vs ISMCTS-1000 (A9)** | ABAB | 1,000 | +0.08 [−0.25, +0.40] | 24.4 % | **+0.16 [−0.47, +0.81]** | 0.236 / 0.014 |
+
+**Verdict round 1: A9 fails** in both lineups (bar ≥ +1.0 with the interval above 0); A12 was
+not run. It is up from round 0 (λ = 1, 1,000 deals: −0.12 / −1.78, `build-phase2.md` §1), and
+λ = 0.5 again beats λ = 1 on the screen. PUCT costs about 17× ISMCTS-1000's time per move; A9's
+equal-time part was not measured in round 1. Teacher rule (Brian, 2026-10-30): "use teacher unless distilled
+model wins significantly". r1 does not beat ISMCTS-1000, so it cannot beat the ISMCTS-5000
+teacher; round 2 labels with ISMCTS-5000 again.
+
+### Round 2 (queued 2026-10-30)
+
+Same teacher (ISMCTS-5000, greedy rollout, 800,000 decisions); network from r1's weights,
+trained on round-1 and round-2 labels together (`DistillV2Config.extra_data_dirs`; each folder
+holds out its own every 50th shard, so round 1's held-out shards stay unseen); same loss
+weights; calibration on round 2's held-out shards; PUCT-2000 r2 at λ = 0.5 and 1 vs
+ISMCTS-1000 (300 deals), the better at 1,000 deals (A9); r2 vs r1 (A12) only if A9 passes.
+Job: `runs\b25_round2\run.ps1` (plan Task 17 status). Results: `runs/round2/table.md`.
 
 ## 2. Hard-constraint belief from the rules (Task 18)
 
@@ -39,8 +74,25 @@ row it returns the last draw and counts a fallback. `analyze(belief="rules")` fo
 and PUCT; agent spec option `belief=rules`.
 
 Smoke run (2 self-play games, ISMCTS-100): 13 % of decisions rejected at least one draw;
-those rejected 38 % of draws on average (largest 57 %); no fallbacks. The 300-deal match
-(`experiments/build_phase3.py rules-mask`) is queued.
+those rejected 38 % of draws on average (largest 57 %); no fallbacks.
+
+**Full run (2026-10-30),** `experiments/build_phase3.py rules-mask`; source
+`runs/p3_matches/a_rules_mask/` (`table.md`, `results.json`). Rejection share over 1,095
+decisions of 40 ISMCTS-300 self-play games (`belief=rules`): **mean 0.5 % of draws per
+decision**; 1.0 % of decisions reject at least one draw, and those reject 53.9 % on average
+(largest 91.2 %); no fallbacks after 1,000 rejections.
+
+Match: PUCT-2000 (round-0 network, `c_puct` 2.5, λ = 0.5) with `belief=rules` against the same
+without it, 300 duplicate deals, duty on, tiered.
+
+| Match | Lineup | Deals | Candidate mean (95 % CI) | Candidate win rate | Paired diff (95 % CI) | s per move cand / opp |
+|---|---|---:|---:|---:|---:|---:|
+| PUCT-2000 rules mask vs uniform | 1+3 | 300 | +0.15 [−0.31, +0.64] | 25.6 % | +0.20 [−0.40, +0.82] | 0.196 / 0.197 |
+| PUCT-2000 rules mask vs uniform | ABAB | 300 | +0.04 [−0.24, +0.35] | 25.1 % | +0.08 [−0.47, +0.65] | 0.205 / 0.205 |
+
+**Verdict A13: met** (the mask loses nothing: both intervals include 0, means slightly
+positive; no measurable cost per move). The mask rarely bites, because only the last-card duty
+ties an action to hidden cards; it is kept on as a correctness fix, not a strength gain.
 
 ## 3. Learned belief (Task 19)
 
@@ -74,6 +126,58 @@ Plain max^n prunes nothing, at about 1 M positions per second here. The default 
 is therefore 10; the queued run (`build_phase3.py endgame`) measures agreement with
 ISMCTS-100,000 (A15) and times by cards in play 8–14, then plays PUCT-2000 with and without it.
 A faster per-deal solver is in `docs/open-items.md`.
+
+**Full run (2026-10-30),** `experiments/build_phase3.py endgame`; source
+`runs/p3_matches/b_endgame/` (`table.md`, `results.json`). 300 late positions (≤ 12 cards hidden
+from the player to move, two or more legal moves) from PUCT-300 self-play; node budget 20 M per
+call; 60 positions not solved within it.
+
+Agreement with ISMCTS-100,000 on the 240 solved positions:
+
+| Measure | Value | Bar | Verdict |
+|---|---|---|---|
+| Same move | 85.8 % | – | – |
+| A move of the same exact value | 94.2 % | ≥ 95 % (A15) | not met (by 0.8 points) |
+| ISMCTS's move: mean loss by the exact values | 0.03 points | – | – |
+| Forced results | 94 of 240 | – | – |
+
+Native time per exact call (one thread; 8 positions solved in parallel, CPU 80.6 % busy before
+the start):
+
+| Hidden cards ≤ | Positions | Not solved | Mean s | 95th pct s | Max s |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 164 | 4 | 2.625 | 21.524 | 51.418 |
+| 10 | 238 | 25 | 7.514 | 44.479 | 51.418 |
+| 12 | 300 | 60 | 11.939 | 46.703 | 51.466 |
+
+| Cards in play ≤ | Positions | Not solved | Mean s | 95th pct s | Max s |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 41 | 0 | 0.003 | 0.008 | 0.020 |
+| 10 | 86 | 0 | 0.045 | 0.169 | 0.956 |
+| 12 | 177 | 0 | 1.944 | 14.239 | 49.096 |
+| 14 | 300 | 60 | 11.939 | 46.703 | 51.466 |
+
+The plan's thresholds 8 / 10 / 12 (hidden cards) are all over 1 s natively at the 95th
+percentile, so the limit that matters is cards in play: **10 cards in play** (with ≤ 12 hidden)
+is the largest with every position solved and 95 % of calls under 1 s natively. That is the
+default (`infoset_max_cards = 10`). **Node WebAssembly timing is not measured yet:** it waits for
+Task 16's harness.
+
+Match: PUCT-2000 (round-0 network, λ = 0.5) with the endgame (`infoset_endgame=12,
+infoset_max_cards=10`) against the same without it, 300 duplicate deals, PUCT-2000 opponents:
+
+| Match | Lineup | Deals | Candidate mean (95 % CI) | Candidate win rate | Paired diff (95 % CI) | s per move cand / opp |
+|---|---|---:|---:|---:|---:|---:|
+| PUCT-2000 + exact endgame | 1+3 | 300 | +0.14 [−0.32, +0.63] | 25.5 % | +0.19 [−0.40, +0.82] | 0.181 / 0.181 |
+| PUCT-2000 + exact endgame | ABAB | 300 | +0.03 [−0.25, +0.35] | 25.1 % | +0.07 [−0.49, +0.65] | 0.173 / 0.172 |
+
+**Verdict:** the endgame costs nothing per move and gains nothing measurable at 300 deals (it
+only fires in the last few tricks). The two matches of §2 and §4 play the same deals with the
+same seeds: 579 of their 600 deal records give the candidate identical scores (checked
+2026-10-30). So the rules mask and the endgame each change play in only a few deals, and the
+shared +0.2 / +0.1 is the same noise in both, not an effect of either feature. A15 is narrowly missed on agreement (94.2 % against 95 %);
+the 60 unsolved positions are all above 10 cards in play, where the hook does not fire. Its use
+is teaching: exact results and `forced` proofs (`reason.counterfactual.forced`).
 
 ## 5.–8. Tasks 21–24
 
