@@ -26,6 +26,14 @@ Round 1 follows the recommendation in docs/open-items.md (2026-10-30) after Task
   round 0 (both PUCT-2000 at that λ), 1,000 deals (bar A12). Otherwise the loop stops
   (proposal §10 row 2: ISMCTS ships as ``expert``).
 
+Round 2 and later (``round 2``): the same teacher (round 1's network did not beat it, and
+Brian's rule of 2026-10-30 keeps the teacher until a network beats it with the 95 % interval
+above 0); new labels into ``runs/round<N>/data``; the network starts from round N-1's
+weights and trains on the labels of rounds 1..N (``--extra-data``; round 0's ISMCTS-1000
+labels are left out); each folder holds out its own every 50th shard, so the calibration on
+round N's held-out shards uses decisions no round trained on. Matches as in round 1, and
+A12 plays round N against round N-1.
+
 Every stage resumes: labelling counts the shards already written, training continues from
 ``latest.pt``, matches reuse their saved blocks; a stage whose results exist is skipped.
 ``runs/round<N>/stages.json`` says which stages are done; ``progress.json`` there moves
@@ -138,6 +146,19 @@ def gpu_busy_percent() -> float | None:
         return None
 
 
+def extra_data_dirs(args: argparse.Namespace) -> list[str]:
+    """Shard folders trained on beside round N's own: ``--extra-data`` if given, else the
+    data of rounds 1..N-1 (with the same ``--tag``) that exist."""
+    if args.extra_data is not None:
+        dirs = [Path(d) for d in args.extra_data]
+    else:
+        dirs = [paths(k, args.tag)["data"] for k in range(1, args.n)]
+    missing = [str(d) for d in dirs if not d.is_dir()]
+    if args.extra_data is not None and missing:
+        raise SystemExit(f"--extra-data: no such folder: {', '.join(missing)}")
+    return [str(d) for d in dirs if d.is_dir()]
+
+
 def train(args: argparse.Namespace, p: dict[str, Path]) -> None:
     from big2.rl.distill import DistillV2Config, train_v2
     from big2.rl.export import export_pknn
@@ -151,8 +172,11 @@ def train(args: argparse.Namespace, p: dict[str, Path]) -> None:
             time.sleep(300)
             waited += 5
         latest = net_dir / "latest.pt"
+        extra = extra_data_dirs(args)
+        log(f"train: data {p['data']} plus {extra or 'nothing'}")
         cfg = DistillV2Config(
             data_dir=str(p["data"]),
+            extra_data_dirs=extra,
             run_dir=str(net_dir),
             device=args.device,
             max_minutes=args.train_minutes,
@@ -253,12 +277,20 @@ def match(args: argparse.Namespace, p: dict[str, Path]) -> None:
         else f"stopped: does not beat round {args.n - 1} (A12)"
     )
     calib = json.loads((out / "f_calibration" / "results.json").read_text())["score_vs_search"]
+    prev_calib = paths(args.n - 1, args.tag)["base"] / "f_calibration" / "results.json"
+    prev_slope = (
+        f"round {args.n - 1}: "
+        f"{json.loads(prev_calib.read_text())['score_vs_search']['slope_search_on_pred']:.2f}"
+        if prev_calib.exists()
+        else "round 0: 0.86"  # build-phase2.md §6.1
+    )
+    trained_on = ", ".join(Path(d).parent.name for d in [str(p["data"]), *extra_data_dirs(args)])
     lines = [
         f"Round {args.n}: labels from ISMCTS-{args.teacher_iterations} (greedy rollout); "
-        f"network from round {args.n - 1}'s weights, loss weights {WEIGHTS}. Calibration on "
-        f"held-out round-{args.n} shards: slope of the search's score on the prediction "
-        f"{calib['slope_search_on_pred']:.2f} (round 0: 0.86), bias {calib['bias']:+.2f}, "
-        f"RMS {calib['rms']:.2f} points.",
+        f"network from round {args.n - 1}'s weights, trained on the labels of {trained_on}, "
+        f"loss weights {WEIGHTS}. Calibration on held-out round-{args.n} shards: slope of "
+        f"the search's score on the prediction {calib['slope_search_on_pred']:.2f} "
+        f"({prev_slope}), bias {calib['bias']:+.2f}, RMS {calib['rms']:.2f} points.",
         "",
         *TABLE_HEAD,
         *(
@@ -290,6 +322,7 @@ def match(args: argparse.Namespace, p: dict[str, Path]) -> None:
             "round": args.n,
             "teacher": f"ismcts:iterations={args.teacher_iterations}",
             "weights": WEIGHTS,
+            "data": [str(p["data"]), *extra_data_dirs(args)],
             "calibration": calib,
             "screens": screens,
             "best_lambda": float(best),
@@ -320,6 +353,12 @@ def main() -> None:
     ap.add_argument("--screen-deals", type=int, default=300)
     ap.add_argument("--deals", type=int, default=1000)
     ap.add_argument("--tag", default="", help="suffix for the run folders (e.g. a test run)")
+    ap.add_argument(
+        "--extra-data",
+        nargs="*",
+        default=None,
+        help="shard folders trained on beside this round's (default: rounds 1..N-1's data)",
+    )
     args = ap.parse_args()
     if args.n < 1:
         ap.error("round 0 is Tasks 11-12")

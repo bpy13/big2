@@ -98,8 +98,54 @@ residual at a higher cost.
 
 ## 2. Drills and mistake clusters (Task 28)
 
-Pending: `python experiments/build_phase4.py mine --threads 8` (700 self-play deals). It writes
-`drills/big2.json`, `runs/p4_audit/drills-50.json` and `runs/p4_mine/clusters.txt`.
+**Full run (2026-10-30),** `python experiments/build_phase4.py mine --threads 8`: 700 self-play
+deals in 185 s (8 threads; the plan's estimate was ~20 min). Sources: `runs/p4_mine/summary.json`,
+`runs/p4_mine/clusters.txt`, `runs/p4_mine/raw.jsonl`; outputs `drills/big2.json` (502 drills,
+untracked so far) and `runs/p4_audit/drills-50.json` (50 drills for Brian's tag audit).
+
+| Measure | Value | Bar (A22) | Verdict |
+|---|---|---|---|
+| Drills | 502 | ≥ 300 | met |
+| Every drill has the §6 fields (`id`, `game`, `skill`, `prompt`, `position`, `seat`, `rating`, `answers`, `source`) | 502 of 502 | all | met |
+| Rating spread | 645 – 1,193 (548 points) | ≥ 600 points | **not met** |
+| Tag audit file | 50 drills | 50 | met |
+
+Ratings by band: 600s 5, 700s 15, 800s 47, 900s 158, 1000s 226, 1100s 51 (5th percentile 828,
+median 1,011, 95th 1,119). Value gaps (rounded): 2 points 127, 3 points 146, 4 points 78,
+5 points 40, 6+ points 111. The formula `1000 + 400·share − 100·log2(gap)` gives a narrow spread
+because every candidate already has `easy` and `medium` wrong and `expert` right (open item).
+
+Drills per skill: `control` 182, `keep_the_plan` 173, `finish_in_two` 41, `saving_twos` 32,
+`score_vs_win` 26, `when_to_pass` 20, `kingmaking` 14, `general` 14.
+
+**Mistake clusters** (5,745 graded mistakes, grouped by the best move's reason keys; clusters of
+at least 10; the 12 largest of 55 shown, full list in `clusters.txt`):
+
+| Mistakes | Mean loss | Skill | In the app | Best move's keys |
+|---:|---:|---|---|---|
+| 594 | 1.98 | `keep_the_plan` | new | `plan.keeps`, `tempo.plays_to_out` |
+| 466 | 2.03 | `keep_the_plan` | new | `plan.keeps`, `tempo.plays_to_out`, `value.score_vs_win` |
+| 417 | 1.95 | `keep_the_plan` | new | `plan.breaks`, `value.score_vs_win` |
+| 343 | 1.39 | `when_to_pass` | yes | `control.pass_to_keep` |
+| 310 | 1.84 | `general` | new | (none) |
+| 286 | 2.66 | `keep_the_plan` | new | `plan.breaks` |
+| 268 | 1.43 | `score_vs_win` | new | `value.score_vs_win` |
+| 195 | 2.66 | `keep_the_plan` | new | `control.highest_out`, `plan.keeps`, `tempo.plays_to_out` |
+| 156 | 5.34 | `control` | new | `control.safe_single` |
+| 154 | 5.72 | `finish_in_two` | yes | `tempo.plays_to_out` |
+| 148 | 1.42 | `score_vs_win` | new | `helps_seat`, `value.score_vs_win` |
+| 148 | 1.25 | `when_to_pass` | yes | `control.pass_to_keep`, `helps_seat` |
+
+Against the app's skill list (`hk-games\app\src\drills\big2.json`: `endgame_counting`,
+`finish_in_two`, `saving_twos`, `when_to_pass`): **new-skill candidates** `skill.control`,
+`skill.keep_the_plan`, `skill.score_vs_win`, `skill.kingmaking` (and `skill.general` for
+mistakes with no key). **App skills with no cluster:** `endgame_counting` (no key marks
+counting yet) and `saving_twos` (32 drills carry it, from their keys, but no mistake cluster
+of 10 or more).
+
+**Verdict Task 28:** not ticked. Shape, count and clusters are done; the rating spread misses
+A22 by 52 points. The default fix (rate by the gap alone within each share band) changes the
+formula and waits for Brian (`docs/open-items.md`).
 
 Tiny run (6 deals, `runs/p4_mine_tiny3/`): 2 drills (ratings 991 and 1085; skills
 `keep_the_plan`, `saving_twos`), 57 graded mistakes. Largest clusters by the best move's keys:
@@ -110,8 +156,28 @@ Tiny run (6 deals, `runs/p4_mine_tiny3/`): 2 drills (ratings 991 and 1085; skill
 
 ## 3. Ladder v2 (Task 29)
 
-Pending: `python experiments/build_phase4.py ladder --threads 8` (500 duplicate deals per
-adjacent pair, A B A B, each deal 4× with the hands rotated).
+**Full run (2026-10-30),** `python experiments/build_phase4.py ladder --threads 8`: 500
+duplicate deals per adjacent pair, A B A B (upper level in seats 0 and 2), each deal 4× with the
+hands rotated; 777 s. Source: `runs/p4_ladder/results.json`, `table.md`. Levels: `random`;
+`easy` = StructuredGreedy ε 0.1 + mistake rates 0.5; `medium` = Q-net
+(`models/big2-qnet-duty.pknn`) T 1.0 + rates 0.15; `hard` = ISMCTS-2,000; `expert` =
+ISMCTS-10,000 + exact endgame.
+
+| Upper vs lower | Mean (points per game) | 95 % | Upper wins | Gap ≥ 1.5 |
+|---|---:|---:|---:|---|
+| easy vs random | +6.56 | ± 0.50 | 85.0 % | yes |
+| medium vs easy | +3.15 | ± 0.56 | 63.6 % | yes |
+| hard vs medium | +3.08 | ± 0.46 | 58.9 % | yes |
+| expert vs hard | **−0.03** | ± 0.38 | 49.9 % | **no** |
+
+Mistakes fired on 23.3 % of `easy`'s decisions with a choice and 5.5 % of `medium`'s.
+
+**Verdict A23: not met.** The lower four levels order strictly with gaps of 3 points or more.
+`expert` (ISMCTS-10,000 + endgame) does not beat `hard` (ISMCTS-2,000) at all. The plan's tuning
+knobs (temperature, mistake rates) only touch `easy` and `medium`, so they cannot open this gap.
+A probe with a weaker `hard` (ISMCTS-500 and ISMCTS-1,000 against the same `expert`) runs in the
+round-2 job's training window (`runs/p4_ladder_h500`, `runs/p4_ladder_h1000`); which `hard` and
+`expert` ship is Brian's call (`docs/open-items.md`). Task 29 is not ticked.
 
 Tiny run (8 deals, `hard` ISMCTS-100 and `expert` ISMCTS-300 instead of 2,000 and 10,000;
 `runs/p4_ladder_tiny/`): easy vs random +3.97 ± 3.35, medium vs easy +2.56 ± 3.10, hard vs

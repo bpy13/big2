@@ -476,6 +476,23 @@ to goes through bot-notes (Task 10).
 ## Phase 3 – Iterate, belief, exact endgames, external bars (opus; Tasks 19, 20 fable)
 
 - [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]**
+  (**Round 1 done 2026-10-30, A9 fails** (`build-phase3.md` §1): r1 PUCT-2000 λ 0.5 vs
+  ISMCTS-1000 at 1,000 deals +0.46 [−0.18, +1.13] 1+3, +0.16 [−0.47, +0.81] ABAB (round 0:
+  −0.12 / −1.78); calibration slope 1.03; A12 not run. **Round 2 running** (rounds 1–3
+  approved): same teacher ISMCTS-5000 (Brian 2026-10-30: "use teacher unless distilled model
+  wins significantly"; r1 does not beat it); r2 from r1's weights on round-1 + round-2 labels
+  (`DistillV2Config.extra_data_dirs`, `expert_iteration.py --extra-data`, default rounds
+  1..N−1; test `test_distill_v2_trains_on_several_folders`); calibration; λ 0.5 / 1 screen at
+  300 deals, the better at 1,000 (A9); r2 vs r1 (A12) only if A9 passes. Plus two Task 29
+  ladder probes (hard ISMCTS-500 / 1,000) in the training window. Job
+  `runs\b25_round2\run.ps1`, launched 20:58 detached, PowerShell PID 33548 (conhost 33200),
+  CPUs 4–19, Normal priority; labelling at ~4,800 decisions/min on 8 workers. Expected end
+  ≈ 03:00–04:00 on 2026-10-31 (≈ 06:00 if A12 runs). Check: `Get-Content
+  C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\b25_round2\progress.json` and
+  `run.log` (details `runs\round2\label\progress.json`, `runs\net_r2\progress.json`,
+  `runs\round2\progress.json`). Resume: relaunch the same `run.ps1` detached (command in its
+  header); every step skips finished work. Then copy `runs\round2\table.md` into §1.
+  Round-1 history follows.)
   (**round 1 prepared and queued 2026-10-30.** Per `docs/open-items.md`: teacher ISMCTS-5000
   (beat ISMCTS-1000 +1.09 [+0.35, +1.87] in ladder v0; PUCT λ 0.5 only tied it at ~4× the
   cost), 800,000 decisions (12 h cap; ~107 ms per decision per worker measured under load);
@@ -510,14 +527,15 @@ to goes through bot-notes (Task 10).
   - Notes: 25 % random top-3 moves in labelling stay. GPU per round 2–4 h; check `nvidia-smi` first.
     If round 1 loses to round 0, do not run rounds 2–3; record it (proposal §10 row 3).
 
-- [ ] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
-  (**code done 2026-10-30, match queued.** `RulesMask` in `belief.rs` (rejection sampler,
+- [x] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
+  (**done 2026-10-30.** `RulesMask` in `belief.rs` (rejection sampler,
   counters, `Sampler::weight`), `Rewind::history_consistent` (State: one backward pass over
   the history, tested equal to a full replay); `analyze(belief="rules")` for ISMCTS and PUCT
   with `belief_rejection_share`/`belief_fallbacks`; spec `belief=rules`. `cargo test -p
-  big2-search rules_mask` passes (3 tests). Smoke: 13 % of decisions reject some draws, 38 %
-  of draws when they do. The 300-deal match PUCT-2000 (c 2.5, λ 0.5) with vs without is
-  `build_phase3.py rules-mask` in the queued job (Task 17 status); §2 then gets the table.)
+  big2-search rules_mask` passes (3 tests). Full run (`runs/p3_matches/a_rules_mask/`,
+  `build-phase3.md` §2): mean rejection share 0.5 % of draws per decision (1.0 % of decisions
+  reject any); PUCT-2000 with vs without, 300 deals: +0.20 [−0.40, +0.82] 1+3, +0.08
+  [−0.47, +0.65] ABAB. A13 met (loses nothing). Play changes in only a few deals.)
   - Files: modify `crates/search/src/belief.rs` (`RulesMask`: a `Sampler` that rejects a sampled
     deal if replaying the history under it makes any observed action illegal: last-card duty
     singles, a `locked_out` pass, a play of cards the deal gives to someone else; counts
@@ -552,9 +570,12 @@ to goes through bot-notes (Task 10).
   unchanged), `analyze(infoset_endgame=…)` returns `exact`/`forced`. `cargo test -p
   big2-search infoset` passes (6 tests incl. the hand-provable forced win and the 13-hidden
   refusal). Finding: cost follows cards in play, not hidden cards (§4 probe; open item), hence
-  `max_cards`. `build_phase3.py endgame` (300 positions vs ISMCTS-100,000, native timing by
-  hidden and by cards in play, 300-deal match) is in the queued job; tiny run passed. Node
-  WebAssembly timing waits for Task 16's harness.)
+  `max_cards`. **Full run done 2026-10-30** (`runs/p3_matches/b_endgame/`, `build-phase3.md`
+  §4): 240 of 300 positions solved within 20 M nodes; same move as ISMCTS-100,000 85.8 %,
+  same exact value 94.2 % (A15 bar 95 %: missed); native 95th percentile under 1 s only up to
+  10 cards in play (hidden-card thresholds 8/10/12 are all over 1 s), so `max_cards` 10 stays;
+  300-deal match with vs without: +0.19 [−0.40, +0.82] 1+3, +0.07 [−0.49, +0.65] ABAB.
+  **Not ticked:** the Node WebAssembly timing part waits for Task 16's harness.)
   - Files: create `crates/search/src/infoset_endgame.rs` (when unseen cards ≤ `threshold`
     (default 12): enumerate every consistent deal (≤ 34,650), solve each by `Endgame::solve_actions`
     under a shared node cap, average per action by the sampler's weights; `forced: Option<Forced
@@ -693,13 +714,11 @@ stream can call it from `crates/app-api` without us touching their crate.
   skill from keys, validation, audit sample), `big2/teach/cluster.py`, CLI `big2 teach
   mine-drills` / `big2 teach cluster`; `pytest python/tests/test_drills.py` 7 passed
   (incl. a native 4-deal run validated against the §6 shape). Positions come from ISMCTS
-  self-play, not PUCT (open items). Tiny runs: 8 deals → 4 drills, 79 mistakes (~0.5 drills
-  per deal, ratings 991–1085). **Remaining:** `python experiments/build_phase4.py mine
-  --threads 8` (700 deals, ~20 min at 8 threads by the tiny run's pace, estimate) → 
-  `drills/big2.json`, `runs/p4_audit/drills-50.json`, `runs/p4_mine/clusters.txt`, then §2.
-  Check: `Get-Content runs\p4_mine\progress.json`; resume: rerun the same command. Risk: the
-  formula's spread may stay under 600 points (A22): the share of levels wrong only spans
-  about 0.4–0.8.)
+  self-play, not PUCT (open items). **Full run done 2026-10-30** (700 deals in 185 s;
+  `build-phase4.md` §2): 502 drills, every §6 field present, 50-drill audit file, 55 mistake
+  clusters beside the app's skill list. **Not ticked:** ratings span 645–1,193 (548 points;
+  A22 needs ≥ 600). The default fix (rate by the gap within each share band) changes the
+  formula and waits for Brian (`docs/open-items.md`). `drills/big2.json` is not committed yet.)
   - Files: create `python/big2/teach/drills.py` (mine positions from PUCT self-play where the
     ladder disagrees: `easy` and `medium` wrong, `expert` right, value gap ≥ 2 points; rating =
     1000 + 400 × (share of levels wrong) − 100 × log2(gap); emit the engine-interface `Drill`
@@ -729,10 +748,12 @@ stream can call it from `crates/app-api` without us touching their crate.
   ISMCTS-10,000 + exact endgame (ISMCTS, not PUCT, per open items). `cargo test -p big2-teach
   ladder` 2 passed. `big2-teach ladder` / `build_phase4.py ladder`. Tiny run (8 deals, small
   searches): every upper level ahead of the one below (+3.97, +2.56, +1.41, +0.34), intervals
-  about ± 3, so nothing is decided yet. **Remaining:** `python
-  experiments/build_phase4.py ladder --threads 8` (500 deals, adjacent pairs; ~45 min,
-  estimate) → §3; then tune rates/temperature if a gap is short. Expert vs hard is likely
-  short: ladder v0 had ISMCTS-1000 → 5000 at +0.55.)
+  about ± 3, so nothing is decided yet. **Full run done 2026-10-30** (500 deals per pair,
+  777 s; `build-phase4.md` §3): easy vs random +6.56 ± 0.50, medium vs easy +3.15 ± 0.56,
+  hard vs medium +3.08 ± 0.46, **expert vs hard −0.03 ± 0.38**. A23 not met at the top; the
+  plan's knobs (temperature, rates) only reach easy and medium. Probes with `hard` =
+  ISMCTS-500 / 1,000 run in the round-2 job (`runs/p4_ladder_h500`, `runs/p4_ladder_h1000`);
+  which `hard`/`expert` ship is Brian's call (`docs/open-items.md`). **Not ticked.**)
   - Files: create `crates/big2/src/bots/error_model.rs` (`ErrorModel { hold_two_too_long,
     break_pair_for_single, miss_safe_single }` rates; wraps any `Policy<State>` and applies a
     named mistake with its rate, returning which key fired so review can show it); the five

@@ -541,6 +541,10 @@ class DistillV2Config:
     auxiliary mean-score loss (see :func:`train_v2`)."""
 
     data_dir: str = "runs/round0/data"
+    #: More shard folders trained on beside ``data_dir`` (expert iteration: round N also
+    #: trains on rounds 1..N-1's labels). Each folder holds out its own every
+    #: ``val_every``-th shard, so a shard held out in an earlier round stays held out.
+    extra_data_dirs: list[str] = field(default_factory=list)
     run_dir: str = "runs/net_r0"
     # Regularized after the first round-0 run (lr 1e-3, weight decay 1e-4, no dropout),
     # whose distribution heads overfitted within 10 minutes (~7 passes over the data;
@@ -584,16 +588,31 @@ class _DataV2:
     """
 
     def __init__(
-        self, data_dir: str, val_every: int, log: Any = print, files: list[Path] | None = None
+        self,
+        data_dir: str | list[str],
+        val_every: int,
+        log: Any = print,
+        files: list[Path] | None = None,
     ) -> None:
-        """``files`` (default: every shard of ``data_dir``) picks the shards to load;
-        ``val_every`` then counts within that list."""
+        """``data_dir`` is one shard folder or a list of them. ``files`` (default: every
+        shard of each folder) picks the shards to load; ``val_every`` then counts within
+        that list. Without ``files``, every folder holds out its own every
+        ``val_every``-th shard (by sorted name), the same shards as when that folder is
+        loaded alone."""
+        dirs = [data_dir] if isinstance(data_dir, str) else list(data_dir)
+        held_out: list[bool]
         if files is None:
-            files = sorted(
-                p for p in Path(data_dir).glob("*.npz") if not p.name.endswith(".tmp.npz")
-            )
+            files, held_out = [], []
+            for folder in dirs:
+                shards = sorted(
+                    p for p in Path(folder).glob("*.npz") if not p.name.endswith(".tmp.npz")
+                )
+                files += shards
+                held_out += [k % val_every == 0 for k in range(len(shards))]
+        else:
+            held_out = [k % val_every == 0 for k in range(len(files))]
         if not files:
-            raise RuntimeError(f"no shards in {data_dir}")
+            raise RuntimeError(f"no shards in {', '.join(dirs)}")
         counts = [_shard_counts(p) for p in files]
         d_total, n_total = sum(c[0] for c in counts), sum(c[1] for c in counts)
         log(f"loading {len(files)} shards: {d_total:,} decisions, {n_total:,} candidates")
@@ -620,7 +639,7 @@ class _DataV2:
                 self.lo[d0 : d0 + d] = n0 + lo
                 self.count[d0 : d0 + d] = hi - lo
                 self.chosen[d0 : d0 + d] = n0 + lo + z["chosen"].astype(np.int64)
-                self.val[d0 : d0 + d] = k % val_every == 0
+                self.val[d0 : d0 + d] = held_out[k]
                 self.actions[n0 : n0 + n] = z["actions"]
                 self.visits[n0 : n0 + n] = z["visits"]
                 self.score[n0 : n0 + n] = z["score"]
@@ -801,7 +820,7 @@ def train_v2(cfg: DistillV2Config, log: Any = print) -> Path:
         log(f"weights from {cfg.init}")
     params = sum(p.numel() for p in net.parameters())
     t_load = time.time()
-    data = _DataV2(cfg.data_dir, cfg.val_every, log=log)
+    data = _DataV2([cfg.data_dir, *cfg.extra_data_dirs], cfg.val_every, log=log)
     t = data.to(dev)
     sizes = {
         "decisions": len(data.states),
