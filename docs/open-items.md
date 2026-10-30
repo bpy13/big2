@@ -3,6 +3,26 @@
 Pending work and questions for Brian. Newest first. The plan is
 `docs/plans/2026-10-29-big2-bot-build.md`; results are in `docs/study-results/`.
 
+## 2026-10-30 · Grade repeatability misses the 95 % bar (Task 27)
+
+The paired grader gives the same grade word on a re-grade with a new seed on 90.2 % of 1,386
+decisions (300 deals, doubled while `unclear` up to 1,200; `build-phase4.md` §1). The plan's
+bar A21 is 95 %. Even 4,800 deals (16× the app's review budget) reach only 93.8 %. The rest
+are grades on opposite sides of a line, each run sure of its side. Counting an `unclear`
+range that covers the other run's grade as agreement gives 97.6 %. The phone grader also
+agrees with a 10× grader on 87.2 % (bar 90 %; compatible 94.9 %).
+
+**Question for Brian (default applies):** Which measure should A21 use?
+1. *Default:* "compatible" agreement (≥ 95 %: met, 97.6 %), and ship 300 deals doubled up to
+   1,200 while `unclear`. Example: run A says "mistake", run B says "between inaccuracy and
+   mistake"; that counts as agreeing.
+2. Strict agreement, with a larger budget or a stronger evaluator in the tables (more time per
+   reviewed decision on the phone).
+
+Also non-blocking: the luck ledger's residual (mean 15.7 points per seat-deal) is larger than
+the score itself (13.8). The terms sum exactly, but with greedy rollouts they explain little of
+a deal. A stronger evaluator would shrink it.
+
 ## 2026-10-30 · Exact endgame is slow beyond 10 cards in play (Task 20)
 
 The information-set endgame solves each deal with plain max^n, which prunes nothing (about

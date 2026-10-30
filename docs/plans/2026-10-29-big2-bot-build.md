@@ -629,7 +629,15 @@ to goes through bot-notes (Task 10).
 The teaching code lives in a new crate we own, `crates/teach` (package `big2-teach`), so the app
 stream can call it from `crates/app-api` without us touching their crate.
 
-- [ ] **Task 26: `big2-teach`: reason keys from the move table** `[parallel-ok]`
+- [x] **Task 26: `big2-teach`: reason keys from the move table** `[parallel-ok]`
+  (done 2026-10-30, opus: `crates/teach` is a workspace member; `MoveTable` (from the paired
+  evaluator or any `Analysis`), `reasons_for`/`reasons` with the 11 keys, rules in rustdoc and
+  `crates/teach/README.md`; `reason.helps_seat` (the proposal's spelling, not `reason.value.*`)
+  needs the gain's paired interval to exclude 0; `reason.plan.keeps` only names a group the
+  chosen play leaves whole. `cargo test -p big2-teach reasons` 25 tests (fire / must-not per
+  key); clippy clean. Audit: `build_phase4.py audit` → `runs/p4_audit/hints-50.json`, 50 entries
+  (counts in `build-phase4.md` §0). The audit runs the native `big2-teach` program, so no
+  extension rebuild was needed.)
   - Files: create `crates/teach/` (`Cargo.toml`, `src/lib.rs`, `src/reasons.rs`): `Reason { key:
     &'static str, args: serde_json::Value }`, `reasons_for(state, analysis, candidates, chosen)
     -> Vec<Reason>` with the proposal's keys: `reason.plan.keeps {combo}`, `reason.plan.breaks
@@ -650,6 +658,16 @@ stream can call it from `crates/app-api` without us touching their crate.
     dependency through app-api; add it to `crates/teach` directly.
 
 - [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]`
+  (**code done 2026-10-30 by opus (not fable: B25 helper brief); repeatability bar not met.**
+  `grade.rs` (`evaluate_paired`, `grade_from_table`, `grade_paired`/`grade_paired_table` with
+  doubling while `unclear` up to `max_deals`, `Thresholds { from_sigma, APP }`, σ 27.45 →
+  0.69 / 2.75 / 6.86), `ledger.rs` (`luck_ledger`, `Ledger::from_tables`, exact by
+  construction). `cargo test -p big2-teach -- grade ledger` passes (11 tests: ledger sums to
+  1e-9 on 200 random deals, a forced move grades `best`). `build_phase4.py regrade`
+  (`build-phase4.md` §1, 52 s): same grade with a new seed 90.2 % (A21 bar 95 %: not met;
+  compatible 97.6 %), `unclear` 13.4 %, phone vs 10× 87.2 % (bar 90 %: not met; compatible
+  94.9 %), ledger error 4e-15 (met). Budget probe up to 4,800 deals: 93.8 % strict. Open item:
+  which agreement measure A21 uses. Not ticked until Brian answers.)
   - Files: create `crates/teach/src/grade.rs` (`grade_paired(position, played, cfg) -> Graded {
     loss, interval, grade, seed }`: every legal move evaluated on the same sampled deals so noise
     cancels; thresholds as multiples of σ from Task 6 (`good < 0.025σ`, `inaccuracy < 0.1σ`,

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/cards", "crates/games", "crates/nn", "crates/big2", "crates/search", "crates/pybind", "crates/app-api"]
+members = ["crates/cards", "crates/games", "crates/nn", "crates/big2", "crates/search", "crates/pybind", "crates/app-api", "crates/teach"]
 
 [workspace.package]
 version = "0.1.0"
@@ -12,6 +12,7 @@ big2-games = { path = "crates/games" }
 big2-nn = { path = "crates/nn" }
 big2-big2 = { path = "crates/big2" }
 big2-search = { path = "crates/search" }
+big2-teach = { path = "crates/teach" }
 rand = { version = "0.8", features = ["small_rng"] }
 rayon = "1.10"
 web-time = "1"

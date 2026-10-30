@@ -9,7 +9,10 @@ flowchart TB
         big2["big2<br/>rules · combos · movegen · State · bots · features · value net"]
         search["search<br/>ISMCTS · PIMC · max^n endgame · belief sampling"]
         pybind["pybind<br/>PyO3 module big2._core"]
+        teach["teach<br/>reason keys · paired grader · luck ledger"]
         cards --> big2
+        big2 --> teach
+        search --> teach
         games --> big2
         nn --> big2
         games --> search
@@ -52,6 +55,11 @@ subsets. `docs/rules/big2.md` is the spec; tests cite its sections.
 **`crates/search`** holds the solvers (see [solver.md](solver.md)). They return an
 `Analysis`: every legal action with simulations, mean score, win rate and 95%
 confidence intervals.
+
+**`crates/teach`** (`big2-teach`) is the teaching layer on top of `big2` and `search`:
+reason keys from the move table, the paired grader (σ lines, `unclear`) and the luck
+ledger ([crates/teach/README.md](../crates/teach/README.md)). The app stream calls it from
+`crates/app-api`; its `big2-teach` program runs the phase-4 experiments natively.
 
 **`crates/pybind`** exposes all of the above to Python as plain values: card masks
 are `int`, an action is the mask of cards played (`0` = pass), rules are keyword
