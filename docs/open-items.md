@@ -3,6 +3,38 @@
 Pending work and questions for Brian. Newest first. The plan is
 `docs/plans/2026-10-29-big2-bot-build.md`; results are in `docs/study-results/`.
 
+## 2026-10-31 · Round 2 beats ISMCTS-1000 but misses A9's bar; round 3 runs; ladder probes
+
+**Where things stand.**
+- Task 17 round 2 (`build-phase3.md` §1): r2 PUCT-2000 λ = 0.5 vs ISMCTS-1000 at 1,000 deals:
+  +0.76 [+0.13, +1.37] (1+3), +0.86 [+0.29, +1.50] (ABAB). The intervals sit above 0 for the
+  first time, but A9 needs ≥ +1.0. Trend r0 → r1 → r2 (ABAB): −1.78 → +0.16 → +0.86.
+  Calibration slope 1.05.
+- Round 3, the last approved round, runs now (`runs\b25_round3\run.ps1`; plan Task 17 status
+  has the check and resume commands). The teacher stays ISMCTS-5000: no r2-vs-ISMCTS-5000
+  match exists, so Brian's rule keeps it. Round 3 also plays r3 against ISMCTS-5000 at 1,000
+  deals (`runs\round3\vs_teacher\`), so the teacher rule can be checked directly.
+- Task 29 probes (`build-phase4.md` §3): `hard` = ISMCTS-500 gives a strict order; `expert`
+  (ISMCTS-10,000 + endgame) leads it by +1.02 ± 0.40, short of 1.5. With `hard` =
+  ISMCTS-1,000 the lead is +0.31 ± 0.40, so the order is not strict.
+
+**Questions for Brian (defaults apply; nothing blocks on them).** These replace questions 1, 2
+and 4 of the 2026-10-30 (evening) item below.
+1. *What should `hard` and `expert` use in the app?* The app uses ISMCTS-2,000 and
+   ISMCTS-10,000 today; `expert` does not beat `hard` there (−0.03). No probed `hard` budget
+   reaches A23's 1.5-point gap below `expert`. *Default:* `hard` = ISMCTS-500, `expert` =
+   ISMCTS-10,000 + exact endgame, and A23's top gap counts as met when the interval is above 0.
+   Example: `expert` beats `hard` by +1.02 ± 0.40; `hard` beats `medium` by +2.72 ± 0.49.
+   The scope-keeping option: probe ISMCTS-250 as `hard` first (about 15 minutes of CPU).
+2. *If round 3 reaches A9's +1.0 bar, does PUCT replace ISMCTS as `expert`?* PUCT needs the
+   network on the phone and costs about 18× ISMCTS-1000's time per move. *Default:* yes, if it
+   also passes A12 (r3 beats r2) and the phone timing allows it (Task 16); otherwise ISMCTS
+   ships. Example: r3 at +1.1 [+0.5, +1.7] in both lineups, beating r2: PUCT-2000 r3 ships.
+3. *Stop expert iteration after round 3 if A9 still fails?* *Default:* yes; ISMCTS ships as
+   `expert` and the GPU moves on. Example: r3 at +0.9 [+0.3, +1.5] ends the loop, even though
+   it beats ISMCTS-1000. The other option is a round 4 (about 6–8 hours, mostly CPU), most
+   useful if r3 also beats ISMCTS-5000 and can become the teacher.
+
 ## 2026-10-30 (evening) · Round 1 fails A9; round 2 queued; Phase 4 runs done
 
 **Where things stand.**

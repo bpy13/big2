@@ -4,8 +4,9 @@ Plan: `docs/plans/2026-10-29-big2-bot-build.md`, phase 3 (Tasks 17–25). Match 
 `build-phase2.md`: duplicate deals (each deal 4×, seats rotated), last-card duty on, tiered
 scoring, no four-card plays, lineups `1+3` and `ABAB`, 95 % bootstrap intervals over deals.
 
-Status 2026-10-30 (evening): round 1 of Task 17 done (A9 fails, §1); round 2 queued
-(`runs\b25_round2\run.ps1`, plan Task 17 status). Task 18 done (A13 met, §2). Task 20's runs
+Status 2026-10-31: rounds 1 and 2 of Task 17 done (A9 fails both; r2 beats ISMCTS-1000
+significantly, +0.76 / +0.86, but under the +1.0 bar; §1); round 3 runs
+(`runs\b25_round3\run.ps1`, plan Task 17 status). Task 18 done (A13 met, §2). Task 20's runs
 done (§4; A15 missed at 94.2 %, Node WebAssembly timing waits for Task 16's harness).
 
 ## 1. Expert iteration (Task 17)
@@ -54,14 +55,60 @@ equal-time part was not measured in round 1. Teacher rule (Brian, 2026-10-30): "
 model wins significantly". r1 does not beat ISMCTS-1000, so it cannot beat the ISMCTS-5000
 teacher; round 2 labels with ISMCTS-5000 again.
 
-### Round 2 (queued 2026-10-30)
+### Round 2 (2026-10-31)
 
 Same teacher (ISMCTS-5000, greedy rollout, 800,000 decisions); network from r1's weights,
 trained on round-1 and round-2 labels together (`DistillV2Config.extra_data_dirs`; each folder
 holds out its own every 50th shard, so round 1's held-out shards stay unseen); same loss
 weights; calibration on round 2's held-out shards; PUCT-2000 r2 at λ = 0.5 and 1 vs
 ISMCTS-1000 (300 deals), the better at 1,000 deals (A9); r2 vs r1 (A12) only if A9 passes.
-Job: `runs\b25_round2\run.ps1` (plan Task 17 status). Results: `runs/round2/table.md`.
+Job: `runs\b25_round2\run.ps1` (20:58 → 01:49).
+
+Source: `runs/round2/results.json`, `runs/round2/table.md`; calibration
+`runs/round2/f_calibration/results.json`; training `runs/net_r2/results.json`.
+
+- **Labels:** 805,394 decisions (4.1 M candidates, 1,541 shards) in 126 min on 8 workers.
+- **Training:** from r1's weights on 1.61 M decisions (rounds 1 and 2); stopped after 90 min (no
+  better validation loss in 6 evaluations); best at 60 min: validation prior top-1 76.2 %
+  (r1: 74.8 %), score RMS 2.17 points (r1: 2.32).
+- **Calibration** on round 2's 31 held-out shards (16,158 decisions): slope **1.05** (r1: 1.03),
+  bias +0.04, RMS 2.44, correlation 0.980; prior vs visit share: expected calibration error 0.007.
+
+| Match | Lineup | Deals | Candidate mean (95 % CI) | Candidate win rate | Paired diff (95 % CI) | s per move cand / opp |
+|---|---|---:|---:|---:|---:|---:|
+| r2 PUCT-2000 λ = 1 vs ISMCTS-1000 | 1+3 | 300 | +0.60 [−0.22, +1.42] | 23.7 % | +0.80 [−0.25, +1.91] | 0.182 / 0.011 |
+| r2 PUCT-2000 λ = 1 vs ISMCTS-1000 | ABAB | 300 | +0.28 [−0.32, +0.85] | 23.4 % | +0.55 [−0.66, +1.79] | 0.161 / 0.010 |
+| r2 PUCT-2000 λ = 0.5 vs ISMCTS-1000 | 1+3 | 300 | +0.54 [−0.29, +1.31] | 25.8 % | +0.72 [−0.31, +1.85] | 0.172 / 0.010 |
+| r2 PUCT-2000 λ = 0.5 vs ISMCTS-1000 | ABAB | 300 | +0.41 [−0.12, +0.91] | 25.2 % | +0.81 [−0.26, +1.86] | 0.176 / 0.010 |
+| **r2 λ = 0.5 vs ISMCTS-1000 (A9)** | 1+3 | 1,000 | +0.57 [+0.13, +1.03] | 24.7 % | **+0.76 [+0.13, +1.37]** | 0.167 / 0.009 |
+| **r2 λ = 0.5 vs ISMCTS-1000 (A9)** | ABAB | 1,000 | +0.43 [+0.13, +0.74] | 24.5 % | **+0.86 [+0.29, +1.50]** | 0.177 / 0.010 |
+
+**Verdict round 2: A9 fails** on its +1.0 bar, but for the first time r2 beats ISMCTS-1000
+**significantly** in both lineups (intervals above 0). A12 was not run. The script's verdict line
+("ISMCTS ships as expert") is the A9 stop rule; round 3 still runs, because the plan approves
+rounds 1–3. PUCT still costs about 18× ISMCTS-1000's time per move.
+
+Teacher check: no direct r2-vs-ISMCTS-5000 match exists. By Brian's rule the teacher stays
+ISMCTS-5000 for round 3. Round 3 adds that match (`expert_iteration.py --stages teacher`).
+
+### Trend over the rounds (A9 cell, 1,000 deals, paired diff vs ISMCTS-1000)
+
+| Round | Teacher | Trained on | λ | 1+3 | ABAB | Calibration slope |
+|---|---|---|---:|---:|---:|---:|
+| r0 | ISMCTS-1000 | round-0 labels | 1 | −0.12 | −1.78 | 0.86 |
+| r1 | ISMCTS-5000 | round 1 | 0.5 | +0.46 [−0.18, +1.13] | +0.16 [−0.47, +0.81] | 1.03 |
+| r2 | ISMCTS-5000 | rounds 1–2 | 0.5 | **+0.76 [+0.13, +1.37]** | **+0.86 [+0.29, +1.50]** | 1.05 |
+
+Each round gains about +0.3 to +0.7 points. If round 3 gains as much again, it would reach
+about +1.0 to +1.2: right at the A9 bar. The A9 intervals are about ± 0.6 wide at 1,000 deals.
+
+### Round 3 (running 2026-10-31)
+
+The last round the plan approves. Same teacher ISMCTS-5000 (above); r3 from r2's weights on
+round-1, 2 and 3 labels (2.4 M decisions); calibration; λ screen; A9 at 1,000 deals; r3 vs r2
+(A12) only if A9 passes; then **r3 vs ISMCTS-5000 at 1,000 deals** (`runs/round3/vs_teacher/`),
+so the next session can apply Brian's rule to the teacher itself. Job
+`runs\b25_round3\run.ps1` (plan Task 17 status has the check and resume commands).
 
 ## 2. Hard-constraint belief from the rules (Task 18)
 
