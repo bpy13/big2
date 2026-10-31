@@ -383,8 +383,14 @@ def rl_train(
         str | None, typer.Option(help="Start from these weights (e.g. a distilled network).")
     ] = None,
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
+    opponents: Annotated[
+        str, typer.Option(help="Agent spec of three frozen seats: a probe, not self-play.")
+    ] = "",
+    opponent_workers: Annotated[
+        int, typer.Option(help="Threads for a frozen search opponent.")
+    ] = 8,
 ) -> None:
-    """Train a Q-network by Deep Monte Carlo self-play."""
+    """Train a Q-network by Deep Monte Carlo self-play, or against three frozen seats."""
     from big2.rl.dmc import TrainConfig, train
 
     cfg = TrainConfig(
@@ -399,6 +405,8 @@ def rl_train(
         seed=seed,
         device=device,
         rules=Rules(last_card_duty=last_card_duty).kwargs(),
+        opponents=opponents,
+        opponent_workers=opponent_workers,
     )
 
     def log(r: dict[str, Any]) -> None:

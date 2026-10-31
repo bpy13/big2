@@ -18,6 +18,12 @@ network plays a duplicate-deal match against three greedy bots.
 Run with ``big2 rl train`` (see ``--help``) or :func:`train`. Output in
 ``run_dir``: ``log.jsonl`` (one line per iteration), ``latest.pt``, ``best.pt``
 (best evaluation score) and ``iter_XXXXX.pt`` snapshots.
+
+**Best-response probe** (``opponents``, plan Task 22). The learner holds one random seat per
+game and the other three seats play a frozen agent spec: only the learner learns, and only
+its decisions become samples. What it gains is how exploitable that agent is. The spec is
+any :func:`big2.agents.make_agent` spec; a ``dmc:`` network acts in batches on the actor
+device, anything else (a search) runs on ``opponent_workers`` threads.
 """
 
 from __future__ import annotations
@@ -26,6 +32,7 @@ import json
 import math
 import time
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -54,6 +61,11 @@ class TrainConfig:
     snapshot_every: int = 50
     max_iters: int = 1_000_000
     max_minutes: float = 60.0
+    #: Stop at this many minutes over all resumes together (0: only ``max_minutes``, per run).
+    total_minutes: float = 0.0
+    #: Agent spec of three frozen seats (see the module docs); empty: self-play.
+    opponents: str = ""
+    opponent_workers: int = 8
     seed: int = 0
     device: str = "auto"  # see big2.rl.device
     rules: dict[str, Any] = field(default_factory=dict)
@@ -149,6 +161,128 @@ def collect(
         np.asarray(out_w, np.float32),
     )
     return batch, {"iter_games": finished_games, "mean_length": float(np.mean(lengths))}
+
+
+class FrozenOpponents:
+    """Three seats playing a frozen agent, and the learner's seat and moves per running game.
+
+    The games in the environment outlive an iteration, so their state lives here.
+    """
+
+    def __init__(self, spec: str, workers: int, rng: np.random.Generator, device: str) -> None:
+        from big2.agents import make_agent
+        from big2.rl.agent import load_model
+
+        self.spec, self.rng, self.device = spec, rng, device
+        kind, _, rest = spec.partition(":")
+        self.net: nn.Module | None = None
+        self.pool: ThreadPoolExecutor | None = None
+        if kind.strip().lower() == "dmc":
+            opts = dict(p.split("=", 1) for p in rest.split(","))
+            self.net = load_model(opts["checkpoint"]).to(device)
+        else:
+            self.agent = make_agent(spec, seed=0)
+            self.pool = ThreadPoolExecutor(workers)
+        self.seats: dict[int, int] = {}
+        self.trajectories: dict[int, list[tuple[np.ndarray, np.ndarray]]] = {}
+
+    def seat(self, game: int) -> int:
+        """The learner's seat in the running game of environment slot ``game``."""
+        if game not in self.seats:
+            self.seats[game] = int(self.rng.integers(4))
+        return self.seats[game]
+
+    def choose(
+        self,
+        env: Big2VecEnv,
+        ids: list[int],
+        states: np.ndarray,
+        actions: np.ndarray,
+        counts: np.ndarray,
+    ) -> np.ndarray:
+        """One legal-move index per decision in ``ids``."""
+        if self.net is not None:
+            return choose(self.net, states, actions, counts, 0.0, self.rng, self.device)
+        assert self.pool is not None
+        out = np.zeros(len(ids), dtype=np.int64)
+        # A forced move needs no search. The rest run at once: the search frees the GIL.
+        searched = [k for k in range(len(ids)) if counts[k] > 1]
+        moves = self.pool.map(self.agent.act, [env.state(ids[k]) for k in searched])
+        for k, cards in zip(searched, moves, strict=True):
+            out[k] = env.legal_cards(ids[k]).index(int(cards))
+        return out
+
+
+def _decisions(
+    rows: np.ndarray,
+    states: np.ndarray,
+    actions: np.ndarray,
+    starts: np.ndarray,
+    counts: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """The states, legal moves and move counts of the observed decisions ``rows``."""
+    moves = np.concatenate([actions[starts[k] : starts[k] + counts[k]] for k in rows])
+    return states[rows], moves, counts[rows]
+
+
+def collect_vs_frozen(
+    net: nn.Module,
+    env: Big2VecEnv,
+    frozen: FrozenOpponents,
+    games: int,
+    epsilon: float,
+    rng: np.random.Generator,
+    device: str = "cpu",
+) -> tuple[Batch, dict[str, float]]:
+    """Plays until ``games`` games finish with the learner in one seat of each; returns the
+    learner's labelled samples, and its mean score in ``learner_score``."""
+    net.eval()
+    out_s, out_a, out_r, out_w = [], [], [], []
+    finished_games = 0
+    lengths: list[int] = []
+    learner_scores: list[float] = []
+    while finished_games < games:
+        st, ac, counts_l, ids, players = env.observe()
+        counts = np.asarray(counts_l, dtype=np.int64)
+        states = np.frombuffer(st, dtype=np.uint8).reshape(len(ids), STATE_LEN)
+        actions = np.frombuffer(ac, dtype=np.uint8).reshape(-1, ACTION_LEN)
+        starts = np.concatenate([[0], np.cumsum(counts)[:-1]])
+        mine = np.array([players[k] == frozen.seat(i) for k, i in enumerate(ids)])
+        choices = np.zeros(len(ids), dtype=np.int64)
+        rows = np.flatnonzero(mine)
+        if len(rows):
+            part = _decisions(rows, states, actions, starts, counts)
+            choices[rows] = choose(net, *part, epsilon, rng, device)
+        others = np.flatnonzero(~mine)
+        if len(others):
+            part = _decisions(others, states, actions, starts, counts)
+            choices[others] = frozen.choose(env, [ids[k] for k in others], *part)
+        for k in rows:
+            frozen.trajectories.setdefault(ids[k], []).append(
+                (states[k], actions[starts[k] + choices[k]])
+            )
+        for i, scores, winner, _ in env.step(choices.tolist()):
+            seat = frozen.seats.pop(i)
+            traj = frozen.trajectories.pop(i, [])
+            finished_games += 1
+            lengths.append(len(traj))
+            learner_scores.append(scores[seat])
+            for s, a in traj:
+                out_s.append(s)
+                out_a.append(a)
+                out_r.append(scores[seat])
+                out_w.append(1.0 if winner == seat else 0.0)
+    batch = Batch(
+        np.stack(out_s),
+        np.stack(out_a),
+        np.asarray(out_r, np.float32),
+        np.asarray(out_w, np.float32),
+    )
+    return batch, {
+        "iter_games": finished_games,
+        "mean_length": float(np.mean(lengths)),
+        "learner_score": float(np.mean(learner_scores)),
+    }
 
 
 def train_epoch(
@@ -258,6 +392,7 @@ def train(
     net = QNet(cfg.net).to(cfg.device)
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr)
     start_iter, total_games, total_samples, best = 0, 0, 0, -math.inf
+    minutes_before = 0.0  # in earlier runs of this resumed training
     if init:
         net.load_state_dict(torch.load(init, map_location=cfg.device, weights_only=False)["model"])
     if resume:
@@ -267,21 +402,37 @@ def train(
             opt.load_state_dict(ckpt["optimizer"])
         info = ckpt["info"]
         start_iter, total_games, total_samples = info["iter"], info["games"], info["samples"]
+        minutes_before = float(info.get("minutes_total", 0.0))
         best = best_eval_so_far(ckpt, Path(resume).parent / "best.pt")
 
     adev = actor_device(cfg.device)
     actor = QNet(cfg.net).to(adev)
     # Offset by the iteration so a resumed run does not replay the same deals.
     env = Big2VecEnv(cfg.envs, seed=cfg.seed + start_iter, **cfg.rules)
+    frozen = (
+        FrozenOpponents(cfg.opponents, cfg.opponent_workers, rng, adev) if cfg.opponents else None
+    )
     replay: deque[Batch] = deque(maxlen=cfg.replay_iters)
     t0 = time.time()
     it = start_iter
+
+    def budget_left() -> bool:
+        minutes = (time.time() - t0) / 60
+        if cfg.total_minutes > 0 and minutes_before + minutes >= cfg.total_minutes:
+            return False
+        return minutes < cfg.max_minutes
+
     with (run / "log.jsonl").open("a") as logf:
-        while it < cfg.max_iters and (time.time() - t0) / 60 < cfg.max_minutes:
+        while it < cfg.max_iters and budget_left():
             it += 1
             actor.load_state_dict(net.state_dict())
             tc = time.time()
-            batch, cstats = collect(actor, env, cfg.games_per_iter, cfg.epsilon, rng, adev)
+            if frozen is not None:
+                batch, cstats = collect_vs_frozen(
+                    actor, env, frozen, cfg.games_per_iter, cfg.epsilon, rng, adev
+                )
+            else:
+                batch, cstats = collect(actor, env, cfg.games_per_iter, cfg.epsilon, rng, adev)
             collect_s = time.time() - tc
             replay.append(batch)
             data = Batch(
@@ -298,6 +449,7 @@ def train(
             rec: dict[str, Any] = {
                 "iter": it,
                 "minutes": (time.time() - t0) / 60,
+                "minutes_total": minutes_before + (time.time() - t0) / 60,
                 "games": total_games,
                 "samples": total_samples,
                 "collect_s": collect_s,
