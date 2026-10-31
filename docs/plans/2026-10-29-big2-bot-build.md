@@ -677,7 +677,17 @@ to goes through bot-notes (Task 10).
 - [ ] **Task 24: Final 10,000-deal matches** **[long: ~9 h CPU each, headless]** (after 17, 21)
   (**Queued 2026-11-01:** `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, the bot that
   ships by default, not PUCT-2000 (`build-phase3.md` §8); Charlesworth waits for Task 21.
-  JOBLINE)
+  One job for Tasks 24, 23 and 22: `runs\b25_tasks22_24\run.ps1`, launched 2026-11-01 06:05
+  detached, PowerShell PID 26572 (conhost 23152), CPUs 4–19, Normal priority; 8 workers at about
+  92 % of a core each. Order: Task 24 with seed B's training beside it, Task 23's match, the five
+  probes (34 h), the probe evaluation. Expected end ≈ 02:00–08:00 on 2026-11-03. Check:
+  `Get-Content C:\Users\brian\OneDrive\Documents\workspace\repo\big2\runs\b25_tasks22_24\progress.json`
+  and `run.log` beside it (details: `runs\final_matches`, `runs\net_seedB`, `runs\seed_crossplay`,
+  `runs\probe_<name>`, `runs\probe_eval`, `progress.json` in each). Resume, also after a Windows
+  Update restart: relaunch the same `run.ps1` detached (command in its header); every step skips
+  finished work. Don't edit `experiments/build_phase3.py` or `python/big2/rl/dmc.py` while it
+  runs: each step reads them when it starts. Then copy the three `table.md` files into
+  `build-phase3.md` §6–§9.)
   - Files: `experiments/build_phase3.py final`; `build-phase3.md` §8; `runs/final_matches/run.ps1`.
   - Done when: §8 holds PUCT-2000(final) vs ISMCTS-1000 and vs Charlesworth (if run), 10,000
     deals each, both lineups, mean ± 95 % and win rate (A19). Check: `progress.json`. Resume: the
