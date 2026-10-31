@@ -3,6 +3,42 @@
 Pending work and questions for Brian. Newest first. The plan is
 `docs/plans/2026-10-29-big2-bot-build.md`; results are in `docs/study-results/`.
 
+## 2026-11-01 · Round 3 done; WebAssembly timing done; Tasks 22–24 run as one job
+
+**Where things stand.**
+- Task 17 (`build-phase3.md` §1): r3 PUCT-2000 λ = 0.5 vs ISMCTS-1000 at 1,000 deals: +1.06
+  [+0.46, +1.67] (1+3, passes), +0.66 [+0.08, +1.28] (ABAB, fails). r3 vs ISMCTS-5000: +0.04,
+  −0.00. The teacher stays, and no network ships. Default answer to question 3 of the item below
+  stands: stop after round 3, ISMCTS ships as `expert`. No round 4 runs without Brian.
+- Task 29 (`build-phase4.md` §3): `hard` = ISMCTS-250 gives +2.17 over `medium`, and `expert`
+  leads it by +1.16 ± 0.45. The order is strict; the top gap still misses 1.5.
+- Task 16 (`build-phase2.md` §5): PUCT-2000 in Node WebAssembly at the opening takes 0.83 s with
+  the app's build flags (bar 0.6 s) and 0.28 s with SIMD. The move after 100 ms changes in 3.0 %
+  of positions (bar < 15 %). ISMCTS-10,000 takes 0.19 s at the opening, 0.07 s in the midgame.
+- Task 20 (`build-phase3.md` §4): at 10 cards in play the exact endgame takes at most 0.36 s in
+  Node WebAssembly, so the time bar is met. The 94.2 % agreement still misses 95 %.
+- Tasks 22–24 run as one detached job (`runs\b25_tasks22_24\run.ps1`; plan Task 24 status has the
+  check and resume commands). About 2 days.
+
+**Choices made without Brian (non-blocking; `build-phase3.md` §6–§8 gives the reasons):**
+- Task 24 plays `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, not PUCT: ISMCTS ships
+  by default.
+- Task 22's third candidate is `expert`, not the network. Every probe starts from the distilled
+  duty network, because a search allows only about 88,000 games in 10 h. The evaluation also
+  compares the probes at equal games.
+- Task 23's seed B trains on the existing labels from fresh weights, not on new labels.
+
+**Questions for Brian (defaults apply; nothing blocks on them).**
+1. *May we run Charlesworth's released weights as a local benchmark?* His repo has no licence
+   file. Task 21 needs this, a hidden four-card rule flag in the engine (plan open question 6),
+   and a download of his checkpoint. It decides A16 and the second half of A19. *Default until you
+   answer: Task 21 stays skipped.* The plan's default would be "yes, local only", and this
+   run does not take it, because a download needs your yes. Example: say yes, and a helper builds
+   the flag and plays 1,000 deals in about 1 hour of CPU.
+2. *If PUCT ever ships, may we ask the app stream for a SIMD build?* SIMD lets WebAssembly compute
+   on several numbers at once, and PUCT needs it to meet the 0.6 s bar. It affects only the build
+   flags. *Default: no request, because ISMCTS ships.* Example: 0.83 s becomes 0.28 s per call.
+
 ## 2026-10-31 · Round 2 beats ISMCTS-1000 but misses A9's bar; round 3 runs; ladder probes
 
 **Where things stand.**
@@ -25,7 +61,8 @@ and 4 of the 2026-10-30 (evening) item below.
    reaches A23's 1.5-point gap below `expert`. *Default:* `hard` = ISMCTS-500, `expert` =
    ISMCTS-10,000 + exact endgame, and A23's top gap counts as met when the interval is above 0.
    Example: `expert` beats `hard` by +1.02 ± 0.40; `hard` beats `medium` by +2.72 ± 0.49.
-   The scope-keeping option: probe ISMCTS-250 as `hard` first (about 15 minutes of CPU).
+   The ISMCTS-250 probe is done (item above): it gains only 0.14 on the top gap and loses 0.55
+   on the gap below, so the default stays.
 2. *If round 3 reaches A9's +1.0 bar, does PUCT replace ISMCTS as `expert`?* PUCT needs the
    network on the phone and costs about 18× ISMCTS-1000's time per move. *Default:* yes, if it
    also passes A12 (r3 beats r2) and the phone timing allows it (Task 16); otherwise ISMCTS
@@ -146,7 +183,7 @@ and move the GPU to phase 5. So the next step is one more round, not more tuning
    against ISMCTS's 14 µs per iteration. A cache of network outputs per position key, or
    fewer evaluations at opponent nodes, would narrow the equal-time gap of §2.
 
-**Not done yet:** Task 16's WebAssembly timing (A11) waits until the CPU is free. A 1,000-deal
+**Not done yet:** a 1,000-deal
 confirmation of λ = 0.5 against ISMCTS-1000 is optional (~2 h at 6 workers under load).
 
 **Question for Brian (default applies):** Accept "one more round, then ISMCTS ships as

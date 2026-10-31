@@ -134,6 +134,20 @@ tiered score), `latest.pt`, `progress.json`; `best.pt` when the validation total
 It stops at `--minutes` (counting resumed time) or after `--patience` evaluations
 without improvement, and writes `results.json` with the validation loss per head.
 
+**The expert-iteration loop** (`experiments/expert_iteration.py round N`, build plan Task
+17; results in `docs/study-results/build-phase3.md` §1). Each round labels about 800,000
+decisions with the teacher ISMCTS-5000, trains network v2 from the previous round's weights
+on the labels of rounds 1..N (score weight 100, prior 1, distributions 0.25 each), checks the
+calibration slope on held-out shards, and plays PUCT-2000 against ISMCTS-1000. Every stage
+resumes. Three rounds ran: the gain levelled off at about +0.85 points against ISMCTS-1000,
+and r3 ties its teacher, so no network replaced it.
+
+**Best-response probe** (`big2 rl train --opponents <spec>`, build plan Task 22). The
+learner holds one random seat per game and three seats play the frozen spec. What it gains
+measures how exploitable that agent is. `experiments/build_phase3.py probe` starts every
+probe from the same distilled network, because a search opponent allows too few games for a
+learner from scratch.
+
 ### 3.4 Network + search — `dmcsearch:` agents
 
 `python/big2/rl/search.py` combines a network with Monte Carlo search:
