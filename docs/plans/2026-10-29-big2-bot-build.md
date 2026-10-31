@@ -455,6 +455,8 @@ to goes through bot-notes (Task 10).
     loss on held-out round-0 data) and try `leaf = 0.5·network + 0.5·short rollout`; record both.
 
 - [ ] **Task 16: Ladder v1, WebAssembly timing, bot-notes for phase 2** (after 15)
+  (Bot-notes entry posted 2026-11-01. Not ticked: A11's time part is unmet in the app build, and
+  `pvnet::teaching_numbers` does not exist; build it only if a PUCT level is proposed.)
   (**Timing done 2026-11-01** (`build-phase2.md` §5, r3's network, a 13 cards probe beside it):
   PUCT-2000 λ 0.5 at the opening 0.83 s with the app's build flags (A11 bar 0.6 s: not met), 0.28
   s with SIMD; PUCT-300 0.14 s and 0.05 s; move changes after 100 ms in 3.0 % of 300 positions
