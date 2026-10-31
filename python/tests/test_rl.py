@@ -17,7 +17,13 @@ from big2.agents import make_agent  # noqa: E402
 from big2.eval import play_game  # noqa: E402
 from big2.games.big2 import Rules  # noqa: E402
 from big2.rl.device import actor_device, resolve_device  # noqa: E402
-from big2.rl.dmc import TrainConfig, choose, train  # noqa: E402
+from big2.rl.dmc import (  # noqa: E402
+    FrozenOpponents,
+    TrainConfig,
+    choose,
+    collect_vs_frozen,
+    train,
+)
 from big2.rl.model import ACTION_LEN, STATE_LEN, QNet  # noqa: E402
 from big2.rl.search import rollout_search  # noqa: E402
 
@@ -180,6 +186,57 @@ def test_dmc_trains_on_device(tmp_path: Path, device: str) -> None:
     ckpt = torch.load(tmp_path / "latest.pt", weights_only=False)
     assert ckpt["train_config"]["device"] == device
     assert all(v.device.type == "cpu" for v in ckpt["model"].values())
+
+
+@pytest.mark.parametrize("opponents", ["greedy", "ismcts:iterations=20"])
+def test_dmc_frozen_opponents(tmp_path: Path, opponents: str) -> None:
+    cfg = TrainConfig(
+        run_dir=str(tmp_path),
+        envs=4,
+        games_per_iter=4,
+        max_iters=2,
+        eval_every=1,
+        eval_deals=2,
+        device="cpu",
+        opponents=opponents,
+        opponent_workers=2,
+    )
+    train(cfg, log=lambda r: None)
+    ckpt = torch.load(tmp_path / "latest.pt", weights_only=False)
+    assert ckpt["train_config"]["opponents"] == opponents
+    assert ckpt["info"]["iter"] == 2
+    assert "learner_score" in ckpt["info"]
+    assert ckpt["info"]["minutes_total"] > 0
+
+
+def test_dmc_frozen_network_opponent_and_total_minutes(tmp_path: Path) -> None:
+    first = tmp_path / "first"
+    base = TrainConfig(
+        run_dir=str(first), envs=4, games_per_iter=4, max_iters=1, eval_every=1, eval_deals=2
+    )
+    train(replace(base, device="cpu"), log=lambda r: None)
+    spec = f"dmc:checkpoint={first / 'latest.pt'}"
+    probe = replace(base, run_dir=str(tmp_path / "probe"), device="cpu", opponents=spec)
+    train(probe, log=lambda r: None)
+    latest = tmp_path / "probe" / "latest.pt"
+    assert torch.load(latest, weights_only=False)["info"]["iter"] == 1
+    # The budget counts over resumes: a resumed run with nothing left plays no iteration.
+    train(replace(probe, max_iters=5, total_minutes=1e-9), resume=str(latest), log=lambda r: None)
+    assert torch.load(latest, weights_only=False)["info"]["iter"] == 1
+
+
+def test_collect_vs_frozen_keeps_only_the_learners_decisions() -> None:
+    """Samples come from one seat of each game, and every game's learner seat is rotated."""
+    rng = np.random.default_rng(0)
+    env = Big2VecEnv(8, seed=4)
+    frozen = FrozenOpponents("greedy", 2, rng, "cpu")
+    batch, stats = collect_vs_frozen(QNet(), env, frozen, 24, 0.05, rng)
+    assert stats["iter_games"] >= 24
+    # A game has about 40 decisions; one seat of four makes about 10.
+    assert 5 < stats["mean_length"] < 25
+    assert len(batch) == pytest.approx(stats["mean_length"] * stats["iter_games"], rel=0.01)
+    assert batch.states.shape[1] == STATE_LEN and batch.actions.shape[1] == ACTION_LEN
+    assert set(np.unique(batch.wins)) <= {0.0, 1.0}
 
 
 def test_rl_specs_need_a_checkpoint() -> None:

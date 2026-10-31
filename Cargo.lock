@@ -99,6 +99,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "big2-search-wasm"
+version = "0.1.0"
+dependencies = [
+ "big2-big2",
+ "big2-games",
+ "big2-search",
+ "rand 0.8.8",
+ "rand_chacha",
+ "wasm-bindgen",
+ "web-time",
+]
+
+[[package]]
 name = "big2-teach"
 version = "0.1.0"
 dependencies = [
