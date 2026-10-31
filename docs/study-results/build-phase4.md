@@ -9,6 +9,8 @@ Status 2026-10-30: Task 26 done; Task 27's code and run done, its repeatability 
 (§1, open item); Task 30 done (scaffold). Tasks 28 and 29: code and full runs done (§2, §3).
 2026-10-31: Task 29's `hard` probes done (§3): `hard` = ISMCTS-500 gives a strict order, but
 `expert` leads it by +1.02, short of A23's 1.5; the budgets are Brian's call.
+2026-11-01: the probe `hard` = ISMCTS-250 gives +2.17 over `medium` and `expert` +1.16 over it
+(§3): the order is strict, and the top gap still misses 1.5.
 
 ## 0. Reason keys and the audit file (Task 26)
 
@@ -192,8 +194,20 @@ The lower pairs do not change (easy vs random +6.56, medium vs easy +3.15). With
 ISMCTS-500, all five levels order strictly and `hard` stays 2.7 points above `medium`. `expert`
 is then 1.02 points ahead: clearly ahead, but short of 1.5. ISMCTS gains little past a few
 thousand iterations, so no `hard` budget probed reaches the 1.5 gap below `expert`. A weaker
-`hard` (for example ISMCTS-250) or a stronger `expert` (a PUCT round that passes A9) are the
-remaining levers; neither was run.
+`hard` or a stronger `expert` (a PUCT round that passes A9) were the remaining levers.
+
+**Probe with `hard` = ISMCTS-250 (2026-11-01).** Same run, same `expert`. Source:
+`runs/p4_ladder_h250/` (`table.md`, `results.json`).
+
+| `hard` | hard vs medium | expert vs hard | Strict order | Every gap ≥ 1.5 |
+|---|---:|---:|---|---|
+| ISMCTS-250 | +2.17 ± 0.48 | **+1.16 ± 0.45** | yes | no |
+
+ISMCTS-250 gains only 0.14 points on `expert`'s lead against ISMCTS-500 (+1.02), and it costs 0.55
+points on `hard`'s lead over `medium`. Both gaps stay clearly above 0, and the top gap still
+misses 1.5. A weaker `hard` no longer helps much: the lead over `hard` flattens, and the next
+halving would close in on `medium`. A23's top gap needs a stronger `expert`, and round 3 did not
+give one (`build-phase3.md` §1). Task 29 stays unticked; the budgets are Brian's call.
 
 Tiny run (8 deals, `hard` ISMCTS-100 and `expert` ISMCTS-300 instead of 2,000 and 10,000;
 `runs/p4_ladder_tiny/`): easy vs random +3.97 ± 3.35, medium vs easy +2.56 ± 3.10, hard vs

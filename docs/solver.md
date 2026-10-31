@@ -182,6 +182,36 @@ ties it mixed with rollouts and loses ~1 point per game alone. A cheating
 search that sees the true deal wins by ~3 points, but the opponents' actions
 reveal little about their cards.
 
+### 6.3 PUCT: the network inside the search
+
+`crates/search/src/puct.rs` keeps the ISMCTS tree and changes how it grows. The
+network's prior orders the tries (`Q + c_puct · P · √N / (1 + n)`) and its value
+replaces the rollout at a new leaf. With `leaf_network_weight = λ < 1` the leaf
+value is `λ · network + (1 − λ) · rollout`.
+
+Results ([build-phase3.md](study-results/build-phase3.md) §1): after three rounds
+of expert iteration, PUCT-2000 at λ = 0.5 beats ISMCTS-1000 by +1.06 and +0.66
+points per game (bar +1.0 in both lineups). It ties its teacher ISMCTS-5000
+(+0.04, −0.00) at about 3.4× the time per move. ISMCTS stays the shipped search
+unless Brian decides otherwise (`docs/open-items.md`).
+
+### 6.4 Rules mask (`belief="rules"`)
+
+`RulesMask` in `belief.rs` draws uniform deals and rejects those under which an
+action already taken would have been illegal. In Big Two only the last-card duty
+ties an action to the hidden cards, so it rejects 0.5 % of draws on average and
+changes play in few deals (build-phase3.md §2). It is a correctness fix, not a
+strength gain, and it costs nothing measurable per move.
+
+### 6.5 Information-set exact endgame (`infoset_endgame`)
+
+`crates/search/src/infoset_endgame.rs` lists every deal of the hidden cards once
+few remain, solves each by max^n, and averages each action. It reports `forced`
+when every deal gives the same winner after the best move. The cost follows the
+cards in all hands, not the hidden cards, so it fires only at `max_cards` = 10 or
+fewer (build-phase3.md §4). It runs at the root of ISMCTS and PUCT, and it falls
+back to the normal search when its node budget runs out (`exact: false`).
+
 ## References
 
 * Cowling, Powley, Whitehouse. *Information Set Monte Carlo Tree Search.* IEEE

@@ -7,7 +7,7 @@ flowchart TB
         games["games<br/>Game / Policy / Rewind / Evaluator traits"]
         nn["nn<br/>MLP inference (.pknn)"]
         big2["big2<br/>rules · combos · movegen · State · bots · features · value net"]
-        search["search<br/>ISMCTS · PIMC · max^n endgame · belief sampling"]
+        search["search<br/>ISMCTS · PIMC · PUCT · max^n and information-set endgames · belief sampling"]
         pybind["pybind<br/>PyO3 module big2._core"]
         teach["teach<br/>reason keys · paired grader · luck ledger"]
         cards --> big2
@@ -60,6 +60,10 @@ confidence intervals.
 reason keys from the move table, the paired grader (σ lines, `unclear`) and the luck
 ledger ([crates/teach/README.md](../crates/teach/README.md)). The app stream calls it from
 `crates/app-api`; its `big2-teach` program runs the phase-4 experiments natively.
+
+**`crates/search-wasm`** (`big2-search-wasm`) is a timing harness, never shipped. It runs the
+same steps in Node WebAssembly and natively (`experiments/wasm_timing.mjs`), so a table's two
+columns come from the same code and the same positions.
 
 **`crates/pybind`** exposes all of the above to Python as plain values: card masks
 are `int`, an action is the mask of cards played (`0` = pass), rules are keyword

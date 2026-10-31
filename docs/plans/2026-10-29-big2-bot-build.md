@@ -455,6 +455,13 @@ to goes through bot-notes (Task 10).
     loss on held-out round-0 data) and try `leaf = 0.5·network + 0.5·short rollout`; record both.
 
 - [ ] **Task 16: Ladder v1, WebAssembly timing, bot-notes for phase 2** (after 15)
+  (**Timing done 2026-11-01** (`build-phase2.md` §5, r3's network, a 13 cards probe beside it):
+  PUCT-2000 λ 0.5 at the opening 0.83 s with the app's build flags (A11 bar 0.6 s: not met), 0.28
+  s with SIMD; PUCT-300 0.14 s and 0.05 s; move changes after 100 ms in 3.0 % of 300 positions
+  (bar < 15 %: met). Harness: `crates/search-wasm` (example `puct_timing`),
+  `experiments/wasm_timing.mjs`. **Not ticked:** the bot-notes entry is drafted, not posted, and
+  says PUCT does not ship: the done-when's `hard` → PUCT-300 proposal and `models/big2-pvnet-r0.pknn`
+  no longer apply. Tick when the entry is in bot-notes.)
   - Files: create `crates/search/examples/puct_timing.rs` (times PUCT-300 and PUCT-2000 at the
     opening position and the anytime move-change share over 300 positions) plus
     `experiments/wasm_timing.mjs` that runs it in Node after
@@ -476,6 +483,13 @@ to goes through bot-notes (Task 10).
 ## Phase 3 – Iterate, belief, exact endgames, external bars (opus; Tasks 19, 20 fable)
 
 - [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]**
+  (**All three rounds done 2026-11-01; not ticked: A9 is not met in both lineups, so no network
+  ships** (`build-phase3.md` §1). r3 PUCT-2000 λ 0.5 vs ISMCTS-1000 at 1,000 deals +1.06
+  [+0.46, +1.67] 1+3 (passes), +0.66 [+0.08, +1.28] ABAB (fails); r3 vs the teacher ISMCTS-5000
+  +0.04 [−0.52, +0.57], −0.00 [−0.62, +0.58], so the teacher stays; calibration slope 1.06; A12
+  not run. The done-when names a shipped `models/big2-pvnet-final.pknn`; none exists. The open
+  items' default stands until Brian answers: stop after round 3, ISMCTS ships as `expert`. A
+  round 4 is not approved. History follows.)
   (**Round 1 done 2026-10-30, A9 fails** (`build-phase3.md` §1): r1 PUCT-2000 λ 0.5 vs
   ISMCTS-1000 at 1,000 deals +0.46 [−0.18, +1.13] 1+3, +0.16 [−0.47, +0.81] ABAB (round 0:
   −0.12 / −1.78); calibration slope 1.03; A12 not run. **Round 2 done 2026-10-31, A9 fails
@@ -579,7 +593,11 @@ to goes through bot-notes (Task 10).
   - Notes: the net's per-card posterior feeds `reason.control.highest_out` even when strength
     gains nothing. Run after Task 17's round 1 exists; once per round at most.
 
-- [ ] **Task 20: Information-set exact endgame with forced proofs** `(fable)` `[parallel-ok]`
+- [x] **Task 20: Information-set exact endgame with forced proofs** `(fable)` `[parallel-ok]`
+  (**done 2026-11-01:** everything in the done-when is recorded (`build-phase3.md` §4). Node
+  WebAssembly: no hidden-card threshold stays under 1 s; 10 cards in play does (95th percentile
+  0.10 s, slowest 0.36 s), so `max_cards` 10 stays. A15: time met, agreement missed at 94.2 %
+  against 95 %. History follows.)
   (**code done 2026-10-30, full run queued.** `infoset_endgame.rs` (`InfosetConfig { threshold
   12, max_cards 10, max_nodes 1 M }`, `InfosetResult { exact, forced, deals, excluded }`,
   `Forced { winner, plays }`), `Game::hidden_count`/`for_each_deal` (State enumerates every
@@ -591,8 +609,7 @@ to goes through bot-notes (Task 10).
   §4): 240 of 300 positions solved within 20 M nodes; same move as ISMCTS-100,000 85.8 %,
   same exact value 94.2 % (A15 bar 95 %: missed); native 95th percentile under 1 s only up to
   10 cards in play (hidden-card thresholds 8/10/12 are all over 1 s), so `max_cards` 10 stays;
-  300-deal match with vs without: +0.19 [−0.40, +0.82] 1+3, +0.07 [−0.49, +0.65] ABAB.
-  **Not ticked:** the Node WebAssembly timing part waits for Task 16's harness.)
+  300-deal match with vs without: +0.19 [−0.40, +0.82] 1+3, +0.07 [−0.49, +0.65] ABAB.)
   - Files: create `crates/search/src/infoset_endgame.rs` (when unseen cards ≤ `threshold`
     (default 12): enumerate every consistent deal (≤ 34,650), solve each by `Endgame::solve_actions`
     under a shared node cap, average per action by the sampler's weights; `forced: Option<Forced
@@ -609,6 +626,9 @@ to goes through bot-notes (Task 10).
     leaf and say so in the result (`exact: false`). This is `quality: {"exact": true}` later.
 
 - [ ] **Task 21: B2 — Charlesworth's network as a local opponent** **[~1 h CPU]** (needs open question 1)
+  (**Skipped until Brian answers 2026-11-01:** open question 1 has no answer in `docs/open-items.md`
+  or `bot-stream\docs\decisions.md` beyond B14's general rule; question 1 of the open items'
+  2026-11-01 item asks it.)
   - Files: modify `crates/big2/src/rules.rs` (`four_card_plays: bool`, default `false`, not in
     `names!`, so the app's `meta()` does not list it); modify `combo.rs`/`movegen.rs` (two pairs
     and four of a kind as four-card plays when the flag is on; ordering per Charlesworth's rules as
@@ -628,6 +648,10 @@ to goes through bot-notes (Task 10).
     record B2 as "not run".
 
 - [ ] **Task 22: B3b — the best-response probe** **[GPU: 3 × 10 h, three separate headless jobs]** (after 17)
+  (**Code done and queued 2026-11-01** in the one job of Task 24's status: `--opponents`,
+  `test_dmc_frozen_opponents`, `build_phase3.py probe`, `probe-eval`. Third candidate is
+  `expert`, not the network; every probe starts from the distilled duty network; the evaluation
+  also compares at equal games (`build-phase3.md` §6).)
   - Files: modify `python/big2/rl/dmc.py` (`--opponents <spec>`: three frozen seats play the given
     agent spec; the learner holds one seat, rotated per game); CLI flag; tests
     (`test_rl.py::test_dmc_frozen_opponents` on a 1-minute run); `experiments/build_phase3.py probe`;
@@ -643,17 +667,26 @@ to goes through bot-notes (Task 10).
     through the pybind, so the frozen seats stay on the CPU.
 
 - [ ] **Task 23: Cross-play of two seeds** **[GPU: 2–4 h; CPU 2 h]** (after 17)
+  (**Queued 2026-11-01** in the one job of Task 24's status: seed B from fresh weights on rounds
+  1–3's labels, then PUCT-2000 r3 vs seed B, `build_phase3.py seeds-train`, `seeds-match`,
+  `build-phase3.md` §7.)
   - Files: `experiments/expert_iteration.py round 1 --seed 1 --tag seedB` (reuse); `build-phase3.md` §7.
   - Done when: §7 records PUCT-2000(seed 0) vs PUCT-2000(seed 1), 1,000 deals, both lineups; A18:
     the interval covers 0. If it does not, record it as a risk (proposal §10 row 4).
 
 - [ ] **Task 24: Final 10,000-deal matches** **[long: ~9 h CPU each, headless]** (after 17, 21)
+  (**Queued 2026-11-01:** `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, the bot that
+  ships by default, not PUCT-2000 (`build-phase3.md` §8); Charlesworth waits for Task 21.
+  JOBLINE)
   - Files: `experiments/build_phase3.py final`; `build-phase3.md` §8; `runs/final_matches/run.ps1`.
   - Done when: §8 holds PUCT-2000(final) vs ISMCTS-1000 and vs Charlesworth (if run), 10,000
     deals each, both lineups, mean ± 95 % and win rate (A19). Check: `progress.json`. Resume: the
     script resumes from the last saved deal index in `progress.json`.
 
 - [ ] **Task 25: Phase 3 docs and bot-notes** (after 17–24)
+  (**Started 2026-11-01:** `docs/solver.md` §6.3–6.5, `docs/rl.md` §3.3, `docs/architecture.md`,
+  and a summary table with sources (`build-phase3.md` §9) cover what is known. Left: the job's
+  results in that table, the README findings table, and the bot-notes entry.)
   - Files: `docs/study-results/build-phase3.md` summary table; `docs/solver.md` §6 (PUCT, rules
     mask, information-set endgame); `docs/rl.md` (v2 net, expert iteration loop, belief net);
     `docs/architecture.md` (new modules); `README.md` findings table; hk-games bot-notes entry.

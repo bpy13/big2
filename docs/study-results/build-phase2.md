@@ -24,6 +24,8 @@ best of the three values tried, all negative. The plan's fallback (Task 15 notes
 row 2) is in §6: the prior is well calibrated, the value is over-spread; a leaf value
 `0.5·network + 0.5·rollout` lifts PUCT by about 1.6–2.0 points to a tie with ISMCTS-1000
 (+0.30 and +0.61, intervals covering 0, 300 deals), still short of A9 and 19× dearer per move.
+§5 (2026-11-01): PUCT-2000 takes 0.83 s at the opening in Node WebAssembly with the app's build
+flags (bar 0.6 s) and 0.28 s with SIMD; the move after 100 ms changes in 3.0 % of positions.
 
 Reading the tables: "paired diff" is the candidate's mean minus the opponent's mean per deal
 (in `ABAB` that is twice the candidate's mean, since the game is zero-sum). In `1+3` a neutral
@@ -116,7 +118,56 @@ Every value loses to ISMCTS-1000. The first 300 deals were worse for PUCT than t
 
 ## 5. WebAssembly timing (Task 16)
 
-(pending: not started while other jobs load the CPU)
+Measured 2026-11-01 in Node 22 with round 3's network (`runs/net_r3/pvnet-r3.pknn`, 1.17 MB),
+one thread, as the app calls it. **Other work ran beside it:** a 13 cards probe on about 4 cores
+and a mahjong training test on the GPU; the CPU was about 40–60 % busy. So these times are upper
+limits for this PC, and phone times will differ. A first run overlapped this session's own
+tests and came out up to 5× slower; it is kept in `runs/wasm_timing/puct_first.json` and not used.
+
+Harness: `crates/search-wasm` (never shipped) and `experiments/wasm_timing.mjs`, commands at the
+top of that file; sources `runs/wasm_timing/puct.json` and `puct_simd.json`. "App build" uses the
+app's flags. "SIMD build" adds `-C target-feature=+simd128`, which lets WebAssembly compute on
+several numbers at once. Opening: the first decision of 50 deals, c_puct 2.5. Midgame: one
+random decision with a choice from each of 300 greedy self-play games (the same 300 everywhere).
+
+| Search | Position | App build mean ms (95th pct) | SIMD build mean ms (95th pct) | Native mean ms |
+|---|---|---:|---:|---:|
+| PUCT-2000 λ = 0.5 | opening | **828** (1,177) | **278** (427) | 212 |
+| PUCT-2000 λ = 1 | opening | 832 (1,395) | 248 (390) | 200 |
+| PUCT-300 λ = 0.5 | opening | 141 (188) | 52 (72) | 39 |
+| PUCT-300 λ = 1 | opening | 130 (193) | 41 (59) | 24 |
+| PUCT-2000 λ = 0.5 | midgame | 512 (872) | 165 (286) | 126 |
+| PUCT-2000 λ = 1 | midgame | 501 (918) | 158 (293) | 118 |
+| PUCT-300 λ = 0.5 | midgame | 81 (140) | 26 (48) | 19 |
+| ISMCTS-1000 | opening | 17 (24) | 12 (15) | 14 |
+| ISMCTS-5000 | opening | 70 (96) | 79 (112) | 95 |
+| ISMCTS-10,000 | opening | 187 (313) | 181 (309) | 191 |
+| ISMCTS-10,000 | midgame | 74 (150) | 73 (153) | 79 |
+
+The first three calls of a fresh process were no slower than later ones (801 ms in the app
+build), so a cold start costs nothing extra here.
+
+The move after 100 ms against the move after all simulations, 300 midgame positions:
+
+| Search | Build | Search still running at 100 ms | Simulations by then (mean) | Move changed | Share (bar < 15 %) |
+|---|---|---:|---:|---:|---:|
+| PUCT-2000 λ = 0.5 | app | 274 | 419 | 9 | **3.0 %** |
+| PUCT-2000 λ = 1 | app | 273 | 419 | 18 | 6.0 % |
+| PUCT-2000 λ = 0.5 | SIMD | 242 | 1,121 | 6 | 2.0 % |
+| PUCT-2000 λ = 0.5 | native | 202 | 1,335 | 5 | 1.7 % |
+
+**Verdict A11.** The time part is **not met in the app build**: PUCT-2000 λ = 0.5 takes 0.83 s at
+the opening against the bar of 0.6 s. The SIMD build meets it (0.28 s, 95th percentile 0.43 s).
+The move-change part is met in every build (3.0 % in the app build, bar < 15 %).
+
+Three findings:
+
+- SIMD only helps the network. PUCT gets 3× faster; ISMCTS does not change. In the app build
+  PUCT costs 4× its native time; with SIMD about 1.3×.
+- If PUCT ever ships, the app's engine build needs `+simd128`. Chrome has run it since version
+  91 and Safari since 16.4. This is a request for the app stream only if Brian picks PUCT.
+- The shipped search is cheap. ISMCTS-10,000 takes 0.19 s at the opening and 0.07 s in the
+  midgame here, about the same as natively. Those numbers cover ISMCTS without the exact endgame.
 
 ## 6. Fallback: calibration and a rollout in the leaf (proposal §10 row 2)
 

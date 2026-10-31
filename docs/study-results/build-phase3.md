@@ -4,10 +4,11 @@ Plan: `docs/plans/2026-10-29-big2-bot-build.md`, phase 3 (Tasks 17–25). Match 
 `build-phase2.md`: duplicate deals (each deal 4×, seats rotated), last-card duty on, tiered
 scoring, no four-card plays, lineups `1+3` and `ABAB`, 95 % bootstrap intervals over deals.
 
-Status 2026-10-31: rounds 1 and 2 of Task 17 done (A9 fails both; r2 beats ISMCTS-1000
-significantly, +0.76 / +0.86, but under the +1.0 bar; §1); round 3 runs
-(`runs\b25_round3\run.ps1`, plan Task 17 status). Task 18 done (A13 met, §2). Task 20's runs
-done (§4; A15 missed at 94.2 %, Node WebAssembly timing waits for Task 16's harness).
+Status 2026-11-01: the three rounds of Task 17 are done (§1). A9 is not met in both lineups: r3
+vs ISMCTS-1000 is +1.06 (1+3, passes) and +0.66 (ABAB, fails). r3 ties its teacher ISMCTS-5000,
+so the teacher stays, and by the default in `docs/open-items.md` ISMCTS ships as `expert` until
+Brian answers. Task 18 done (A13 met, §2). Task 20 done (§4; agreement missed at 94.2 %, time met
+at 10 cards in play). Tasks 22–24 run as one job (§6–§8). Task 21 waits for Brian (§5).
 
 ## 1. Expert iteration (Task 17)
 
@@ -98,17 +99,58 @@ ISMCTS-5000 for round 3. Round 3 adds that match (`expert_iteration.py --stages 
 | r0 | ISMCTS-1000 | round-0 labels | 1 | −0.12 | −1.78 | 0.86 |
 | r1 | ISMCTS-5000 | round 1 | 0.5 | +0.46 [−0.18, +1.13] | +0.16 [−0.47, +0.81] | 1.03 |
 | r2 | ISMCTS-5000 | rounds 1–2 | 0.5 | **+0.76 [+0.13, +1.37]** | **+0.86 [+0.29, +1.50]** | 1.05 |
+| r3 | ISMCTS-5000 | rounds 1–3 | 0.5 | **+1.06 [+0.46, +1.67]** | **+0.66 [+0.08, +1.28]** | 1.06 |
 
-Each round gains about +0.3 to +0.7 points. If round 3 gains as much again, it would reach
-about +1.0 to +1.2: right at the A9 bar. The A9 intervals are about ± 0.6 wide at 1,000 deals.
+The mean of the two lineups runs −0.95 → +0.31 → +0.81 → +0.86. Round 1 and round 2 each gained
+points; round 3 gained almost nothing on that mean, because 1+3 went up and ABAB went down, and
+both moves are well inside the ± 0.6 of one cell. The gain has levelled off at about +0.85,
+close to what the teacher itself gets against ISMCTS-1000 (+1.09 [+0.35, +1.87], `build-phase1.md`
+ladder v0). The direct match below says the same thing: r3 has caught up with its teacher and
+does not pass it.
 
-### Round 3 (running 2026-10-31)
+### Round 3 (2026-11-01)
 
-The last round the plan approves. Same teacher ISMCTS-5000 (above); r3 from r2's weights on
-round-1, 2 and 3 labels (2.4 M decisions); calibration; λ screen; A9 at 1,000 deals; r3 vs r2
-(A12) only if A9 passes; then **r3 vs ISMCTS-5000 at 1,000 deals** (`runs/round3/vs_teacher/`),
-so the next session can apply Brian's rule to the teacher itself. Job
-`runs\b25_round3\run.ps1` (plan Task 17 status has the check and resume commands).
+The last round the plan approves. Same teacher ISMCTS-5000; r3 from r2's weights on round-1, 2
+and 3 labels; same loss weights; calibration on round 3's held-out shards; λ screen; A9 at 1,000
+deals; r3 vs r2 (A12) only if A9 passes; then **r3 vs ISMCTS-5000 at 1,000 deals**, so Brian's
+rule could be applied to the teacher itself. Job `runs\b25_round3\run.ps1`. A Windows Update
+restart on 31 Oct stopped the job during labelling and cost 19 h; relaunched at 23:56 it resumed
+from its shards, and it ended at 04:07 on 1 Nov.
+
+Source: `runs/round3/results.json`, `runs/round3/table.md`, `runs/round3/vs_teacher/table.md`;
+calibration `runs/round3/f_calibration/results.json`; training `runs/net_r3/results.json`.
+
+- **Labels:** 807,378 decisions (4.1 M candidates, 1,548 shards), ISMCTS-5000, 8 workers.
+- **Training:** from r2's weights on 2.42 M decisions (rounds 1–3); stopped after 35 min (no better
+  validation loss in 6 evaluations); best at 5 min: validation prior top-1 76.3 % (r2: 76.2 %),
+  score RMS 2.14 points (r2: 2.17). So r3 is r2 with a small polish on the extra labels.
+- **Calibration** on round 3's 31 held-out shards (16,265 decisions): slope **1.06** (r2: 1.05),
+  bias −0.16, RMS 2.36, correlation 0.980; prior vs visit share: expected calibration error 0.008.
+
+| Match | Lineup | Deals | Candidate mean (95 % CI) | Candidate win rate | Paired diff (95 % CI) | s per move cand / opp |
+|---|---|---:|---:|---:|---:|---:|
+| r3 PUCT-2000 λ = 1 vs ISMCTS-1000 | 1+3 | 300 | +0.96 [+0.14, +1.81] | 23.2 % | +1.28 [+0.21, +2.40] | 0.186 / 0.011 |
+| r3 PUCT-2000 λ = 1 vs ISMCTS-1000 | ABAB | 300 | +0.38 [−0.21, +0.94] | 23.4 % | +0.76 [−0.40, +1.87] | 0.170 / 0.010 |
+| r3 PUCT-2000 λ = 0.5 vs ISMCTS-1000 | 1+3 | 300 | +0.91 [+0.06, +1.78] | 24.2 % | +1.21 [+0.13, +2.32] | 0.189 / 0.010 |
+| r3 PUCT-2000 λ = 0.5 vs ISMCTS-1000 | ABAB | 300 | +0.62 [+0.09, +1.14] | 24.8 % | +1.25 [+0.20, +2.31] | 0.199 / 0.011 |
+| **r3 λ = 0.5 vs ISMCTS-1000 (A9)** | 1+3 | 1,000 | +0.80 [+0.35, +1.28] | 23.9 % | **+1.06 [+0.46, +1.67]** | 0.193 / 0.011 |
+| **r3 λ = 0.5 vs ISMCTS-1000 (A9)** | ABAB | 1,000 | +0.33 [+0.03, +0.63] | 24.2 % | **+0.66 [+0.08, +1.28]** | 0.203 / 0.011 |
+| **r3 λ = 0.5 vs ISMCTS-5000 (teacher)** | 1+3 | 1,000 | +0.03 [−0.37, +0.43] | 23.4 % | **+0.04 [−0.52, +0.57]** | 0.185 / 0.055 |
+| **r3 λ = 0.5 vs ISMCTS-5000 (teacher)** | ABAB | 1,000 | −0.00 [−0.29, +0.31] | 23.9 % | **−0.00 [−0.62, +0.58]** | 0.147 / 0.043 |
+
+**Verdict round 3: A9 is not met in both lineups.** 1+3 passes (+1.06), ABAB fails (+0.66); both
+intervals sit above 0. A12 was not run. The stop rule therefore applies, and no shipped network
+exists.
+
+**Teacher rule** (Brian, 2026-10-30): "use teacher unless distilled model wins significantly". r3
+vs ISMCTS-5000 is +0.04 and −0.00, with both intervals across 0. The teacher stays. r3 ties
+ISMCTS-5000 at about 3.4× its time per move (0.19 s against 0.05 s), and needs a 1.2 MB network
+on the phone.
+
+**What happens next.** The plan's three rounds are done. The default in `docs/open-items.md`
+stands until Brian answers: stop after round 3, and ISMCTS ships as `expert`. A round 4 is not
+approved. It would need a stronger teacher to help: a network that has caught its teacher learns
+little more from it.
 
 ## 2. Hard-constraint belief from the rules (Task 18)
 
@@ -207,8 +249,30 @@ the start):
 The plan's thresholds 8 / 10 / 12 (hidden cards) are all over 1 s natively at the 95th
 percentile, so the limit that matters is cards in play: **10 cards in play** (with ≤ 12 hidden)
 is the largest with every position solved and 95 % of calls under 1 s natively. That is the
-default (`infoset_max_cards = 10`). **Node WebAssembly timing is not measured yet:** it waits for
-Task 16's harness.
+default (`infoset_max_cards = 10`).
+
+**Node WebAssembly timing (2026-11-01).** The same 300 positions, the same 20 M node budget, the
+app's build flags, 4 threads side by side (`experiments/wasm_timing.mjs endgame`, source
+`runs/wasm_timing/endgame.json`). A 13 cards probe ran beside it on about 4 cores. The native
+table above ran on a busier CPU, so the two tables do not compare exactly. The same 60 positions
+stay unsolved.
+
+| Hidden cards ≤ | Positions | Not solved | Mean s | 95th pct s | Max s |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 164 | 4 | 1.358 | 6.915 | 24.177 |
+| 10 | 238 | 25 | 3.855 | 23.174 | 24.908 |
+| 12 | 300 | 60 | 6.358 | 24.084 | 27.657 |
+
+| Cards in play ≤ | Positions | Not solved | Mean s | 95th pct s | Max s |
+|---:|---:|---:|---:|---:|---:|
+| 8 | 41 | 0 | 0.003 | 0.010 | 0.019 |
+| 10 | 86 | 0 | 0.025 | 0.100 | 0.361 |
+| 12 | 177 | 0 | 0.981 | 7.045 | 23.290 |
+| 14 | 300 | 60 | 6.358 | 24.084 | 27.657 |
+
+As natively, no hidden-card threshold stays under 1 s. **10 cards in play is the largest limit
+under 1 s in Node WebAssembly:** every position solved, 95th percentile 0.10 s, slowest 0.36 s.
+That meets A15's time part at the default `infoset_max_cards = 10`.
 
 Match: PUCT-2000 (round-0 network, λ = 0.5) with the endgame (`infoset_endgame=12,
 infoset_max_cards=10`) against the same without it, 300 duplicate deals, PUCT-2000 opponents:
@@ -222,10 +286,64 @@ infoset_max_cards=10`) against the same without it, 300 duplicate deals, PUCT-20
 only fires in the last few tricks). The two matches of §2 and §4 play the same deals with the
 same seeds: 579 of their 600 deal records give the candidate identical scores (checked
 2026-10-30). So the rules mask and the endgame each change play in only a few deals, and the
-shared +0.2 / +0.1 is the same noise in both, not an effect of either feature. A15 is narrowly missed on agreement (94.2 % against 95 %);
+shared +0.2 / +0.1 is the same noise in both, not an effect of either feature. A15 is narrowly missed on agreement (94.2 % against 95 %)
+and met on time (0.36 s at most in Node WebAssembly at 10 cards in play);
 the 60 unsolved positions are all above 10 cards in play, where the hook does not fire. Its use
 is teaching: exact results and `forced` proofs (`reason.counterfactual.forced`).
 
-## 5.–8. Tasks 21–24
+## 5. Charlesworth's network (Task 21)
 
-Not started.
+Not run. It needs Brian's answer to the plan's open questions 1 and 6 (running his unlicensed
+weights locally, and a hidden four-card rule flag). `docs/open-items.md` carries the question.
+
+## 6. Best-response probe (Task 22)
+
+Queued in `runs\b25_tasks22_24\run.ps1`; results land here when it ends. Code:
+`big2 rl train --opponents <spec>` (`FrozenOpponents`, `collect_vs_frozen` in
+`python/big2/rl/dmc.py`), `experiments/build_phase3.py probe` and `probe-eval`.
+
+What differs from the plan, and why:
+
+- **The third candidate is `expert`** (ISMCTS-10,000 + exact endgame), not the final PUCT
+  network: no network passed A9, and ISMCTS ships by default.
+- **Every probe starts from the same distilled network** (`models/big2-distilled-duty.pt`), not
+  from random weights. A search candidate gives few games: a smoke run reached about 150 games
+  per minute against `expert`, so about 88,000 games in 10 h. A learner from scratch would not
+  learn the game in that many. The gain is end minus start, 1,000 deals, 1 + 3.
+- **Equal games as well as equal hours.** ISMCTS-1000 gives about 10× the games of `expert` per
+  hour, and the DMC-10h probe far more, so a smaller gain against `expert` could only mean fewer
+  games. `probe-eval` therefore also plays each probe at the snapshot with the games of the
+  slowest probe. A17 is read on that column too.
+
+## 7. Cross-play of two seeds (Task 23)
+
+Queued in the same job. The plan's second seed reuses round N's command. The labels exist, so
+seed B trains on rounds 1–3's labels from **fresh weights** with seed 1 (at most 3 h on the GPU,
+`experiments/build_phase3.py seeds-train`): a second chain from r2's weights would share r3's
+start. Then PUCT-2000 λ = 0.5 r3 vs seed B, 1,000 deals, both lineups (A18: the interval covers
+0). No network ships, so this measures how repeatable the teaching network is. No shipped bot
+depends on it.
+
+## 8. Final 10,000-deal matches (Task 24)
+
+Queued in the same job. The plan named PUCT-2000 (final). **This measures the bot that ships by
+default instead:** `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, 10,000 deals, both
+lineups, 8 workers. The match against Charlesworth waits for Task 21. PUCT-2000 r3 at 10,000 deals
+was not queued; at its 0.19 s per move it would take about 3× as long, and it is worth running
+only if Brian picks PUCT.
+
+## 9. Summary (Task 25)
+
+Filled in as the job ends. Numbers so far, each with its source:
+
+| Bar | Result | Source | Verdict |
+|---|---|---|---|
+| A9 | r3 vs ISMCTS-1000: +1.06 (1+3), +0.66 (ABAB) | `runs/round3/results.json` | not met |
+| A11 | PUCT-2000: 0.83 s app build, 0.28 s SIMD; move change 3.0 % | `runs/wasm_timing/puct.json`, `puct_simd.json` | time not met in the app build; move change met |
+| A12 | not run (A9 failed) | `runs/round3/results.json` | stop rule applied |
+| A13 | mask loses nothing | `runs/p3_matches/a_rules_mask/results.json` | met |
+| A14 | Task 19 not started | – | open |
+| A15 | 94.2 % agreement; 0.36 s at most in Node at 10 cards | `runs/p3_matches/b_endgame/results.json`, `runs/wasm_timing/endgame.json` | agreement missed by 0.8; time met |
+| A16 | not run (Task 21) | – | waits for Brian |
+| A17, A18, A19 | queued | `runs/probe_eval`, `runs/seed_crossplay`, `runs/final_matches` | pending |
+| Teacher rule | r3 vs ISMCTS-5000: +0.04, −0.00 | `runs/round3/vs_teacher/results.json` | teacher stays |
