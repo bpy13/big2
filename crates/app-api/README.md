@@ -230,10 +230,14 @@ the end costs 3 points under pairwise settlement (`tiered`, `original`: a player
 | Grade | Condition |
 |---|---|
 | `best` | the solver's first choice, or no loss |
-| `good` | loss under ⅓ card (1 point tiered/original, ⅓ point win_loss) |
-| `inaccuracy` | loss under 1 card (3 points, or 1 point) |
-| `mistake` | loss under 3 cards (9 points, or 3 points) |
-| `blunder` | 3 cards or more |
+| `good` | loss under 0.69 points tiered/original (0.23 win_loss) |
+| `inaccuracy` | loss under 2.75 points (0.92 win_loss) |
+| `mistake` | loss under 6.86 points (2.29 win_loss) |
+| `blunder` | 6.86 points or more (2.29 win_loss) |
+
+The lines are 0.025σ, 0.1σ and 0.25σ of one deal's score, σ = 27.45 points in expert self-play
+(`big2-teach`'s `Thresholds::from_sigma`). Brian chose them over ⅓ / 1 / 3 cards on 2026-11-02.
+Under `win_loss` they shrink by the same 3 : 1 as the card unit.
 
 The solver's numbers are estimates with sampling error (`score_ci95`); a `good` at the margin
 may be noise.
@@ -245,7 +249,7 @@ may be noise.
 | `random` | a uniformly random legal move |
 | `easy` | `StructuredGreedy` (greedy play that keeps the hand's best decomposition into combinations), with 10% random moves (`epsilon = 0.1`) |
 | `medium` | `QNetPolicy`, temperature 1.0: the trained network `models/big2-qnet-duty.pknn` (1.16 MB), embedded with `include_bytes!` and parsed once on the first `medium` move; no search |
-| `hard` | ISMCTS, 2,000 simulations |
+| `hard` | ISMCTS, 500 simulations (so `expert` is clearly stronger: +1.02 ± 0.40 points per deal) |
 | `expert` | ISMCTS, 10,000 simulations |
 
 `hard` and `expert` use one thread, the greedy rollout policy with 10% noise, and stop early at
