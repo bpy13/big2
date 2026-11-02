@@ -28,7 +28,9 @@ pub const REVIEW_DEALS: u64 = 300;
 pub fn bot_iterations(level: &str) -> Option<u64> {
     match level {
         "medium" => Some(300),
-        "hard" => Some(2_000),
+        // 500, not 2,000, so `expert` is clearly stronger (+1.02 ± 0.40
+        // points per deal at 500; −0.03 at 2,000). Brian, 2026-11-02.
+        "hard" => Some(500),
         "expert" => Some(10_000),
         _ => None,
     }
@@ -95,20 +97,25 @@ pub fn score_unit(scoring: Scoring) -> f64 {
     }
 }
 
-/// Grade buckets, in units of [`score_unit`] (one card):
-/// `good` under ⅓ of a card, `inaccuracy` under 1 card, `mistake` under 3
-/// cards, `blunder` from 3 cards. `best` is the solver's own first choice.
+/// Grade buckets, in score points under `tiered`/`original`: `good` under
+/// 0.69, `inaccuracy` under 2.75, `mistake` under 6.86, `blunder` from 6.86.
+/// `best` is the solver's own first choice. The lines are 0.025σ, 0.1σ and
+/// 0.25σ of one deal's score (σ = 27.45 in expert self-play, `big2-teach`'s
+/// `Thresholds::from_sigma`); Brian chose them over ⅓ / 1 / 3 cards on
+/// 2026-11-02. Under `win_loss` they shrink by the same 3 : 1 as
+/// [`score_unit`].
 pub const GRADE_THRESHOLDS: [(&str, f64); 3] =
-    [("good", 1.0 / 3.0), ("inaccuracy", 1.0), ("mistake", 3.0)];
+    [("good", 0.69), ("inaccuracy", 2.75), ("mistake", 6.86)];
 
 /// The grade of a move that loses `loss` score points against the best move.
 pub fn grade_for(is_best: bool, loss: f64, scoring: Scoring) -> &'static str {
     if is_best || loss <= 0.0 {
         return "best";
     }
-    let cards = loss / score_unit(scoring);
+    // Express the loss in tiered points, the unit of the thresholds.
+    let points = loss * score_unit(Scoring::Tiered) / score_unit(scoring);
     for (grade, limit) in GRADE_THRESHOLDS {
-        if cards < limit {
+        if points < limit {
             return grade;
         }
     }
@@ -129,5 +136,24 @@ mod tests {
         assert_eq!(grade_for(false, 5.0, t), "mistake");
         assert_eq!(grade_for(false, 9.0, t), "blunder");
         assert_eq!(grade_for(false, 0.5, Scoring::WinLoss), "inaccuracy");
+    }
+
+    #[test]
+    fn grades_change_at_the_statistics_based_lines() {
+        let t = Scoring::Tiered;
+        assert_eq!(grade_for(false, 0.68, t), "good");
+        assert_eq!(grade_for(false, 0.69, t), "inaccuracy");
+        assert_eq!(grade_for(false, 2.74, t), "inaccuracy");
+        assert_eq!(grade_for(false, 2.75, t), "mistake");
+        assert_eq!(grade_for(false, 6.85, t), "mistake");
+        assert_eq!(grade_for(false, 6.86, t), "blunder");
+        // win_loss: a third of the tiered lines.
+        assert_eq!(grade_for(false, 0.2, Scoring::WinLoss), "good");
+        assert_eq!(grade_for(false, 2.3, Scoring::WinLoss), "blunder");
+    }
+
+    #[test]
+    fn hard_is_ismcts_500() {
+        assert_eq!(bot_iterations("hard"), Some(500));
     }
 }
