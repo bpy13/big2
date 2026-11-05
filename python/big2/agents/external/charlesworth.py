@@ -27,17 +27,21 @@ reverse tables (action number within its size -> hand positions).
 * 13 hand cards x 22: value (13: 3..2), suit (4: D C H S), flags in pair / in three of a
   kind / in four of a kind / in straight / in flush. Empty slots are zero.
 * 3 opponents (the next player first) x 27: cards left (13, one-hot of 1..13), has played
-  AD AC AH AS 2D 2C 2H 2S (8), has played pair / three of a kind / two pair / straight /
-  flush / full house (6).
-* 29 for the previous hand: highest card's value (13) and suit (4), type (8: single, pair,
-  three of a kind, two pair, four of a kind, straight, flush, full house), control, and
-  no / one / two passes since the last play.
-* 16: Q K A 2 of each suit has been played by anyone.
+  AD AC AH AS 2D 2C 2H 2S (8), has played pair / three of a kind / four-card hand (two pair
+  *or* four of a kind) / straight / flush / full house (6).
+* 16: Q K A 2 of each suit (D C H S) has been played by anyone.
+* 29 for the previous hand: highest card's value (13) and suit (4; none for a full house,
+  whose value is the three of a kind's), then control, single, pair, three of a kind, two
+  pair, four of a kind, straight, flush, full house (9), then no / one / two passes since
+  the last play. Control is the only bit set when the player leads a new trick.
 
-The paper does not give the bit order inside a group or how a straight flush is typed; the
-choices here follow the figure's reading order, a straight flush sets straight and flush,
-and ``tests/test_charlesworth.py`` checks the layout indirectly (the policy puts nearly all
-its probability on legal actions).
+The order inside the groups was first guessed from the paper's figure; it was then checked
+against the author's published source (``henrycharlesworth/big2_PPOalgorithm`` at commit
+eea4b04, read-only, nothing copied). The corrections: the 16 "played" bits come before the
+previous-hand group, control is the group's first type bit, four of a kind sets the
+opponents' four-card bit, a full house takes the three's value and no suit, and his
+straights are any five consecutive ranks including J Q K A 2 (no low-2 straights).
+``tests/test_charlesworth.py`` pins the layout on one hand-built state.
 """
 
 from __future__ import annotations
@@ -59,8 +63,10 @@ PASS_ACTION = 1694
 #: First action number of each hand size (singles, pairs, triples, four-card, five-card).
 SIZE_OFFSET = {1: 0, 2: 13, 3: 46, 4: 77, 5: 407}
 
-# Straights as rank sets, weakest first (Big Two ranks 3=0 ... A=11, 2=12).
-_STRAIGHTS = [tuple(range(k, k + 5)) for k in range(8)] + [(11, 12, 0, 1, 2), (12, 0, 1, 2, 3)]
+# His straights: any five consecutive ranks (Big Two ranks 3=0 ... A=11, 2=12), so J Q K A 2
+# counts and A 2 3 4 5 does not. This is what the network saw in training, whatever the
+# engine's own straights rule says.
+_STRAIGHTS = [tuple(range(k, k + 5)) for k in range(9)]
 
 _TYPES = [
     "single",
@@ -72,7 +78,8 @@ _TYPES = [
     "flush",
     "full_house",
 ]
-_OPP_TYPES = ["pair", "triple", "two_pair", "straight", "flush", "full_house"]
+# The opponents' "has played" type bits: the four-card bit covers two pair and four of a kind.
+_OPP_TYPES = ["pair", "triple", "four_card", "straight", "flush", "full_house"]
 
 
 def _bits(mask: int) -> list[int]:
@@ -99,6 +106,10 @@ def card_type_flags(cards: int, straights: str) -> set[str]:
     if kind == "straight_flush":
         return {"straight", "flush"}
     return {kind}
+
+
+def _opp_kinds(flags: set[str]) -> set[str]:
+    return {"four_card" if f in ("two_pair", "four_of_a_kind") else f for f in flags}
 
 
 def load_weights(directory: Path = WEIGHTS_DIR):
@@ -147,7 +158,7 @@ class CharlesworthAgent:
         suits = [c % 4 for c in hand]
         in_straight = set()
         have = set(ranks)
-        for seq in _STRAIGHTS[: 10 if straights == "with_low_twos" else 8]:
+        for seq in _STRAIGHTS:
             if have.issuperset(seq):
                 in_straight.update(seq)
         for pos, (r, s) in enumerate(zip(ranks, suits, strict=True)):
@@ -172,13 +183,18 @@ class CharlesworthAgent:
             kinds: set[str] = set()
             for c in played:
                 top |= c
-                kinds |= card_type_flags(c, straights)
+                kinds |= _opp_kinds(card_type_flags(c, straights))
             for j, card in enumerate(range(44, 52)):  # AD AC AH AS 2D 2C 2H 2S
                 x[o + 13 + j] = (top >> card) & 1
             for j, name in enumerate(_OPP_TYPES):
                 x[o + 21 + j] = name in kinds
 
-        o = 367
+        # The 16 "played" bits (Q K A 2, each D C H S) come before the previous hand.
+        played_all = state.played
+        for j, card in enumerate(range(36, 52)):
+            x[367 + j] = (played_all >> card) & 1
+
+        o = 383
         cur = state.current_play
         passes = 0
         for _, c in reversed(history):
@@ -186,18 +202,23 @@ class CharlesworthAgent:
                 break
             passes += 1
         if cur is None:
-            x[o + 25] = 1  # control: leading a new trick
+            x[o + 17] = 1  # control: leading a new trick, nothing else in the group is set
         else:
             _, cards, _ = cur
+            flags = card_type_flags(cards, straights)
             top_card = max(_bits(cards))
-            x[o + top_card // 4] = 1
-            x[o + 13 + top_card % 4] = 1
-            for name in card_type_flags(cards, straights):
-                x[o + 17 + _TYPES.index(name)] = 1
+            value = top_card // 4
+            suit_bit = 13 + top_card % 4
+            if "full_house" in flags:  # the value is the three of a kind's; no suit
+                rks = [c // 4 for c in _bits(cards)]
+                value = next(r for r in rks if rks.count(r) == 3)
+                suit_bit = -1
+            x[o + value] = 1
+            if suit_bit >= 0:
+                x[o + suit_bit] = 1
+            for name in flags:
+                x[o + 18 + _TYPES.index(name)] = 1
             x[o + 26 + min(passes, 2)] = 1
-        played_all = state.played
-        for j, card in enumerate(range(36, 52)):  # Q K A 2, each D C H S
-            x[396 + j] = (played_all >> card) & 1
         return x
 
     # --- policy -------------------------------------------------------------------
