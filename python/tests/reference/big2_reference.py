@@ -64,7 +64,9 @@ class Combo:
         return len(self.cards)
 
 
-def classify(cards: tuple[Card, ...], straights: str, flush_order: str) -> Combo | None:
+def classify(
+    cards: tuple[Card, ...], straights: str, flush_order: str, four_card_plays: bool = False
+) -> Combo | None:
     cards = tuple(sorted(cards))
     n = len(cards)
     ranks = [r for r, _ in cards]
@@ -77,6 +79,15 @@ def classify(cards: tuple[Card, ...], straights: str, flush_order: str) -> Combo
         if n == 2:
             return Combo(cards, "pair", (ranks[0], max(suits)))
         return Combo(cards, "triple", (ranks[0],))
+    if n == 4 and four_card_plays:
+        # Charlesworth's rules: two pairs (ranked by the highest card) and four of a
+        # kind (beats any two pair); four of a kind with a kicker is not a play.
+        counts = sorted(ranks.count(r) for r in set(ranks))
+        if counts == [4]:
+            return Combo(cards, "four_of_a_kind", (1, ranks[0]))
+        if counts == [2, 2]:
+            return Combo(cards, "two_pair", (0, *max(cards)))
+        return None
     if n != 5:
         return None
 
@@ -96,7 +107,7 @@ def classify(cards: tuple[Card, ...], straights: str, flush_order: str) -> Combo
     counts = sorted((ranks.count(r), r) for r in set(ranks))
     if [c for c, _ in counts] == [2, 3]:
         return Combo(cards, "full_house", (CATEGORY["full_house"], counts[1][1]))
-    if [c for c, _ in counts] == [1, 4]:
+    if [c for c, _ in counts] == [1, 4] and not four_card_plays:
         return Combo(cards, "four_of_a_kind", (CATEGORY["four_of_a_kind"], counts[1][1]))
     return None
 
@@ -128,6 +139,7 @@ class RefGame:
     pass_rule: str = "may_reenter"
     scoring: str = "tiered"
     last_card_duty: bool = True
+    four_card_plays: bool = False
     current: int = 0
     current_play: Combo | None = None
     holder: int | None = None
@@ -144,13 +156,14 @@ class RefGame:
         if self.winner is not None:
             return set()
         hand = sorted(self.hands[self.current])
-        sizes = [self.current_play.size] if self.current_play else [1, 2, 3, 5]
+        leading = [1, 2, 3, 4, 5] if self.four_card_plays else [1, 2, 3, 5]
+        sizes = [self.current_play.size] if self.current_play else leading
         out: set[int] = set()
         next_has_one = len(self.hands[(self.current + 1) % 4]) == 1
         highest = max(hand)
         for k in sizes:
             for cs in combinations(hand, k):
-                c = classify(cs, self.straights, self.flush_order)
+                c = classify(cs, self.straights, self.flush_order, self.four_card_plays)
                 if c is None:
                     continue
                 if self.opening and (0, 0) not in cs:
@@ -186,7 +199,7 @@ class RefGame:
                     self.current = nxt
             return
         cards = tuple(cards_from_mask(mask))
-        combo = classify(cards, self.straights, self.flush_order)
+        combo = classify(cards, self.straights, self.flush_order, self.four_card_plays)
         assert combo is not None
         self.hands[p] -= set(cards)
         self.current_play, self.holder = combo, p

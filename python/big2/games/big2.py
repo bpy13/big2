@@ -45,10 +45,16 @@ class Rules:
     pass_rule: str = "may_reenter"
     scoring: str = "tiered"
     last_card_duty: bool = True
+    four_card_plays: bool = False
+    """Charlesworth's four-card plays (two pairs, four of a kind), only for the B2
+    benchmark (docs/study-results/build-phase3.md §5). Hidden: not a user-facing rule."""
 
     def kwargs(self) -> dict[str, Any]:
         """Keyword arguments for ``Big2State`` constructors."""
-        return asdict(self)
+        out = asdict(self)
+        if not out["four_card_plays"]:
+            del out["four_card_plays"]  # callers that predate the flag never see it
+        return out
 
     def new_deal(self, seed: int | None = None) -> Big2State:
         return Big2State.new_deal(seed, **self.kwargs())

@@ -29,6 +29,8 @@ pub enum Kind {
     FullHouse = 6,
     FourOfAKind = 7,
     StraightFlush = 8,
+    /// Two pairs as a four-card play; only with `RuleSet::four_card_plays`.
+    TwoPair = 9,
 }
 
 impl Kind {
@@ -43,6 +45,7 @@ impl Kind {
             Kind::FullHouse => "full_house",
             Kind::FourOfAKind => "four_of_a_kind",
             Kind::StraightFlush => "straight_flush",
+            Kind::TwoPair => "two_pair",
         }
     }
 }
@@ -59,7 +62,7 @@ pub struct Combo {
 }
 
 impl Combo {
-    /// Number of cards (1, 2, 3 or 5).
+    /// Number of cards (1, 2, 3, 5; 4 with `four_card_plays`).
     #[inline]
     pub fn size(&self) -> u32 {
         self.cards.count_ones()
@@ -122,7 +125,14 @@ pub fn num_straights(rules: &RuleSet) -> usize {
 #[inline]
 fn key(kind: Kind, detail: u32) -> u32 {
     debug_assert!(detail < (1 << 24));
-    ((kind as u32) << 24) | detail
+    // Two pair only meets other four-card plays, and four of a kind beats it, so it
+    // takes a class below four of a kind (7).
+    let class = if kind == Kind::TwoPair {
+        6
+    } else {
+        kind as u32
+    };
+    (class << 24) | detail
 }
 
 /// The 13-bit set of ranks present in `cards`.
@@ -152,6 +162,7 @@ fn rank_set(cards: u64) -> u16 {
 /// | Flush, suit first | suit, then five ranks high→low |
 /// | Full house | rank of the triple |
 /// | Four of a kind | rank of the four |
+/// | Two pair (four cards) | card index of its highest card |
 /// | Straight flush | sequence·4 + suit |
 pub fn classify(cards: u64, rules: &RuleSet) -> Option<Combo> {
     let n = cards.count_ones();
@@ -176,7 +187,34 @@ pub fn classify(cards: u64, rules: &RuleSet) -> Option<Combo> {
                 make(Kind::Triple, rank_of(top) as u32)
             }
         }
+        4 if rules.four_card_plays => classify_four(cards),
         5 => classify_five(cards, rules),
+        _ => None,
+    }
+}
+
+/// Four-card plays (Charlesworth's rules): four of a kind, or two pairs that rank by
+/// their highest card (higher rank, then higher suit).
+fn classify_four(cards: u64) -> Option<Combo> {
+    let ranks = rank_set(cards);
+    let make = |kind, detail| {
+        Some(Combo {
+            cards,
+            kind,
+            key: key(kind, detail),
+        })
+    };
+    match ranks.count_ones() {
+        1 => make(Kind::FourOfAKind, ranks.trailing_zeros()),
+        2 => {
+            let lo = ranks.trailing_zeros() as u8;
+            let hi = 15 - ranks.leading_zeros() as u8;
+            if suits_at(cards, lo).count_ones() == 2 && suits_at(cards, hi).count_ones() == 2 {
+                make(Kind::TwoPair, mask::highest(cards)? as u32)
+            } else {
+                None
+            }
+        }
         _ => None,
     }
 }
@@ -227,7 +265,8 @@ fn classify_five(cards: u64, rules: &RuleSet) -> Option<Combo> {
         return None;
     }
 
-    // Two distinct ranks: full house (3+2) or four of a kind (4+1).
+    // Two distinct ranks: full house (3+2) or four of a kind (4+1). With four-card
+    // plays, four of a kind is a four-card play only, so 4+1 is not a combination.
     if ranks.count_ones() == 2 {
         let lo = ranks.trailing_zeros() as u8;
         let hi = 15 - ranks.leading_zeros() as u8;
@@ -238,6 +277,7 @@ fn classify_five(cards: u64, rules: &RuleSet) -> Option<Combo> {
         return match (n_lo, n_hi) {
             (3, 2) => make(Kind::FullHouse, lo as u32),
             (2, 3) => make(Kind::FullHouse, hi as u32),
+            (4, 1) | (1, 4) if rules.four_card_plays => None,
             (4, 1) => make(Kind::FourOfAKind, lo as u32),
             (1, 4) => make(Kind::FourOfAKind, hi as u32),
             _ => None,
@@ -353,6 +393,56 @@ mod tests {
     fn full_house_and_quads_ignore_the_extra_cards() {
         assert!(beats("4d 4c 4h 3s 3d", "3c 3h 3s 2s 2d"));
         assert!(beats("6d 6c 6h 6s 3c", "5d 5c 5h 5s 2s"));
+    }
+
+    fn four(s: &str) -> Option<Combo> {
+        let rules = RuleSet {
+            four_card_plays: true,
+            ..Default::default()
+        };
+        classify(parse_mask(s).unwrap(), &rules)
+    }
+
+    #[test]
+    fn four_card_plays_flag_off_changes_nothing() {
+        assert_eq!(kind("3d 3c 9h 9s"), None);
+        assert_eq!(kind("3d 3c 3h 3s"), None);
+        assert_eq!(kind("3d 3c 3h 3s 9d"), Some(Kind::FourOfAKind));
+    }
+
+    #[test]
+    fn four_card_plays_flag_on() {
+        assert_eq!(four("3d 3c 9h 9s").unwrap().kind, Kind::TwoPair);
+        assert_eq!(four("3d 3c 3h 3s").unwrap().kind, Kind::FourOfAKind);
+        assert_eq!(four("3d 3c 3h 9s"), None, "three and one");
+        assert_eq!(four("3d 3c 9h Ks"), None, "one pair and two singles");
+        // four of a kind plus a kicker is no longer a five-card play
+        assert_eq!(four("3d 3c 3h 3s 9d"), None);
+        // the other five-card plays are unchanged
+        assert_eq!(four("3d 3c 3h 9s 9d").unwrap().kind, Kind::FullHouse);
+        // four of a kind beats any two pair; two pairs rank by the highest card
+        assert!(four("3d 3c 3h 3s")
+            .unwrap()
+            .beats(&four("Kd Kc 2h 2s").unwrap()));
+        assert!(!four("Kd Kc 2h 2s")
+            .unwrap()
+            .beats(&four("3d 3c 3h 3s").unwrap()));
+        assert!(!four("4d 4c 3h 3s")
+            .unwrap()
+            .beats(&four("3d 3c 2h 2s").unwrap())); // 2s tops 4c
+        assert!(!four("4d 4c 3h 3s")
+            .unwrap()
+            .beats(&four("9d 9c 3d 3s").unwrap()));
+        assert!(four("Td Tc 5h 5s")
+            .unwrap()
+            .beats(&four("9d 9c 8h 8s").unwrap()));
+        // same highest rank: the higher suit wins; two fours: the higher rank wins
+        assert!(four("9h 9s 3h 3c")
+            .unwrap()
+            .beats(&four("9d 9c 8h 8s").unwrap()));
+        assert!(four("5d 5c 5h 5s")
+            .unwrap()
+            .beats(&four("4d 4c 4h 4s").unwrap()));
     }
 
     #[test]

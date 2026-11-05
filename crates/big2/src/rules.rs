@@ -73,6 +73,11 @@ pub struct RuleSet {
     /// When the next player holds one card, any single played must be the
     /// player's highest card (rules §5). On by default.
     pub last_card_duty: bool,
+    /// Charlesworth's four-card plays (survey §2.1): two pairs, or four of a kind
+    /// without a kicker, may be played as four cards. Off by default and not in
+    /// `names!`, so the app's `meta()` never lists it; it exists for the B2 benchmark.
+    /// When on, four of a kind plus a kicker is no longer a five-card play.
+    pub four_card_plays: bool,
 }
 
 impl Default for RuleSet {
@@ -83,6 +88,7 @@ impl Default for RuleSet {
             pass_rule: PassRule::default(),
             scoring: Scoring::default(),
             last_card_duty: true,
+            four_card_plays: false,
         }
     }
 }
@@ -138,6 +144,7 @@ mod tests {
         assert_eq!(r.pass_rule, PassRule::MayReenter);
         assert_eq!(r.scoring, Scoring::Tiered);
         assert!(r.last_card_duty);
+        assert!(!r.four_card_plays);
     }
 
     #[test]

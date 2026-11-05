@@ -127,7 +127,14 @@ impl VecEnv {
                 "n must be positive (and a multiple of 4 for vs_greedy)",
             ));
         }
-        let rules = crate::rules_from(straights, flush_order, pass_rule, scoring, last_card_duty)?;
+        let rules = crate::rules_from(
+            straights,
+            flush_order,
+            pass_rule,
+            scoring,
+            last_card_duty,
+            None,
+        )?;
         let mut rng = SmallRng::seed_from_u64(seed);
         let placeholder = State::new_deal(rules, &mut rng);
         let mut env = VecEnv {

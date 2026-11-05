@@ -28,7 +28,8 @@ fn at_rank(suits: u8, rank: u8) -> u64 {
     (suits as u64) << (rank * 4)
 }
 
-/// Appends every legal combination in `hand` with `size` cards (1, 2, 3 or 5).
+/// Appends every legal combination in `hand` with `size` cards (1, 2, 3 or 5; 4 with
+/// `rules.four_card_plays`).
 pub fn combos_of_size(hand: u64, size: u32, rules: &RuleSet, out: &mut Vec<Combo>) {
     let mut push = |cards: u64| {
         if let Some(c) = classify(cards, rules) {
@@ -42,8 +43,26 @@ pub fn combos_of_size(hand: u64, size: u32, rules: &RuleSet, out: &mut Vec<Combo
                 for_each_suit_subset(suits_at(hand, r), size, |s| push(at_rank(s, r)));
             }
         }
+        4 if rules.four_card_plays => four_card_combos(hand, &mut push),
         5 => five_card_combos(hand, rules, &mut push),
         _ => {}
+    }
+}
+
+/// Four of a kind, and two pairs: two ranks with two suits each.
+fn four_card_combos(hand: u64, push: &mut impl FnMut(u64)) {
+    let suits: [u8; 13] = std::array::from_fn(|r| suits_at(hand, r as u8));
+    for r in 0..NUM_RANKS {
+        if suits[r as usize] == 0xF {
+            push(at_rank(0xF, r));
+        }
+        for_each_suit_subset(suits[r as usize], 2, |rs| {
+            for q in r + 1..NUM_RANKS {
+                for_each_suit_subset(suits[q as usize], 2, |qs| {
+                    push(at_rank(rs, r) | at_rank(qs, q))
+                });
+            }
+        });
     }
 }
 
@@ -119,9 +138,10 @@ fn five_card_combos(hand: u64, rules: &RuleSet, push: &mut impl FnMut(u64)) {
         });
     }
 
-    // Four of a kind: all four cards of a rank plus any other card.
+    // Four of a kind: all four cards of a rank plus any other card (a four-card play
+    // under `four_card_plays`, see `four_card_combos`).
     for q in 0..NUM_RANKS {
-        if suits[q as usize] == 0xF {
+        if suits[q as usize] == 0xF && !rules.four_card_plays {
             let quad = at_rank(0xF, q);
             for kicker in mask::bits(hand & !quad) {
                 push(quad | 1u64 << kicker);
@@ -150,8 +170,8 @@ pub fn legal_combos(
             out.retain(|c| c.key > current.key);
         }
         None => {
-            for size in [1, 2, 3, 5] {
-                combos_of_size(hand, size, rules, out);
+            for size in [1, 2, 3, 4, 5] {
+                combos_of_size(hand, size, rules, out); // size 4 is empty without the flag
             }
         }
     }
@@ -209,11 +229,15 @@ mod tests {
                 straights: crate::Straights::NoTwos,
                 ..Default::default()
             },
+            RuleSet {
+                four_card_plays: true,
+                ..Default::default()
+            },
         ] {
             for _ in 0..300 {
                 deck.shuffle(&mut rng);
                 let hand = deck[..13].iter().fold(0u64, |m, &i| m | 1 << i);
-                for size in [1, 2, 3, 5] {
+                for size in [1, 2, 3, 4, 5] {
                     assert_eq!(
                         generated(hand, size, &rules),
                         brute_force(hand, size, &rules),
@@ -222,6 +246,29 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn four_card_plays_lead_and_follow() {
+        let rules = RuleSet {
+            four_card_plays: true,
+            ..Default::default()
+        };
+        let hand = parse_mask("3d 3c 5h 5s 9d 9c 9h 9s Kd").unwrap();
+        let mut v = Vec::new();
+        legal_combos(hand, None, 0, &rules, &mut v);
+        let fours: Vec<Kind> = v.iter().filter(|c| c.size() == 4).map(|c| c.kind).collect();
+        // two pairs: {3,5}, {3,9} x 6 suit pairs of the 9s, {5,9} x 6; quads: 9s
+        assert_eq!(fours.iter().filter(|&&k| k == Kind::TwoPair).count(), 13);
+        assert_eq!(fours.iter().filter(|&&k| k == Kind::FourOfAKind).count(), 1);
+        // following a two pair needs a higher four-card play
+        let current = classify(parse_mask("4d 4c 8h 8s").unwrap(), &rules).unwrap();
+        legal_combos(hand, Some(&current), 0, &rules, &mut v);
+        assert!(v.iter().all(|c| c.size() == 4 && c.key > current.key));
+        assert!(v.iter().any(|c| c.kind == Kind::FourOfAKind));
+        // off: no four-card plays at all
+        legal_combos(hand, None, 0, &RuleSet::default(), &mut v);
+        assert!(v.iter().all(|c| c.size() != 4));
     }
 
     #[test]
