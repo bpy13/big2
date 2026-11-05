@@ -86,6 +86,11 @@ class RestrictedUnpickler(pickle._Unpickler):  # pure-Python class: BUILD can be
             return _Wrapper
         raise UnsafePickle(f"refused to import {module}.{name}")
 
+    def get_extension(self, code: int) -> Any:
+        # The EXT1/2/4 opcodes look objects up in copyreg's extension cache without
+        # calling find_class, so they could bypass the allow list: refuse them all.
+        raise UnsafePickle(f"refused extension code {code}")
+
     def load_build(self) -> None:
         super().load_build()
         if isinstance(self.stack[-1], _Wrapper):
