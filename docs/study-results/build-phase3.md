@@ -293,8 +293,26 @@ is teaching: exact results and `forced` proofs (`reason.counterfactual.forced`).
 
 ## 5. Charlesworth's network (Task 21)
 
-Not run. It needs Brian's answer to the plan's open questions 1 and 6 (running his unlicensed
-weights locally, and a hidden four-card rule flag). `docs/open-items.md` carries the question.
+Run 2026-11-05 after Brian's yes ("local only"). Weights: `modelParameters136500` and
+`actionIndices.pkl` from `github.com/henrycharlesworth/big2_PPOalgorithm` at commit
+`eea4b04f544fcbf3ca29f117858363b466873f0e` (default branch `master`); the repo has no licence
+file, so they stay in `runs/external/charlesworth/` (gitignored), loaded by a restricted
+unpickler (numpy arrays only), never committed or shipped (B14). The forward pass is our own
+NumPy code (`python/big2/agents/external/charlesworth.py`); its 412-feature layout was checked
+against his source (b45d709: five mismatches fixed; win rate against three greedy bots went
+from 29.7 % to 47.0 %). Rules: his four-card plays (hidden `four_card_plays` flag, 95480b7)
+and his scoring (`sum_of_others`). Queue job 12, 27 minutes on 8 threads.
+
+| Lineup | Deals | `expert` mean | `expert` win rate | Charlesworth mean | Charlesworth win rate | Paired diff expert − Charlesworth | s per move expert / his |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1+3 | 1,000 | +0.05 ± 0.20 | 24.7 % ± 1.1 % | −0.02 ± 0.07 | 25.1 % ± 0.4 % | +0.06 ± 0.26 | 0.089 / 0.0005 |
+| ABAB | 1,000 | +0.02 ± 0.15 | 24.6 % ± 0.8 % | −0.02 ± 0.15 | 25.4 % ± 0.8 % | +0.04 ± 0.30 | 0.095 / 0.0006 |
+
+`expert` = `ismcts:iterations=10000,infoset_endgame=12,infoset_max_cards=10`. Both intervals
+include 0: **`expert` ties Charlesworth's network** under his rules and scoring, while it
+thinks about 170 times longer per move. Our inference, not tested: his rules (four-card plays)
+are new to `expert`'s rollout policy, and his network was trained on exactly these rules.
+Raw: `runs/b2_charlesworth/b2_charlesworth/table.md`, `results.json`.
 
 ## 6. Best-response probe (Task 22)
 

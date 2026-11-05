@@ -627,8 +627,10 @@ to goes through bot-notes (Task 10).
   - Notes: the node cap is per call, shared across deals; when it is hit, fall back to the network
     leaf and say so in the result (`exact: false`). This is `quality: {"exact": true}` later.
 
-- [ ] **Task 21: B2 — Charlesworth's network as a local opponent** **[~1 h CPU]** (needs open question 1)
-  (**Skipped until Brian answers 2026-11-01:** open question 1 has no answer in `docs/open-items.md`
+- [x] **Task 21: B2 — Charlesworth's network as a local opponent** **[~1 h CPU]** (needs open question 1)
+  (**Done 2026-11-05** after Brian's yes: `expert` ties his network, paired diff +0.06 ± 0.26
+  (1+3) and +0.04 ± 0.30 (ABAB), 1,000 deals each; `build-phase3.md` §5.)
+  (Earlier: **Skipped until Brian answers 2026-11-01:** open question 1 has no answer in `docs/open-items.md`
   or `bot-stream\docs\decisions.md` beyond B14's general rule; question 1 of the open items'
   2026-11-01 item asks it.)
   - Files: modify `crates/big2/src/rules.rs` (`four_card_plays: bool`, default `false`, not in
