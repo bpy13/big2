@@ -628,8 +628,8 @@ to goes through bot-notes (Task 10).
     leaf and say so in the result (`exact: false`). This is `quality: {"exact": true}` later.
 
 - [x] **Task 21: B2 — Charlesworth's network as a local opponent** **[~1 h CPU]** (needs open question 1)
-  (**Done 2026-11-05** after Brian's yes: `expert` ties his network, paired diff +0.06 ± 0.26
-  (1+3) and +0.04 ± 0.30 (ABAB), 1,000 deals each; `build-phase3.md` §5.)
+  (**Done 2026-11-05** after Brian's yes: no difference detected, paired diff +0.06 ± 0.26
+  (1+3) and +0.04 ± 0.30 (ABAB), 1,000 deals each, so A16 is missed; `build-phase3.md` §5.)
   (Earlier: **Skipped until Brian answers 2026-11-01:** open question 1 has no answer in `docs/open-items.md`
   or `bot-stream\docs\decisions.md` beyond B14's general rule; question 1 of the open items'
   2026-11-01 item asks it.)
@@ -680,7 +680,7 @@ to goes through bot-notes (Task 10).
 
 - [ ] **Task 24: Final 10,000-deal matches** **[long: ~9 h CPU each, headless]** (after 17, 21)
   (**Queued 2026-11-01:** `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, the bot that
-  ships by default, not PUCT-2000 (`build-phase3.md` §8); Charlesworth waits for Task 21.
+  ships by default, not PUCT-2000 (`build-phase3.md` §8); Charlesworth ran in Task 21 (§5).
   One job for Tasks 24, 23 and 22: `runs\b25_tasks22_24\run.ps1`, launched 2026-11-01 06:05
   detached, PowerShell PID 26572 (conhost 23152), CPUs 4–19, Normal priority; 8 workers at about
   92 % of a core each. Order: Task 24 with seed B's training beside it, Task 23's match, the five
