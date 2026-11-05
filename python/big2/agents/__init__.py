@@ -151,6 +151,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     only the deals the rules allow, for PUCT and ISMCTS alike),
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
+    ``charlesworth[:temperature=…]`` (his released network, play it with
+    ``Rules(four_card_plays=True)``; see :mod:`big2.agents.external.charlesworth`),
     ``pvnet:checkpoint=….pt[,mode=score|prior,scoring=…]`` (a network v2 played greedily,
     see :class:`big2.rl.agent.PvNetAgent`),
     ``dmc:checkpoint=…[,objective=…]``, ``dmcsearch:checkpoint=…[,determinizations=…,top=…]``.
@@ -188,6 +190,13 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         if kind == "patwa-greedy":
             return PatwaGreedy(name=spec)
         return PatwaSmart(name=spec, **opts)
+    if kind == "charlesworth":
+        # Charlesworth's released network, local benchmark only (big2.agents.external).
+        from big2.agents.external.charlesworth import CharlesworthAgent
+
+        return CharlesworthAgent(
+            temperature=float(opts.pop("temperature", 0.0)), seed=seed, name=spec
+        )
     if kind == "qnet":
         # NumPy copy of the Rust QNetPolicy, reading the exported .pknn (big2.agents.qnet).
         from big2.agents.qnet import DEFAULT_QNET, QNetAgent
