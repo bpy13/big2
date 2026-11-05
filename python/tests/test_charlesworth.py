@@ -185,3 +185,9 @@ def test_feature_layout_is_pinned_on_one_hand_built_state() -> None:
     # Leading a new trick: control (group offset 17) is the only previous-hand bit.
     lead = agent.features(_Table([], None, 0))  # type: ignore[arg-type]
     assert np.flatnonzero(lead[383:]).tolist() == [17]
+
+
+def test_restricted_unpickler_refuses_extension_codes() -> None:
+    # PROTO 2, EXT1 code 1, STOP: copyreg's extension cache would skip find_class.
+    with pytest.raises(safe_pickle.UnsafePickle):
+        safe_pickle.loads(b"\x80\x02\x82\x01.")
