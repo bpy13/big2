@@ -215,6 +215,8 @@ pub fn kind_index(a: &Action) -> usize {
             Kind::FullHouse => 6,
             Kind::FourOfAKind => 7,
             Kind::StraightFlush => 8,
+            // Four-card plays exist only in the B2 benchmark, never with a network.
+            Kind::TwoPair => 2,
         },
     }
 }

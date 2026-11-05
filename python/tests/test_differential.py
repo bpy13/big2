@@ -29,8 +29,18 @@ VARIANTS = {
 
 @pytest.mark.parametrize("seed", range(GAMES))
 def test_engines_agree(seed: int) -> None:
+    _play_and_compare(seed, {})
+
+
+@pytest.mark.parametrize("seed", range(GAMES))
+def test_engines_agree_with_four_card_plays(seed: int) -> None:
+    """Charlesworth's four-card plays (Task 21): the engine flag against the oracle."""
+    _play_and_compare(seed + 1_000_000, {"four_card_plays": True})
+
+
+def _play_and_compare(seed: int, extra: dict[str, object]) -> None:
     rng = random.Random(seed)
-    rules = {k: rng.choice(v) for k, v in VARIANTS.items()}
+    rules = {k: rng.choice(v) for k, v in VARIANTS.items()} | extra
     state = Big2State.new_deal(seed=seed, **rules)
     ref = RefGame(hands=[set(cards_from_mask(h)) for h in state.hands], **rules)  # type: ignore[arg-type]
     assert ref.current == state.current_player

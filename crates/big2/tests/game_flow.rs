@@ -247,8 +247,9 @@ fn arb_rules() -> impl Strategy<Value = RuleSet> {
         any::<bool>(),
         0..3usize,
         any::<bool>(),
+        any::<bool>(),
     )
-        .prop_map(|(st, fl, pr, sc, lcd)| RuleSet {
+        .prop_map(|(st, fl, pr, sc, lcd, fcp)| RuleSet {
             straights: if st {
                 big2_big2::Straights::WithLowTwos
             } else {
@@ -266,6 +267,7 @@ fn arb_rules() -> impl Strategy<Value = RuleSet> {
             },
             scoring: Scoring::ALL[sc],
             last_card_duty: lcd,
+            four_card_plays: fcp,
         })
 }
 

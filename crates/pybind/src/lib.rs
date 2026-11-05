@@ -116,6 +116,7 @@ pub(crate) fn rules_from(
     pass_rule: Option<&str>,
     scoring: Option<&str>,
     last_card_duty: Option<bool>,
+    four_card_plays: Option<bool>,
 ) -> PyResult<RuleSet> {
     let mut r = RuleSet::default();
     if let Some(s) = straights {
@@ -132,6 +133,9 @@ pub(crate) fn rules_from(
     }
     if let Some(b) = last_card_duty {
         r.last_card_duty = b;
+    }
+    if let Some(b) = four_card_plays {
+        r.four_card_plays = b;
     }
     Ok(r)
 }
@@ -157,7 +161,7 @@ fn classify_cards(
     straights: Option<&str>,
     flush_order: Option<&str>,
 ) -> PyResult<Option<(String, u32)>> {
-    let rules = rules_from(straights, flush_order, None, None, None)?;
+    let rules = rules_from(straights, flush_order, None, None, None, None)?;
     Ok(classify(cards, &rules).map(|c| (c.kind.name().to_string(), c.key)))
 }
 
@@ -165,7 +169,7 @@ fn classify_cards(
 #[pyfunction]
 #[pyo3(signature = (hand, *, straights=None, flush_order=None))]
 fn min_plays(hand: u64, straights: Option<&str>, flush_order: Option<&str>) -> PyResult<u32> {
-    let rules = rules_from(straights, flush_order, None, None, None)?;
+    let rules = rules_from(straights, flush_order, None, None, None, None)?;
     Ok(plan::min_plays(hand, &rules))
 }
 
@@ -181,7 +185,7 @@ fn decompositions(
     straights: Option<&str>,
     flush_order: Option<&str>,
 ) -> PyResult<Vec<Vec<u64>>> {
-    let rules = rules_from(straights, flush_order, None, None, None)?;
+    let rules = rules_from(straights, flush_order, None, None, None, None)?;
     Ok(plan::decompositions(hand, &rules, max)
         .iter()
         .map(|d| d.combos.iter().map(|c| c.cards).collect())
@@ -224,7 +228,7 @@ pub(crate) struct PyState {
 impl PyState {
     /// Shuffles and deals a new game.
     #[staticmethod]
-    #[pyo3(signature = (seed=None, *, straights=None, flush_order=None, pass_rule=None, scoring=None, last_card_duty=None))]
+    #[pyo3(signature = (seed=None, *, straights=None, flush_order=None, pass_rule=None, scoring=None, last_card_duty=None, four_card_plays=None))]
     fn new_deal(
         seed: Option<u64>,
         straights: Option<&str>,
@@ -232,8 +236,16 @@ impl PyState {
         pass_rule: Option<&str>,
         scoring: Option<&str>,
         last_card_duty: Option<bool>,
+        four_card_plays: Option<bool>,
     ) -> PyResult<Self> {
-        let rules = rules_from(straights, flush_order, pass_rule, scoring, last_card_duty)?;
+        let rules = rules_from(
+            straights,
+            flush_order,
+            pass_rule,
+            scoring,
+            last_card_duty,
+            four_card_plays,
+        )?;
         Ok(PyState {
             inner: State::new_deal(rules, &mut rng_from(seed)),
         })
@@ -241,7 +253,7 @@ impl PyState {
 
     /// Starts a game from four 13-card hands (masks) covering the deck.
     #[staticmethod]
-    #[pyo3(signature = (hands, *, straights=None, flush_order=None, pass_rule=None, scoring=None, last_card_duty=None))]
+    #[pyo3(signature = (hands, *, straights=None, flush_order=None, pass_rule=None, scoring=None, last_card_duty=None, four_card_plays=None))]
     fn from_hands(
         hands: [u64; 4],
         straights: Option<&str>,
@@ -249,8 +261,16 @@ impl PyState {
         pass_rule: Option<&str>,
         scoring: Option<&str>,
         last_card_duty: Option<bool>,
+        four_card_plays: Option<bool>,
     ) -> PyResult<Self> {
-        let rules = rules_from(straights, flush_order, pass_rule, scoring, last_card_duty)?;
+        let rules = rules_from(
+            straights,
+            flush_order,
+            pass_rule,
+            scoring,
+            last_card_duty,
+            four_card_plays,
+        )?;
         Ok(PyState {
             inner: State::from_hands(rules, hands).map_err(value_error)?,
         })
@@ -258,7 +278,7 @@ impl PyState {
 
     /// Sets up a mid-game position. `current_play` is `(player, cards)` or `None`.
     #[staticmethod]
-    #[pyo3(signature = (hands, current, current_play=None, *, straights=None, flush_order=None, pass_rule=None, scoring=None, last_card_duty=None))]
+    #[pyo3(signature = (hands, current, current_play=None, *, straights=None, flush_order=None, pass_rule=None, scoring=None, last_card_duty=None, four_card_plays=None))]
     #[allow(clippy::too_many_arguments)]
     fn from_position(
         hands: [u64; 4],
@@ -269,8 +289,16 @@ impl PyState {
         pass_rule: Option<&str>,
         scoring: Option<&str>,
         last_card_duty: Option<bool>,
+        four_card_plays: Option<bool>,
     ) -> PyResult<Self> {
-        let rules = rules_from(straights, flush_order, pass_rule, scoring, last_card_duty)?;
+        let rules = rules_from(
+            straights,
+            flush_order,
+            pass_rule,
+            scoring,
+            last_card_duty,
+            four_card_plays,
+        )?;
         Ok(PyState {
             inner: State::from_position(rules, hands, current, current_play)
                 .map_err(value_error)?,
@@ -286,6 +314,9 @@ impl PyState {
         d.set_item("pass_rule", r.pass_rule.name())?;
         d.set_item("scoring", r.scoring.name())?;
         d.set_item("last_card_duty", r.last_card_duty)?;
+        if r.four_card_plays {
+            d.set_item("four_card_plays", true)?; // hidden unless on (not in the app's meta)
+        }
         Ok(d)
     }
 
