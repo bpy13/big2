@@ -29,7 +29,8 @@ Pending work and questions for Brian. Newest first. The plan is
 - Task 23's seed B trains on the existing labels from fresh weights, not on new labels.
 
 **Questions for Brian (defaults apply; nothing blocks on them).**
-1. *May we run Charlesworth's released weights as a local benchmark?* His repo has no licence
+1. **Answered (Brian, 2026-11-05: yes, local only).** *May we run Charlesworth's released
+   weights as a local benchmark?* His repo has no licence
    file. Task 21 needs this, a hidden four-card rule flag in the engine (plan open question 6),
    and a download of his checkpoint. It decides A16 and the second half of A19. *Default until you
    answer: Task 21 stays skipped.* The plan's default would be "yes, local only", and this
