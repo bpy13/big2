@@ -8,7 +8,7 @@ Status 2026-11-01: the three rounds of Task 17 are done (§1). A9 is not met in 
 vs ISMCTS-1000 is +1.06 (1+3, passes) and +0.66 (ABAB, fails). r3 ties its teacher ISMCTS-5000,
 so the teacher stays, and by the default in `docs/open-items.md` ISMCTS ships as `expert` until
 Brian answers. Task 18 done (A13 met, §2). Task 20 done (§4; agreement missed at 94.2 %, time met
-at 10 cards in play). Tasks 22–24 run as one job (§6–§8). Task 21 waits for Brian (§5).
+at 10 cards in play). Tasks 22–24 run as one job (§6–§8). Task 21 ran on 2026-11-05 (§5).
 
 ## 1. Expert iteration (Task 17)
 
@@ -309,7 +309,8 @@ and his scoring (`sum_of_others`). Queue job 12, 27 minutes on 8 threads.
 | ABAB | 1,000 | +0.02 ± 0.15 | 24.6 % ± 0.8 % | −0.02 ± 0.15 | 25.4 % ± 0.8 % | +0.04 ± 0.30 | 0.095 / 0.0006 |
 
 `expert` = `ismcts:iterations=10000,infoset_endgame=12,infoset_max_cards=10`. Both intervals
-include 0: **`expert` ties Charlesworth's network** under his rules and scoring, while it
+include 0: **no difference between `expert` and Charlesworth's network is detected at 1,000
+deals** (A16, which asks for `expert` ahead with the interval excluding 0, is missed), while it
 thinks about 170 times longer per move. Our inference, not tested: his rules (four-card plays)
 are new to `expert`'s rollout policy, and his network was trained on exactly these rules.
 Raw: `runs/b2_charlesworth/b2_charlesworth/table.md`, `results.json`.
@@ -346,7 +347,7 @@ depends on it.
 
 Queued in the same job. The plan named PUCT-2000 (final). **This measures the bot that ships by
 default instead:** `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, 10,000 deals, both
-lineups, 8 workers. The match against Charlesworth waits for Task 21. PUCT-2000 r3 at 10,000 deals
+lineups, 8 workers. The match against Charlesworth ran separately (Task 21, §5). PUCT-2000 r3 at 10,000 deals
 was not queued; at its 0.19 s per move it would take about 3× as long, and it is worth running
 only if Brian picks PUCT.
 
@@ -362,6 +363,6 @@ Filled in as the job ends. Numbers so far, each with its source:
 | A13 | mask loses nothing | `runs/p3_matches/a_rules_mask/results.json` | met |
 | A14 | Task 19 not started | – | open |
 | A15 | 94.2 % agreement; 0.36 s at most in Node at 10 cards | `runs/p3_matches/b_endgame/results.json`, `runs/wasm_timing/endgame.json` | agreement missed by 0.8; time met |
-| A16 | not run (Task 21) | – | waits for Brian |
+| A16 | +0.06 ± 0.26 (1+3), +0.04 ± 0.30 (ABAB) vs Charlesworth, his rules | `runs/b2_charlesworth/b2_charlesworth/results.json` | missed: intervals include 0 |
 | A17, A18, A19 | queued | `runs/probe_eval`, `runs/seed_crossplay`, `runs/final_matches` | pending |
 | Teacher rule | r3 vs ISMCTS-5000: +0.04, −0.00 | `runs/round3/vs_teacher/results.json` | teacher stays |
