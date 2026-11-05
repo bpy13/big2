@@ -128,3 +128,60 @@ def test_rules_four_card_plays_stays_hidden_unless_on() -> None:
     assert Rules(four_card_plays=True).kwargs()["four_card_plays"] is True
     assert "four_card_plays" not in Big2State.new_deal(seed=1).rules()
     assert Big2State.new_deal(seed=1, four_card_plays=True).rules()["four_card_plays"] is True
+
+
+class _Table:
+    """A hand-built table: just the attributes `CharlesworthAgent.features` reads."""
+
+    current_player = 1
+    hand_sizes = (13, 7, 8, 13)
+
+    def __init__(self, history, current_play, played) -> None:
+        self.history = history
+        self.current_play = current_play
+        self.played = played
+
+    def rules(self) -> dict[str, str]:
+        return {"straights": "no_twos"}
+
+    def hand(self, player: int) -> int:
+        # 3D 3C 3H 4D 5D 6D 7D: a triple, a diamond flush and a 3-7 straight.
+        return sum(1 << c for c in (0, 1, 2, 4, 8, 12, 16))
+
+
+def test_feature_layout_is_pinned_on_one_hand_built_state() -> None:
+    """Indices follow the author's published encoding (his source, read-only; Task 21)."""
+    agent = object.__new__(CharlesworthAgent)  # features() needs no weights
+    full_house = sum(1 << c for c in (36, 37, 38, 24, 25))  # Q Q Q 9 9
+    # Player 2 (the next seat) played the full house; player 3 passed since.
+    table = _Table([(2, full_house), (3, 0)], (2, full_house, 0), full_house)
+    expected = {
+        # hand, 22 per card: value, suit, pair, triple, four, straight, flush
+        *(0, 13, 17, 18, 20, 21),  # 3D
+        *(22, 36, 39, 40, 42),  # 3C
+        *(44, 59, 61, 62, 64),  # 3H
+        *(67, 79, 86, 87),  # 4D
+        *(90, 101, 108, 109),  # 5D
+        *(113, 123, 130, 131),  # 6D
+        *(136, 145, 152, 153),  # 7D
+        # opponents, 27 each from 286: cards left, then (next seat) played a full house
+        293,  # next seat holds 8 cards
+        286 + 26,  # ... and has played a full house
+        286 + 27 + 12,  # second seat: 13 cards
+        286 + 54 + 12,  # third seat: 13 cards
+        # Q of D, C, H played (before the previous-hand group)
+        367,
+        368,
+        369,
+        # previous hand from 383: value Q (the three's), no suit, full house, one pass
+        383 + 9,
+        383 + 25,
+        383 + 27,
+    }
+    x = agent.features(table)  # type: ignore[arg-type]
+    assert x.shape == (N_FEATURES,)
+    assert set(np.flatnonzero(x).tolist()) == expected
+
+    # Leading a new trick: control (group offset 17) is the only previous-hand bit.
+    lead = agent.features(_Table([], None, 0))  # type: ignore[arg-type]
+    assert np.flatnonzero(lead[383:]).tolist() == [17]
