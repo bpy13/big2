@@ -1,4 +1,4 @@
-"""Build-run phase 3 experiments (Tasks 18, 20, 22-24). Results: docs/study-results/build-phase3.md.
+"""Build-run phase 3 experiments (Tasks 18, 20-24). Results: docs/study-results/build-phase3.md.
 
 Usage::
 
@@ -6,6 +6,7 @@ Usage::
     python experiments/build_phase3.py endgame --workers 8
     python experiments/build_phase3.py endgame --positions 6 --deals 4 --out p3_tiny  # smoke run
     python experiments/build_phase3.py final --deals 10000 --block 200 --out final_matches
+    python experiments/build_phase3.py b2 --deals 1000 --out b2_charlesworth
     python experiments/build_phase3.py seeds-train --out seed_crossplay
     python experiments/build_phase3.py seeds-match --deals 1000 --out seed_crossplay
     python experiments/build_phase3.py probe --probes validate_greedy validate_ismcts
@@ -28,6 +29,11 @@ Usage::
 * ``final`` (Task 24, bar A19): the bot that ships by default against ISMCTS-1000. The plan
   named PUCT-2000; no network passed A9, so the default in docs/open-items.md ships ISMCTS as
   ``expert``, and this measures that bot.
+* ``b2`` (Task 21, bar A16): ``expert`` against Charlesworth's released network, under his
+  rules (the engine's hidden ``four_card_plays`` flag) and his scoring (``sum_of_others``, the
+  tournament's ``--score-as``), ``--deals`` duplicate deals, both lineups. The weights are
+  local only (``runs/external/charlesworth/``, never committed; B14). The match is the plan's
+  PUCT-2000 slot filled by ``expert``, the bot that ships (see ``final``).
 * ``seeds-train``, ``seeds-match`` (Task 23, bar A18): a second network from fresh weights
   (seed 1) on the labels of rounds 1-3, then PUCT-2000 r3 against PUCT-2000 of that network.
 * ``probe``, ``probe-eval`` (Task 22, bar A17): best-response probes. A learner in one seat
@@ -462,6 +468,122 @@ def final(args: argparse.Namespace, progress: Progress) -> None:
     progress.update(None, done=name)
 
 
+# b2 (Task 21) ---------------------------------------------------------------------
+
+#: His agent plays the network's best legal action (``temperature`` 0).
+CHARLESWORTH = "charlesworth"
+B2_LINEUPS = {
+    "1+3": [EXPERT, CHARLESWORTH, CHARLESWORTH, CHARLESWORTH],
+    "ABAB": [EXPERT, CHARLESWORTH, EXPERT, CHARLESWORTH],
+}
+
+
+def _b2_block(lineup: list[str], block_seed: int, deals: int, workers: int) -> list[dict]:
+    """Raw per-deal records of ``deals`` duplicate deals (four rotations each) under his
+    rules and scoring; the deals are those of ``seed = block_seed`` in the tournament."""
+    from big2.eval.tournament import _play_deals
+    from big2.games.big2 import Rules
+
+    seeds = [block_seed * 1_000_000 + d for d in range(deals)]
+    chunks = [seeds[i::workers] for i in range(workers)]
+    rules = Rules(four_card_plays=True)
+    with ProcessPoolExecutor(workers) as pool:
+        parts = pool.map(
+            _play_deals,
+            [lineup] * workers,
+            chunks,
+            [rules] * workers,
+            ["sum_of_others"] * workers,
+        )
+        return [r for part in parts for r in part]
+
+
+def _b2_stats(raw: list[dict], spec: str) -> dict[str, Any]:
+    """Mean score and win rate of ``spec`` over deals (each deal's four games averaged)."""
+    from big2.eval.tournament import _mean_ci
+
+    scores = [sum(r[f"score|{spec}"]) / len(r[f"score|{spec}"]) for r in raw]
+    wins = [sum(r[f"win|{spec}"]) / len(r[f"win|{spec}"]) for r in raw]
+    time_s = sum(sum(r[f"time|{spec}"]) for r in raw)
+    moves = sum(sum(r[f"moves|{spec}"]) for r in raw)
+    m, ci = _mean_ci(scores)
+    w, wci = _mean_ci(wins)
+    return {
+        "scores": scores,
+        "mean": m,
+        "ci95": ci,
+        "win": w,
+        "win_ci95": wci,
+        "seconds_per_move": time_s / max(moves, 1),
+    }
+
+
+def b2(args: argparse.Namespace, progress: Progress) -> None:
+    name = "b2_charlesworth"
+    if _done(args, name):
+        return
+    from big2.eval.tournament import _mean_ci
+
+    folder = ROOT / "runs" / args.out / name
+    reports: dict[str, Any] = {}
+    for lu, lineup in B2_LINEUPS.items():
+        raw: list[dict] = []
+        for start in range(0, args.deals, args.block):
+            n = min(args.block, args.deals - start)
+            path = folder / lu.replace("+", "p") / f"block_s{args.seed}_d{start}-{start + n}.json"
+            if path.exists():
+                raw += json.loads(path.read_text(encoding="utf-8"))
+                continue
+            progress.update(f"{name} {lu}, deals up to {start + n} of {args.deals}")
+            # Seed 1_000 * seed + block index: blocks never share a deal.
+            block = _b2_block(
+                lineup, 1_000 * (args.seed + 1) + start // args.block, n, args.workers
+            )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(block), encoding="utf-8")
+            tmp.replace(path)
+            raw += block
+        e, c = _b2_stats(raw, EXPERT), _b2_stats(raw, CHARLESWORTH)
+        diff = [a - b for a, b in zip(e["scores"], c["scores"], strict=True)]
+        d_mean, d_ci = _mean_ci(diff)
+        reports[lu] = {
+            "deals": len(raw),
+            "expert": {k: v for k, v in e.items() if k != "scores"},
+            "charlesworth": {k: v for k, v in c.items() if k != "scores"},
+            "paired_diff": d_mean,
+            "paired_ci95": d_ci,
+        }
+        print(
+            f"done {name} {lu}: expert {e['mean']:+.2f} +- {e['ci95']:.2f}, win {e['win']:.1%}; "
+            f"Charlesworth {c['mean']:+.2f} +- {c['ci95']:.2f}",
+            flush=True,
+        )
+        progress.update(None, done=f"{name} {lu}")
+    lines = [
+        f"`expert` (`{EXPERT}`) vs Charlesworth's network (`{CHARLESWORTH}`, best legal action), "
+        f"his rules (`four_card_plays`) and his scoring (`sum_of_others`), "
+        f"{args.deals:,} duplicate deals per lineup, each deal played in four rotations; "
+        "mean score per game with the 95 % interval over deals.",
+        "",
+        "| Lineup | Deals | `expert` mean | `expert` win rate | Charlesworth mean "
+        "| Charlesworth win rate | Paired diff expert - Charlesworth | s per move expert / his |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        *(
+            f"| {lu} | {r['deals']:,} | {r['expert']['mean']:+.2f} ± {r['expert']['ci95']:.2f} "
+            f"| {r['expert']['win']:.1%} ± {r['expert']['win_ci95']:.1%} "
+            f"| {r['charlesworth']['mean']:+.2f} ± {r['charlesworth']['ci95']:.2f} "
+            f"| {r['charlesworth']['win']:.1%} ± {r['charlesworth']['win_ci95']:.1%} "
+            f"| {r['paired_diff']:+.2f} ± {r['paired_ci95']:.2f} "
+            f"| {r['expert']['seconds_per_move']:.3f} "
+            f"/ {r['charlesworth']['seconds_per_move']:.4f} |"
+            for lu, r in reports.items()
+        ),
+    ]
+    _finish(args, name, {"candidate": EXPERT, "opponent": CHARLESWORTH, "reports": reports}, lines)
+    progress.update(None, done=name)
+
+
 # seeds (Task 23) ------------------------------------------------------------------
 
 
@@ -674,6 +796,7 @@ COMMANDS = {
     "rules-mask": rules_mask,
     "endgame": endgame,
     "final": final,
+    "b2": b2,
     "seeds-train": seeds_train,
     "seeds-match": seeds_match,
     "probe": probe,
@@ -685,6 +808,7 @@ CELLS = {
     "rules-mask": ["a_rules_mask 1+3", "a_rules_mask ABAB"],
     "endgame": ["b_endgame 1+3", "b_endgame ABAB"],
     "final": ["a_expert_vs_ismcts1000 1+3", "a_expert_vs_ismcts1000 ABAB"],
+    "b2": ["b2_charlesworth 1+3", "b2_charlesworth ABAB"],
     "seeds-train": ["seed B training"],
     "seeds-match": ["a_r3_vs_seedB 1+3", "a_r3_vs_seedB ABAB"],
     "probe": list(PROBES),
