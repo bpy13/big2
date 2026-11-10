@@ -185,7 +185,7 @@ ties an action to hidden cards; it is kept on as a correctness fix, not a streng
 
 ## 3. Learned belief (Task 19)
 
-Status 2026-11-10: code done, round 1 job queued (hkq job 46); numbers below when it ends.
+Status 2026-11-10: round 1 done (hkq job 46, ended 22:48); result: **teaching only** (A14 missed).
 
 - **Network** (`python/big2/rl/belief.py`): state features (what the Q-network sees) → 320 → 256
   → `52 × 3` logits, added to the hand-size baseline (seat `s` holds a hidden card with
@@ -206,6 +206,33 @@ Status 2026-11-10: code done, round 1 job queued (hkq job 46); numbers below whe
 - **Rule (A14):** keep the sampler in the ladder only if PUCT-2000 with it beats PUCT-2000
   with the rules mask by ≥ +0.5 paired with the interval above 0; else "teaching only".
   Round 1 only.
+
+### Round 1 result (2026-11-10, job 46)
+
+Held-out log-likelihood per hidden card (1,059,754 cards held out, 6 epochs, from
+`runs/belief/v1/results.json` in the slot-2 worktree):
+
+| Model | Log-likelihood per card | Top-1 holder |
+|---|---:|---:|
+| Hand-size baseline (uniform) | -1.0486 | |
+| Belief net, epoch 2 (best) | -0.9962 | 46.2 % |
+| Belief net, epoch 6 (exported) | -1.0007 | 45.9 % |
+
+The net beats the baseline by 0.048 per card (epoch 6); it peaked at epoch 2 and then overfit
+slightly (the exported file is the last epoch, not the best). The earlier measurement
+(0.37 -> 0.40) used a different scale and is not comparable.
+
+300-deal match, PUCT-2000 with `belief=net` vs PUCT-2000 with `belief=rules`, duty on, tiered
+(`runs/belief_r1/a_belief_net/table.md`):
+
+| Lineup | Candidate mean (95 % CI) | Paired diff (95 % CI) | s/move cand / opp |
+|---|---:|---:|---:|
+| 1+3 | +0.30 [-0.08, +0.71] | +0.40 [-0.12, +0.91] | 0.115 / 0.138 |
+| ABAB | +0.12 [-0.17, +0.42] | +0.24 [-0.36, +0.81] | 0.128 / 0.154 |
+
+**A14 (gain >= +0.5, interval above 0): missed in both lineups. Recorded: teaching only.** The
+sampler stays out of the ladder; its per-card posterior can still feed
+`reason.control.highest_out`. Round 1 only, as the plan says.
 
 ## 4. Information-set exact endgame (Task 20)
 

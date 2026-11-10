@@ -582,7 +582,7 @@ to goes through bot-notes (Task 10).
     hard mask a sampler of its own, cheap enough for the phone (no greedy model). Each rule is a
     future reason key (`reason.control.safe_single`, Task 26).
 
-- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]** `[parallel-ok]` (beside earlier phases: job 46 already ran; recording its numbers needs no Task 15 or 17 result) (queue job 46 ended 2026-11-10 22:48, exit 0; next: record round 1's numbers; tick only if the done-when holds, otherwise send the orchestrator a QUESTION) (taken: slot 1, 2026-11-10 23:00)
+- [x] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]** `[parallel-ok]` (beside earlier phases: job 46 already ran; recording its numbers needs no Task 15 or 17 result) (**done 2026-11-10:** round 1 recorded in `build-phase3.md` §3; A14 missed, teaching only)
   (**code done 2026-11-10 (slot 2); job running, not ticked.** Python `python/big2/rl/belief.py`
   (`big2 rl belief-gen`, `belief-train --export`; 476 k parameters; the net corrects the
   hand-size baseline), Rust `big2_big2::belief_net::BeliefNet`, `big2_search::NetSampler` +
@@ -721,7 +721,10 @@ to goes through bot-notes (Task 10).
     (`RulesMask`, `NetSampler`, `infoset_endgame`), what `quality` would carry (`{"samples": n}` or
     `{"exact": true}`) once they accept B20, and the B2/B3 results in three lines.
 
-- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (waiting: queue job 50, full run, cpu lane; est. ~37 h wall on 8 threads (60 deals x 2 lineups, 8 rollouts, rollout iterations 10,000, ~17,700 CPU-s per deal pair from the pilot); output runsollout_br_full in the big2-workers worktree (needs its copied pythonbig2_core.pyd); resume: rerun runsollout_brun.ps1 through the queue, raise --deals in it to add deals (same seeds, same deals.jsonl); a worker then records pilot and run in §7a and ticks)
+- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (waiting: queue job 50, full run, cpu lane; est. ~37 h wall on 8 threads (60 deals x 2 lineups, 8 rollouts, rollout iterations 10,000, ~17,700 CPU-s per deal pair from the pilot); output runs
+ollout_br_full in the big2-workers worktree (needs its copied pythonbig2_core.pyd); resume: rerun runs
+ollout_br
+un.ps1 through the queue, raise --deals in it to add deals (same seeds, same deals.jsonl); a worker then records pilot and run in §7a and ticks)
   (Job 47 is a pilot, not the run: it took 17 minutes, not 1–2 CPU-days, and its rollouts
   played ISMCTS-100, not `expert`'s ISMCTS-10,000. Pilot results, 40 deals each: 1+3 −1.35 ± 3.75,
   ABAB −0.59 ± 1.92, 2.6 s per searched decision; files in

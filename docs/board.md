@@ -3,6 +3,7 @@
 ## Workers
 
 ## Results
+- Task 19 (slot 1, 2026-11-10): ticked. Learned belief round 1: held-out log-lik -1.0007 vs -1.0486 uniform; 300-deal match paired +0.40 [-0.12, +0.91] (1+3), +0.24 [-0.36, +0.81] (ABAB). A14 missed: teaching only.
 - Task 32 (slot 1, 2026-11-10): rerun queued, **not ticked**: queue job 50 (cpu lane, `hkq.ps1 log 50`; `runs/rollout_br_full/progress.json` in the big2-workers worktree) plays 60 deals x 2 lineups with rollouts at ISMCTS-10,000, est. ~37 h wall. Then §7a of build-phase3.md gets the pilot and run numbers and the task is ticked.
 - Task 33 (slot 1, 2026-11-10): code done and pushed, **not ticked**: queue job 49 (gpu lane, `hkq.ps1 log 49`; runs from the big2-workers worktree, needs its untracked `models/big2-distilled-duty.pt`) trains the from-scratch probe 10 h, then plays 1,000 deals; then §6.1 of build-phase3.md gets the numbers and the task is ticked. Smoke only confirmed launch (no full iteration); `pytest` not run here (no `big2._core` built in this worktree).
 - Task 32 (slot 2, 2026-11-10): code done and pushed, **not ticked**: queue job 47 (cpu lane, `hkq.ps1 log 47`; `runs/rollout_br/progress.json`) plays 40 deals x 2 lineups of a rollout attacker (rollouts at ISMCTS-100, real opponents full `expert`); then §7a of build-phase3.md gets the numbers and the task is ticked.
