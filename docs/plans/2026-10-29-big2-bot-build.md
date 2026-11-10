@@ -582,7 +582,7 @@ to goes through bot-notes (Task 10).
     hard mask a sampler of its own, cheap enough for the phone (no greedy model). Each rule is a
     future reason key (`reason.control.safe_single`, Task 26).
 
-- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]** (queue job 46 ended 2026-11-10 22:48, exit 0; next: record its numbers and tick)
+- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]** `[parallel-ok]` (beside earlier phases: job 46 already ran; recording its numbers needs no Task 15 or 17 result) (queue job 46 ended 2026-11-10 22:48, exit 0; next: record round 1's numbers; tick only if the done-when holds, otherwise send the orchestrator a QUESTION)
   (**code done 2026-11-10 (slot 2); job running, not ticked.** Python `python/big2/rl/belief.py`
   (`big2 rl belief-gen`, `belief-train --export`; 476 k parameters; the net corrects the
   hand-size baseline), Rust `big2_big2::belief_net::BeliefNet`, `big2_search::NetSampler` +
