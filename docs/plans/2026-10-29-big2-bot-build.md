@@ -454,7 +454,7 @@ to goes through bot-notes (Task 10).
   - Notes: if (a) fails the bar, follow proposal §10 row 2: check the prior's calibration (log
     loss on held-out round-0 data) and try `leaf = 0.5·network + 0.5·short rollout`; record both.
 
-- [ ] **Task 16: Ladder v1, WebAssembly timing, bot-notes for phase 2** (after 15)
+- [x] **Task 16: Ladder v1, WebAssembly timing, bot-notes for phase 2** (after 15)
   (Bot-notes entry posted 2026-11-01. Not ticked: A11's time part is unmet in the app build, and
   `pvnet::teaching_numbers` does not exist; build it only if a PUCT level is proposed.)
   (**Timing done 2026-11-01** (`build-phase2.md` §5, r3's network, a 13 cards probe beside it):
@@ -742,7 +742,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     (`reason.keeps_control` etc.) untouched; ours are additions. serde_json is already a workspace
     dependency through app-api; add it to `crates/teach` directly.
 
-- [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (inbox default taken: A21 uses compatible agreement; orchestrator's call 2026-11-10, Brian may change it) (taken: slot 1, 2026-11-10 12:00)
+- [x] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (inbox default taken: A21 uses compatible agreement; orchestrator's call 2026-11-10, Brian may change it)
   (**code done 2026-10-30 by opus (not fable: B25 helper brief); repeatability bar not met.**
   `grade.rs` (`evaluate_paired`, `grade_from_table`, `grade_paired`/`grade_paired_table` with
   doubling while `unclear` up to `max_deals`, `Thresholds { from_sigma, APP }`, σ 27.45 →
