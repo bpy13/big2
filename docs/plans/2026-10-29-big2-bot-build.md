@@ -742,7 +742,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     (`reason.keeps_control` etc.) untouched; ours are additions. serde_json is already a workspace
     dependency through app-api; add it to `crates/teach` directly.
 
-- [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]`
+- [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran)
   (**code done 2026-10-30 by opus (not fable: B25 helper brief); repeatability bar not met.**
   `grade.rs` (`evaluate_paired`, `grade_from_table`, `grade_paired`/`grade_paired_table` with
   doubling while `unclear` up to `max_deals`, `Thresholds { from_sigma, APP }`, σ 27.45 →
@@ -800,7 +800,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     with the app's skill list instead and name the unmatched clusters as new-skill candidates.
     Human solve rates (Spearman) arrive only after release: open item, not a task.
 
-- [ ] **Task 29: Error model and ladder v2** **[long: ~45 min CPU]** (after 26)
+- [ ] **Task 29: Error model and ladder v2** **[long: ~45 min CPU]** (after 26) (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran)
   (**code done 2026-10-30, tiny run only; the 500-deal round is pending.**
   `crates/big2/src/bots/error_model.rs` (`ErrorModel<P>`, `Mistake` with keys
   `mistake.hold_two_too_long`, `mistake.break_pair_for_single`, `mistake.miss_safe_single`,
