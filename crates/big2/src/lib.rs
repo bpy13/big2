@@ -25,6 +25,7 @@
 //! assert_eq!(outcome.scores.iter().sum::<f64>(), 0.0);
 //! ```
 
+pub mod belief_net;
 pub mod bots;
 pub mod card;
 pub mod combo;

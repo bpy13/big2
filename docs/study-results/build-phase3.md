@@ -185,7 +185,27 @@ ties an action to hidden cards; it is kept on as a correctness fix, not a streng
 
 ## 3. Learned belief (Task 19)
 
-Not started (after Task 17's round 1).
+Status 2026-11-10: code done, round 1 job queued (hkq job 46); numbers below when it ends.
+
+- **Network** (`python/big2/rl/belief.py`): state features (what the Q-network sees) → 320 → 256
+  → `52 × 3` logits, added to the hand-size baseline (seat `s` holds a hidden card with
+  probability `cards_s / hidden cards`); 475,548 parameters. Loss: log-likelihood of the true
+  holder of each hidden card. Exported as `.pknn` (`big2-belief`), read by
+  `big2_big2::belief_net::BeliefNet`; the Rust output equals PyTorch's to 1e-4
+  (`python/tests/test_belief.py`).
+- **Sampler** (`big2_search::NetSampler`): draw 256 uniform deals, drop those the rules
+  exclude, weight the rest by the product of the net's per-card holder probabilities, temper
+  as `Belief` does (effective sample size ≥ 25 %), draw from them. `analyze(belief="net",
+  belief_net=<.pknn>)` for ISMCTS and PUCT.
+- **Data deviation:** the plan trains on PUCT self-play. PUCT costs about 0.2 s per move, so
+  1 M positions would take about 50 CPU-hours; the positions come from self-play of round 1's
+  network by its prior (5 % random moves), 256 games at a time, about 32 CPU-minutes per
+  million. Hidden cards are the true hands at each decision. Every 20th shard is held out.
+- **Smoke run** (20,000 positions, 2 epochs, 10,000 held out): log-likelihood per hidden card
+  −1.0550 against −1.0555 for the hand-size baseline (too little data to say anything).
+- **Rule (A14):** keep the sampler in the ladder only if PUCT-2000 with it beats PUCT-2000
+  with the rules mask by ≥ +0.5 paired with the interval above 0; else "teaching only".
+  Round 1 only.
 
 ## 4. Information-set exact endgame (Task 20)
 

@@ -253,7 +253,15 @@ impl<G: Rewind> Belief<G> {
             loglik.push(log_likelihood(&d, observer, model));
             deals.push(d);
         }
-        let (weights, tempering) = temper(&loglik, cfg.min_ess);
+        Belief::from_log_weights(deals, &loglik, cfg.min_ess)
+    }
+}
+
+impl<G> Belief<G> {
+    /// Resamples `deals` by weights `exp(τ · log_weights)`, tempered as the module docs
+    /// say. `None` if no deal has positive weight.
+    pub fn from_log_weights(deals: Vec<G>, log_weights: &[f64], min_ess: f64) -> Option<Belief<G>> {
+        let (weights, tempering) = temper(log_weights, min_ess);
         let total: f64 = weights.iter().sum();
         if total <= 0.0 {
             return None; // no candidate explains the history (should not happen)
@@ -288,6 +296,60 @@ impl<G: Game> Belief<G> {
 impl<G: Game> Sampler<G> for Belief<G> {
     fn sample(&self, _root: &G, _observer: Player, rng: &mut SmallRng) -> G {
         self.draw(rng).clone()
+    }
+}
+
+/// A learned opinion about which hidden cards the opponents hold (a network that
+/// looks at what the observer sees), as weights on candidate deals.
+pub trait DealPrior<G: Game>: Sync {
+    /// `log` weight of each of `deals` (full states the observer cannot tell apart
+    /// from `root`), up to a constant. Higher = the model finds that deal likelier.
+    fn log_weights(&self, root: &G, observer: Player, deals: &[G]) -> Vec<f64>;
+}
+
+/// Determinization weighted by a learned [`DealPrior`] (Task 19): draw `candidates`
+/// uniform deals, drop those the rules exclude ([`Rewind::history_consistent`]), weight
+/// the rest by the prior's `exp(τ · log weight)` with the same tempering as [`Belief`],
+/// and let the search draw from them. Built once per decision, like [`Belief`].
+#[derive(Clone, Debug)]
+pub struct NetSampler<G>(Belief<G>);
+
+impl<G: Rewind> NetSampler<G> {
+    /// Weights `cfg.candidates` determinizations of `root` by `prior`. `None` if no
+    /// candidate is possible under the rules (callers fall back to uniform sampling).
+    pub fn new<P: DealPrior<G>>(
+        root: &G,
+        observer: Player,
+        prior: &P,
+        cfg: &BeliefConfig,
+        rng: &mut SmallRng,
+    ) -> Option<NetSampler<G>> {
+        let n = cfg.candidates.max(1);
+        let deals: Vec<G> = (0..n).map(|_| root.determinize(observer, rng)).collect();
+        let mut log_weights = prior.log_weights(root, observer, &deals);
+        assert_eq!(log_weights.len(), deals.len(), "one weight per deal");
+        for (w, d) in log_weights.iter_mut().zip(&deals) {
+            if !d.history_consistent() {
+                *w = f64::NEG_INFINITY;
+            }
+        }
+        Belief::from_log_weights(deals, &log_weights, cfg.min_ess).map(NetSampler)
+    }
+
+    /// The tempering exponent used (0 = uniform over the possible deals, 1 = the net as is).
+    pub fn tempering(&self) -> f64 {
+        self.0.tempering
+    }
+
+    /// Effective sample size of the weights.
+    pub fn ess(&self) -> f64 {
+        self.0.ess
+    }
+}
+
+impl<G: Game> Sampler<G> for NetSampler<G> {
+    fn sample(&self, _root: &G, _observer: Player, rng: &mut SmallRng) -> G {
+        self.0.draw(rng).clone()
     }
 }
 

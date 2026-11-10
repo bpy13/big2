@@ -11,6 +11,7 @@
 //! The friendlier Python API lives in `python/big2/games/big2.py`; this module is
 //! its engine room.
 
+use big2_big2::belief_net::BeliefNet;
 use big2_big2::bots::{Greedy, StructuredGreedy, DEFAULT_PLAN_DEPTH};
 use big2_big2::card::{format_mask, parse_mask};
 use big2_big2::plan;
@@ -19,9 +20,9 @@ use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
 use big2_games::{Game, Policy};
 use big2_search::{
-    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, InfosetConfig,
-    IsmctsConfig, Leaf, Objective, OracleSampler, PimcConfig, PolicyModel, PuctConfig, RulesMask,
-    Sampler, UniformSampler,
+    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, DealPrior, InfosetConfig,
+    IsmctsConfig, Leaf, NetSampler, Objective, OracleSampler, PimcConfig, PolicyModel, PuctConfig,
+    RulesMask, Sampler, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -64,6 +65,34 @@ fn load_pvnet(path: &str) -> PyResult<Arc<PvNet>> {
     let net = Arc::new(PvNet::from_bytes(&bytes).map_err(|e| value_error(format!("{path}: {e}")))?);
     cache.insert(path.to_string(), net.clone());
     Ok(net)
+}
+
+/// The learned belief network as a [`DealPrior`]: the sum of the log-probabilities it
+/// gives each hidden card's true holder in a candidate deal.
+struct NetPrior(Arc<BeliefNet>);
+
+impl DealPrior<State> for NetPrior {
+    fn log_weights(&self, root: &State, observer: usize, deals: &[State]) -> Vec<f64> {
+        let lp = self.0.card_log_probs(root);
+        deals
+            .iter()
+            .map(|d| BeliefNet::deal_log_weight(&lp, observer, d))
+            .collect()
+    }
+}
+
+/// Loads a belief `.pknn` (`big2 rl belief-train --export`) once per path.
+fn load_belief_net(path: &str) -> PyResult<NetPrior> {
+    static CACHE: OnceLock<Mutex<HashMap<String, Arc<BeliefNet>>>> = OnceLock::new();
+    let mut cache = CACHE.get_or_init(Default::default).lock().unwrap();
+    if let Some(net) = cache.get(path) {
+        return Ok(NetPrior(net.clone()));
+    }
+    let bytes = std::fs::read(path).map_err(|e| value_error(format!("{path}: {e}")))?;
+    let net =
+        Arc::new(BeliefNet::from_bytes(&bytes).map_err(|e| value_error(format!("{path}: {e}")))?);
+    cache.insert(path.to_string(), net.clone());
+    Ok(NetPrior(net))
 }
 
 fn rng_from(seed: Option<u64>) -> SmallRng {
@@ -512,7 +541,7 @@ impl PyState {
 /// at most; then the search runs) and reports `exact`
 /// and `forced` (`(winner, plays)`). The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None, infoset_endgame=None, infoset_max_cards=10, infoset_max_nodes=1_000_000))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_net=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None, infoset_endgame=None, infoset_max_cards=10, infoset_max_nodes=1_000_000))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -530,6 +559,7 @@ fn analyze<'py>(
     rollout: &str,
     rollout_plan_depth: usize,
     belief: Option<&str>,
+    belief_net: Option<&str>,
     belief_candidates: usize,
     belief_epsilon: f64,
     belief_min_ess: f64,
@@ -564,17 +594,32 @@ fn analyze<'py>(
     // "rules": uniform deals minus those the rules exclude (last-card duty; Task 18).
     let rules_mask = (belief == Some("rules")).then(RulesMask::default);
     let model = match belief {
-        None | Some("none") | Some("oracle") | Some("rules") => None,
+        None | Some("none") | Some("oracle") | Some("rules") | Some("net") => None,
         Some("greedy") => Some(PolicyModel {
             policy: Greedy { epsilon: 0.0 },
             epsilon: belief_epsilon,
         }),
         Some(other) => {
             return Err(value_error(format!(
-                "unknown belief model {other:?} (use \"rules\", \"greedy\", \"oracle\" or none)"
+                "unknown belief model {other:?} (use \"rules\", \"net\", \"greedy\", \"oracle\" or none)"
             )))
         }
     };
+    // "net": uniform candidates weighted by a learned belief network (Task 19).
+    let net_prior = if belief == Some("net") {
+        let path = belief_net.ok_or_else(|| {
+            value_error("belief=\"net\" needs belief_net=<path to a belief .pknn file>")
+        })?;
+        Some(load_belief_net(path)?)
+    } else {
+        None
+    };
+    if belief != Some("net") && belief_net.is_some() {
+        return Err(value_error("belief_net is only used with belief=\"net\""));
+    }
+    if net_prior.is_some() && algorithm == "pimc" {
+        return Err(value_error("belief=\"net\" works with ismcts and puct"));
+    }
     if algorithm != "ismcts" && (model.is_some() || oracle || value.is_some()) {
         return Err(value_error(
             "belief (other than \"rules\") and value are only supported with ismcts",
@@ -656,8 +701,22 @@ fn analyze<'py>(
                 let (analysis, ess) = py.detach(|| {
                     let mut rng = SmallRng::seed_from_u64(seed ^ 0xB3_11EF);
                     let weighted = model.and_then(|m| Belief::new(&s, player, &m, &bcfg, &mut rng));
-                    let ess = weighted.as_ref().map(|b| b.ess);
+                    let netted = net_prior
+                        .as_ref()
+                        .and_then(|p| NetSampler::new(&s, player, p, &bcfg, &mut rng));
+                    let ess = weighted
+                        .as_ref()
+                        .map(|b| b.ess)
+                        .or_else(|| netted.as_ref().map(NetSampler::ess));
                     let a = match &weighted {
+                        _ if netted.is_some() => ismcts_with(
+                            &s,
+                            player,
+                            &cfg,
+                            &rollout,
+                            netted.as_ref().unwrap(),
+                            leaf.as_ref(),
+                        ),
                         _ if oracle => {
                             ismcts_with(&s, player, &cfg, &rollout, &OracleSampler, leaf.as_ref())
                         }
@@ -712,10 +771,34 @@ fn analyze<'py>(
                     infoset_endgame: None, // solved above when asked for
                 };
                 // With λ = 1 (the default) the rollout is never played: same result as `puct`.
-                let r = py.detach(|| match &rules_mask {
-                    Some(m) => puct_with_rollout(&s, player, &cfg, &*net, m, &rollout),
-                    None => puct_with_rollout(&s, player, &cfg, &*net, &UniformSampler, &rollout),
+                let bcfg = BeliefConfig {
+                    candidates: belief_candidates,
+                    min_ess: belief_min_ess,
+                };
+                let (r, ess) = py.detach(|| {
+                    let mut rng = SmallRng::seed_from_u64(seed ^ 0xB3_11EF);
+                    let netted = net_prior
+                        .as_ref()
+                        .and_then(|p| NetSampler::new(&s, player, p, &bcfg, &mut rng));
+                    if let Some(n) = &netted {
+                        let r = puct_with_rollout(&s, player, &cfg, &*net, n, &rollout);
+                        (r, Some(n.ess()))
+                    } else {
+                        let r = match &rules_mask {
+                            Some(m) => puct_with_rollout(&s, player, &cfg, &*net, m, &rollout),
+                            None => puct_with_rollout(
+                                &s,
+                                player,
+                                &cfg,
+                                &*net,
+                                &UniformSampler,
+                                &rollout,
+                            ),
+                        };
+                        (r, None)
+                    }
                 });
+                belief_ess = ess;
                 first_answer = r.first_answer.map(|a| a.cards());
                 r.analysis
             }
@@ -812,6 +895,18 @@ fn sample_deals(
         .collect())
 }
 
+/// A belief network's log-probabilities for the player to act: 52 cards, each with
+/// the three relative seats (1, 2, 3) that could hold it (`belief.pknn` of
+/// `big2 rl belief-train --export`). For checking the Rust reader against PyTorch.
+#[pyfunction]
+fn belief_log_probs(state: &PyState, path: &str) -> PyResult<Vec<[f32; 3]>> {
+    if state.inner.current_player().is_none() {
+        return Err(value_error("the deal is over"));
+    }
+    let prior = load_belief_net(path)?;
+    Ok(prior.0.card_log_probs(&state.inner).to_vec())
+}
+
 /// A value network's estimate for the position (all hands visible to it):
 /// `(scores, win_probabilities)` per absolute seat.
 #[pyfunction]
@@ -834,6 +929,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(candidates, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
     m.add_function(wrap_pyfunction!(value_estimate, m)?)?;
+    m.add_function(wrap_pyfunction!(belief_log_probs, m)?)?;
     m.add_function(wrap_pyfunction!(sample_deals, m)?)?;
     m.add_class::<vecenv::VecEnv>()?;
     m.add_function(wrap_pyfunction!(vecenv::encode, m)?)?;

@@ -35,8 +35,8 @@ pub mod puct;
 
 pub use analysis::{Analysis, MoveStats, Objective};
 pub use belief::{
-    Belief, BeliefConfig, OracleSampler, PolicyModel, RulesMask, RulesMaskStats, Sampler,
-    UniformSampler,
+    Belief, BeliefConfig, DealPrior, NetSampler, OracleSampler, PolicyModel, RulesMask,
+    RulesMaskStats, Sampler, UniformSampler,
 };
 pub use infoset_endgame::{infoset_endgame, Forced, InfosetConfig, InfosetResult};
 pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};

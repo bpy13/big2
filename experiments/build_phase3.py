@@ -3,6 +3,7 @@
 Usage::
 
     python experiments/build_phase3.py rules-mask --workers 8
+    python experiments/build_phase3.py belief --net N.pknn --belief-net B.pknn --out belief_r1
     python experiments/build_phase3.py endgame --workers 8
     python experiments/build_phase3.py endgame --positions 6 --deals 4 --out p3_tiny  # smoke run
     python experiments/build_phase3.py final --deals 10000 --block 200 --out final_matches
@@ -16,6 +17,10 @@ Usage::
   decision (on positions from ISMCTS self-play), then PUCT-2000 with ``belief=rules``
   against the same PUCT without it, ``--deals`` duplicate deals, both lineups. A13: the
   interval includes or exceeds 0 (the mask loses nothing).
+* ``belief`` (Task 19, bar A14): PUCT-2000 with ``belief=net`` (uniform candidates weighted by
+  the learned belief network, ``--belief-net``) against PUCT-2000 with ``belief=rules``,
+  ``--deals`` duplicate deals, both lineups. A14: the net stays in the ladder only if the
+  paired gain is at least +0.5 with the interval excluding 0.
 * ``endgame`` (Task 20, bar A15): ``--positions`` late positions (at most 12 cards hidden
   and at most 14 in all hands) from PUCT self-play; on each, the information-set endgame
   (every deal solved, cap ``--exact-max-nodes``) against ISMCTS-100,000: agreement on the
@@ -197,6 +202,45 @@ def rules_mask(args: argparse.Namespace, progress: Progress) -> None:
         args,
         name,
         {"candidate": cand, "opponent": opp, "rejections": shares, "reports": reports, "a13": ok},
+        lines,
+    )
+    progress.update(None, done=name)
+
+
+# belief (Task 19) -----------------------------------------------------------------
+
+#: A14: the learned belief stays in the ladder only with this gain, interval above 0.
+A14_GAIN = 0.5
+
+
+def belief(args: argparse.Namespace, progress: Progress) -> None:
+    name = "a_belief_net"
+    if _done(args, name):
+        return
+    if not args.belief_net:
+        raise SystemExit("belief needs --belief-net <belief .pknn>")
+    cand = puct2000(args.net, f"belief=net,belief_net={args.belief_net}")
+    opp = puct2000(args.net, "belief=rules")
+    reports = play_cell(args, progress, name, cand, opp, args.deals)
+    verdict = {
+        lu: bool(r["paired_diff"] >= A14_GAIN and r["paired_ci95"][0] > 0)
+        for lu, r in reports.items()
+    }
+    keep = all(verdict.values())
+    lines = [
+        f"`{cand}` vs `{opp}`, {args.deals:,} duplicate deals, duty on, tiered.",
+        "",
+        *TABLE_HEAD,
+        *(_row("PUCT-2000 belief net vs rules mask", lu, r) for lu, r in reports.items()),
+        "",
+        f"A14 (paired gain ≥ +{A14_GAIN} with the interval above 0): "
+        + ", ".join(f"{lu} {'yes' if v else 'no'}" for lu, v in verdict.items())
+        + (". Keep the sampler in the ladder." if keep else ". Teaching only."),
+    ]
+    _finish(
+        args,
+        name,
+        {"candidate": cand, "opponent": opp, "reports": reports, "a14": verdict, "keep": keep},
         lines,
     )
     progress.update(None, done=name)
@@ -794,6 +838,7 @@ def probe_eval(args: argparse.Namespace, progress: Progress) -> None:
 
 COMMANDS = {
     "rules-mask": rules_mask,
+    "belief": belief,
     "endgame": endgame,
     "final": final,
     "b2": b2,
@@ -806,6 +851,7 @@ COMMANDS = {
 ALL = ["rules-mask", "endgame"]
 CELLS = {
     "rules-mask": ["a_rules_mask 1+3", "a_rules_mask ABAB"],
+    "belief": ["a_belief_net 1+3", "a_belief_net ABAB"],
     "endgame": ["b_endgame 1+3", "b_endgame ABAB"],
     "final": ["a_expert_vs_ismcts1000 1+3", "a_expert_vs_ismcts1000 ABAB"],
     "b2": ["b2_charlesworth 1+3", "b2_charlesworth ABAB"],
@@ -820,6 +866,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0] if __doc__ else None)
     ap.add_argument("command", choices=[*COMMANDS, "all"])
     ap.add_argument("--net", default=DEFAULT_NET, help=".pknn network v2 for PUCT")
+    ap.add_argument("--belief-net", default="", help="belief: the learned belief .pknn")
     ap.add_argument("--deals", type=int, default=300, help="deals per match")
     ap.add_argument("--positions", type=int, default=300, help="endgame: late positions")
     ap.add_argument("--position-simulations", type=int, default=300)

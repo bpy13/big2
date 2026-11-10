@@ -499,6 +499,44 @@ def rl_distill_gen(
     console.print(f"{n:,} decisions written to {out_dir}")
 
 
+@rl.command("belief-gen")
+def rl_belief_gen(
+    checkpoint: Annotated[str, typer.Option(help="Network v2 checkpoint that plays.")],
+    out_dir: Annotated[str, typer.Option(help="Where to write shards.")] = "runs/belief/data",
+    positions: int = 1_000_000,
+    seed: int = 0,
+) -> None:
+    """Self-play positions with the true holder of every unseen card (Task 19)."""
+    from big2.rl.belief import generate
+
+    n = generate(checkpoint, out_dir, positions=positions, seed=seed, log=console.print)
+    console.print(f"{n:,} positions in {out_dir}")
+
+
+@rl.command("belief-train")
+def rl_belief_train(
+    data_dir: str = "runs/belief/data",
+    run_dir: str = "runs/belief/v1",
+    epochs: int = 6,
+    batch_size: int = 2048,
+    device: Device = "auto",
+    export: Annotated[str | None, typer.Option(help="Also write this .pknn file.")] = None,
+) -> None:
+    """Train the learned belief net (which opponent holds each unseen card)."""
+    from big2.rl.belief import BeliefConfig, export_belief_pknn, train
+
+    best = train(
+        data_dir,
+        run_dir,
+        BeliefConfig(epochs=epochs, batch_size=batch_size),
+        device=device,
+        log=console.print,
+    )
+    if export:
+        export_belief_pknn(best, export)
+        console.print(f"exported {export}")
+
+
 @rl.command("distill-train")
 def rl_distill_train(
     data_dir: str = "runs/distill/data",

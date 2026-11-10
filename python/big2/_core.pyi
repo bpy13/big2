@@ -138,8 +138,10 @@ def analyze(
     rollout_epsilon: float = 0.1,
     rollout: str = "greedy",  # "greedy" | "structured" (StructuredGreedy, Task 5)
     rollout_plan_depth: int = 8,
-    # None | "rules" (ismcts, puct) | "greedy" | "oracle" (cheats; diagnostics only)
+    # None | "rules" (ismcts, puct) | "net" (ismcts, puct; needs belief_net) | "greedy" | "oracle"
+    # (cheats; diagnostics only)
     belief: str | None = None,
+    belief_net: str | None = None,  # belief="net": a belief .pknn (big2 rl belief-train)
     belief_candidates: int = 256,
     belief_epsilon: float = 0.2,
     belief_min_ess: float = 0.25,
@@ -167,6 +169,7 @@ def sample_deals(
     seed: int = 0,
 ) -> list[list[int]]: ...
 def value_estimate(state: Big2State, path: str) -> tuple[list[float], list[float]]: ...
+def belief_log_probs(state: Big2State, path: str) -> list[list[float]]: ...
 
 # --- Phase 3: RL environment (crates/pybind/src/vecenv.rs) -----------------
 

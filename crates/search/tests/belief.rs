@@ -174,3 +174,82 @@ fn leaf_evaluator_values_reach_the_root() {
         assert_eq!(m.mean_score, -10.0, "{m:?}");
     }
 }
+
+// --- Task 19: the learned-belief sampler -------------------------------------
+
+use big2_big2::belief_net::{synthetic_graph, BeliefNet};
+use big2_search::{DealPrior, NetSampler, Sampler};
+
+/// A prior that likes deals where the next seat holds the highest unseen card.
+struct LikesNextSeat;
+
+impl DealPrior<State> for LikesNextSeat {
+    fn log_weights(&self, root: &State, observer: usize, deals: &[State]) -> Vec<f64> {
+        let unseen = big2_big2::card::FULL_DECK & !root.hand(observer) & !root.played();
+        let top = 63 - unseen.leading_zeros();
+        deals
+            .iter()
+            .map(|d| {
+                if d.hand((observer + 1) % 4) >> top & 1 == 1 {
+                    20.0
+                } else {
+                    0.0
+                }
+            })
+            .collect()
+    }
+}
+
+/// The network as a prior: what `crates/pybind` does.
+struct NetPrior(BeliefNet);
+
+impl DealPrior<State> for NetPrior {
+    fn log_weights(&self, root: &State, observer: usize, deals: &[State]) -> Vec<f64> {
+        let lp = self.0.card_log_probs(root);
+        deals
+            .iter()
+            .map(|d| BeliefNet::deal_log_weight(&lp, observer, d))
+            .collect()
+    }
+}
+
+#[test]
+fn net_sampler_draws_deals_the_observer_cannot_tell_apart_from_the_root() {
+    let s = greedy_game(7, 14);
+    let me = s.current_player().unwrap();
+    let net = NetPrior(BeliefNet::new(synthetic_graph(16, 4)).unwrap());
+    let mut rng = SmallRng::seed_from_u64(1);
+    let ns = NetSampler::new(&s, me, &net, &BeliefConfig::default(), &mut rng).unwrap();
+    assert!(ns.tempering() >= 0.0 && ns.tempering() <= 1.0);
+    for _ in 0..50 {
+        let d = ns.sample(&s, me, &mut rng);
+        assert_eq!(d.hand(me), s.hand(me));
+        assert_eq!(d.hand_sizes(), s.hand_sizes());
+        assert_eq!(d.played(), s.played());
+        assert!(d.history_consistent());
+    }
+}
+
+#[test]
+fn net_sampler_follows_a_strong_prior() {
+    let s = greedy_game(8, 10);
+    let me = s.current_player().unwrap();
+    let cfg = BeliefConfig {
+        candidates: 400,
+        min_ess: 0.001,
+    };
+    let mut rng = SmallRng::seed_from_u64(2);
+    let ns = NetSampler::new(&s, me, &LikesNextSeat, &cfg, &mut rng).unwrap();
+    let unseen = big2_big2::card::FULL_DECK & !s.hand(me) & !s.played();
+    let top = 63 - unseen.leading_zeros();
+    let hits = (0..400)
+        .filter(|_| ns.sample(&s, me, &mut rng).hand((me + 1) % 4) >> top & 1 == 1)
+        .count();
+    assert!(
+        hits > 300,
+        "{hits} of 400 draws give the next seat the top card"
+    );
+    // With the default tempering the same prior is flattened, not followed blindly.
+    let ns = NetSampler::new(&s, me, &LikesNextSeat, &BeliefConfig::default(), &mut rng).unwrap();
+    assert!(ns.ess() >= 0.25 * 256.0 - 1.0);
+}

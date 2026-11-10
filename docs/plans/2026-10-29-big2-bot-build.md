@@ -582,7 +582,19 @@ to goes through bot-notes (Task 10).
     hard mask a sampler of its own, cheap enough for the phone (no greedy model). Each rule is a
     future reason key (`reason.control.safe_single`, Task 26).
 
-- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]** (taken: slot 2, 2026-11-10 20:06)
+- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]**
+  (**code done 2026-11-10 (slot 2); job running, not ticked.** Python `python/big2/rl/belief.py`
+  (`big2 rl belief-gen`, `belief-train --export`; 476 k parameters; the net corrects the
+  hand-size baseline), Rust `big2_big2::belief_net::BeliefNet`, `big2_search::NetSampler` +
+  `DealPrior`, `analyze(belief="net", belief_net=…)` for ISMCTS and PUCT, match command
+  `experiments/build_phase3.py belief`; tests pass (3 + 2 Rust, 4 Python). Data comes from
+  self-play of round 1's network by its prior, not PUCT self-play (PUCT: ~0.2 s per move,
+  1 M positions would be ~50 CPU-hours). **Round 1 only** (the plan says once per round at most).
+  Queue job 46 (`hkq.ps1 status`; `hkq.ps1 log 46`; `runs\belief\run.log` in the slot-2
+  worktree `.worktrees\.worktrees\big2-2`): generate 1 M positions, train, export
+  `runs\belief\belief-r1.pknn`, 300-deal match PUCT-2000 net vs rules mask →
+  `runs\belief_r1\results.json`. Then: copy the numbers into `build-phase3.md` §3 (held-out
+  log-likelihood from `runs\belief\v1\results.json`), apply the A14 rule, tick.)
   - Files: create `python/big2/rl/belief.py` (small net ≤ 0.5 M parameters: from the actor's view
     predict, for each unseen card, which of the three opponents holds it; trained on 1 M positions
     from PUCT self-play of the current round; `big2 rl belief-train`); `.pknn` export; create
