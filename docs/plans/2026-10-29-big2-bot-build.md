@@ -721,7 +721,7 @@ to goes through bot-notes (Task 10).
     (`RulesMask`, `NetSampler`, `infoset_endgame`), what `quality` would carry (`{"samples": n}` or
     `{"exact": true}`) once they accept B20, and the B2/B3 results in three lines.
 
-- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result)
+- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (taken: slot 2, 2026-11-10 12:00)
   (Added 2026-11-10 on Brian's word "Yes, add all three", from the strength-check research: no
   outside test of `expert` exists, and Charlesworth's network only ties it, A16.)
   - What: one seat plays a best response found by rollouts. At each decision it tries every legal
