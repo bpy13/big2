@@ -582,7 +582,7 @@ to goes through bot-notes (Task 10).
     hard mask a sampler of its own, cheap enough for the phone (no greedy model). Each rule is a
     future reason key (`reason.control.safe_single`, Task 26).
 
-- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]**
+- [ ] **Task 19: Learned belief per round, kept only if it pays** `(fable)` **[GPU: ~2 h per round; CPU 1 h]** (taken: slot 2, 2026-11-10 20:06)
   - Files: create `python/big2/rl/belief.py` (small net ≤ 0.5 M parameters: from the actor's view
     predict, for each unseen card, which of the three opponents holds it; trained on 1 M positions
     from PUCT self-play of the current round; `big2 rl belief-train`); `.pknn` export; create
