@@ -721,7 +721,13 @@ to goes through bot-notes (Task 10).
     (`RulesMask`, `NetSampler`, `infoset_endgame`), what `quality` would carry (`{"samples": n}` or
     `{"exact": true}`) once they accept B20, and the B2/B3 results in three lines.
 
-- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (waiting: queue job 47, rollout run; code done, a worker records the numbers in build-phase3.md §7a and ticks after it ends)
+- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result)
+  (Job 47 is a pilot, not the run: it took 17 minutes, not 1–2 CPU-days, and its rollouts
+  played ISMCTS-100, not `expert`'s ISMCTS-10,000. Pilot results, 40 deals each: 1+3 −1.35 ± 3.75,
+  ABAB −0.59 ± 1.92, 2.6 s per searched decision; files in
+  `.worktrees\.worktrees\big2-2\runs\rollout_br\`. Orchestrator 2026-11-10: rerun with
+  `--rollout-iterations` as close to 10,000 as the 2-CPU-day budget allows, timed from the
+  pilot, with a new `--out` folder; record the pilot and the run in §7a, then tick.)
   (Added 2026-11-10 on Brian's word "Yes, add all three", from the strength-check research: no
   outside test of `expert` exists, and Charlesworth's network only ties it, A16.)
   - What: one seat plays a best response found by rollouts. At each decision it tries every legal
