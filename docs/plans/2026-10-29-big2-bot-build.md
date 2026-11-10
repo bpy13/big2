@@ -742,7 +742,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     (`reason.keeps_control` etc.) untouched; ours are additions. serde_json is already a workspace
     dependency through app-api; add it to `crates/teach` directly.
 
-- [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (inbox default taken: A21 uses compatible agreement; orchestrator's call 2026-11-10, Brian may change it)
+- [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (inbox default taken: A21 uses compatible agreement; orchestrator's call 2026-11-10, Brian may change it) (taken: slot 1, 2026-11-10 12:00)
   (**code done 2026-10-30 by opus (not fable: B25 helper brief); repeatability bar not met.**
   `grade.rs` (`evaluate_paired`, `grade_from_table`, `grade_paired`/`grade_paired_table` with
   doubling while `unclear` up to `max_deals`, `Thresholds { from_sigma, APP }`, σ 27.45 →
