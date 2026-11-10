@@ -769,7 +769,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     app's current lines are 1 / 3 / 9 points; open question 3 asks Brian which to ship. Both
     tables are in `crates/teach/README.md`.
 
-- [ ] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27)
+- [ ] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27) (taken: slot 3, 2026-11-10 21:00)
   (**code done 2026-10-30, tiny run only; the full run is pending.** Miner in Rust:
   `big2-teach mine` (self-play by easy, medium, hard, hard; paired table of 600 deals per
   decision; candidate = gap ≥ 2 with interval above 0, easy and medium wrong on ≥ half of 16
