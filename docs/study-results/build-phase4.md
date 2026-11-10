@@ -146,9 +146,9 @@ mistakes with no key). **App skills with no cluster:** `endgame_counting` (no ke
 counting yet) and `saving_twos` (32 drills carry it, from their keys, but no mistake cluster
 of 10 or more).
 
-**Verdict Task 28:** not ticked. Shape, count and clusters are done; the rating spread misses
-A22 by 52 points. The default fix (rate by the gap alone within each share band) changes the
-formula and waits for Brian (`docs/open-items.md`).
+**Re-run with banded ratings (2026-11-10, slot 3):** 553 drills (the miner is not bit-for-bit repeatable), ratings 600–1,400 (800 points, A22 met), skills `control` 203, `keep_the_plan` 184, `finish_in_two` 46, `saving_twos` 36, `score_vs_win` 31, `when_to_pass` 20, `general` 18, `kingmaking` 15. New-skill candidates unchanged. Formula: decision 0004 (orchestrator's call, Brian may change it; `RATING_FORMULA = "seed"` restores the first one).
+
+**Verdict Task 28:** ticked.
 
 Tiny run (6 deals, `runs/p4_mine_tiny3/`): 2 drills (ratings 991 and 1085; skills
 `keep_the_plan`, `saving_twos`), 57 graded mistakes. Largest clusters by the best move's keys:

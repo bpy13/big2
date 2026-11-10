@@ -417,7 +417,7 @@ to goes through bot-notes (Task 10).
     `threads == 1` path on the calling thread (Task 2's rule). `c_puct` default 1.5; Task 15 tries
     1.0 and 2.5 on 300 deals and keeps the best.
 
-- [ ] **Task 15: Phase 2 matches** **[long: ~4 h CPU, headless]** (after 14)
+- [ ] **Task 15: Phase 2 matches** **[long: ~4 h CPU, headless]** (after 14) (waiting: Brian, does a recorded miss count as done)
   (**results in, bars failed; fallback running.** Job finished 2026-10-29 19:47; tables and
   verdicts in `build-phase2.md` §1–§4. A9 fails: PUCT-2000 vs ISMCTS-1000 at 1,000 deals −0.12
   [−0.78, +0.56] in `1+3`, −1.78 [−2.42, −1.13] in `ABAB`; at 0.5 s per move −1.81 and −2.44.
@@ -454,7 +454,7 @@ to goes through bot-notes (Task 10).
   - Notes: if (a) fails the bar, follow proposal §10 row 2: check the prior's calibration (log
     loss on held-out round-0 data) and try `leaf = 0.5·network + 0.5·short rollout`; record both.
 
-- [ ] **Task 16: Ladder v1, WebAssembly timing, bot-notes for phase 2** (after 15)
+- [x] **Task 16: Ladder v1, WebAssembly timing, bot-notes for phase 2** (after 15)
   (Bot-notes entry posted 2026-11-01. Not ticked: A11's time part is unmet in the app build, and
   `pvnet::teaching_numbers` does not exist; build it only if a PUCT level is proposed.)
   (**Timing done 2026-11-01** (`build-phase2.md` §5, r3's network, a 13 cards probe beside it):
@@ -484,7 +484,7 @@ to goes through bot-notes (Task 10).
 
 ## Phase 3 – Iterate, belief, exact endgames, external bars (opus; Tasks 19, 20 fable)
 
-- [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]**
+- [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]** (waiting: Brian, stop after round 3 if A9 still fails)
   (**All three rounds done 2026-11-01; not ticked: A9 is not met in both lineups, so no network
   ships** (`build-phase3.md` §1). r3 PUCT-2000 λ 0.5 vs ISMCTS-1000 at 1,000 deals +1.06
   [+0.46, +1.67] 1+3 (passes), +0.66 [+0.08, +1.28] ABAB (fails); r3 vs the teacher ISMCTS-5000
@@ -754,7 +754,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     (`reason.keeps_control` etc.) untouched; ours are additions. serde_json is already a workspace
     dependency through app-api; add it to `crates/teach` directly.
 
-- [ ] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (waiting: inbox)
+- [x] **Task 27: Paired grader, σ thresholds with "unclear", luck ledger** `(fable)` `[parallel-ok]` (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (inbox default taken: A21 uses compatible agreement; orchestrator's call 2026-11-10, Brian may change it)
   (**code done 2026-10-30 by opus (not fable: B25 helper brief); repeatability bar not met.**
   `grade.rs` (`evaluate_paired`, `grade_from_table`, `grade_paired`/`grade_paired_table` with
   doubling while `unclear` up to `max_deals`, `Thresholds { from_sigma, APP }`, σ 27.45 →
@@ -764,7 +764,7 @@ stream can call it from `crates/app-api` without us touching their crate.
   (`build-phase4.md` §1, 52 s): same grade with a new seed 90.2 % (A21 bar 95 %: not met;
   compatible 97.6 %), `unclear` 13.4 %, phone vs 10× 87.2 % (bar 90 %: not met; compatible
   94.9 %), ledger error 4e-15 (met). Budget probe up to 4,800 deals: 93.8 % strict. Open item:
-  which agreement measure A21 uses. Not ticked until Brian answers.)
+  which agreement measure A21 uses. Orchestrator's call 2026-11-10: the default, compatible agreement (97.6 %, met); a worker ticks it after recording this in decisions.md.)
   - Files: create `crates/teach/src/grade.rs` (`grade_paired(position, played, cfg) -> Graded {
     loss, interval, grade, seed }`: every legal move evaluated on the same sampled deals so noise
     cancels; thresholds as multiples of σ from Task 6 (`good < 0.025σ`, `inaccuracy < 0.1σ`,
@@ -781,7 +781,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     app's current lines are 1 / 3 / 9 points; open question 3 asks Brian which to ship. Both
     tables are in `crates/teach/README.md`.
 
-- [ ] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27)
+- [x] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27)
   (**code done 2026-10-30, tiny run only; the full run is pending.** Miner in Rust:
   `big2-teach mine` (self-play by easy, medium, hard, hard; paired table of 600 deals per
   decision; candidate = gap ≥ 2 with interval above 0, easy and medium wrong on ≥ half of 16
@@ -792,9 +792,9 @@ stream can call it from `crates/app-api` without us touching their crate.
   (incl. a native 4-deal run validated against the §6 shape). Positions come from ISMCTS
   self-play, not PUCT (open items). **Full run done 2026-10-30** (700 deals in 185 s;
   `build-phase4.md` §2): 502 drills, every §6 field present, 50-drill audit file, 55 mistake
-  clusters beside the app's skill list. **Not ticked:** ratings span 645–1,193 (548 points;
-  A22 needs ≥ 600). The default fix (rate by the gap within each share band) changes the
-  formula and waits for Brian (`docs/open-items.md`). `drills/big2.json` is not committed yet.)
+  clusters beside the app's skill list. **Ticked 2026-11-10 (slot 3):** the seed formula spread 548 points (A22 needs ≥ 600), so the
+  inbox default is applied (orchestrator's call 2026-11-10; Brian may change it): rank by share wrong, then
+  by gap, stretched over 600–1,400 (`RATING_FORMULA = "bands"` in `big2/teach/drills.py`; `"seed"` restores the old formula; decision 0004). Re-run: 553 drills, ratings 600–1,400, `drills/big2.json` committed.)
   - Files: create `python/big2/teach/drills.py` (mine positions from PUCT self-play where the
     ladder disagrees: `easy` and `medium` wrong, `expert` right, value gap ≥ 2 points; rating =
     1000 + 400 × (share of levels wrong) − 100 × log2(gap); emit the engine-interface `Drill`
@@ -812,8 +812,8 @@ stream can call it from `crates/app-api` without us touching their crate.
     with the app's skill list instead and name the unmatched clusters as new-skill candidates.
     Human solve rates (Spearman) arrive only after release: open item, not a task.
 
-- [ ] **Task 29: Error model and ladder v2** **[long: ~45 min CPU]** (after 26) (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (waiting: inbox)
-  (**code done 2026-10-30, tiny run only; the 500-deal round is pending.**
+- [x] **Task 29: Error model and ladder v2** **[long: ~45 min CPU]** (after 26) (beside earlier phases: orchestrator's call 2026-11-10, since Tasks 26 and 30 of this phase were built while phase 3 ran) (inbox default taken: hard = ISMCTS-500, expert = ISMCTS-10,000 + exact endgame, short top gap recorded; orchestrator's call 2026-11-10, Brian may change it)
+  (**Ticked 2026-11-10 (slot 3): inbox default (a) applied: `hard` = ISMCTS-500 (`ladder.rs`, app preset, UI text, docs/ui.md); `expert` = ISMCTS-10,000 + exact endgame; top gap +1.02 recorded short of A23 bar 1.5. `cargo test -p big2-teach ladder` 2 passed.** Earlier: **code done 2026-10-30, tiny run only; the 500-deal round is pending.**
   `crates/big2/src/bots/error_model.rs` (`ErrorModel<P>`, `Mistake` with keys
   `mistake.hold_two_too_long`, `mistake.break_pair_for_single`, `mistake.miss_safe_single`,
   `choose_explained` returns the mistake). `cargo test -p big2-big2 error_model` 6 passed

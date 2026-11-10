@@ -8,8 +8,12 @@ interval above 0) that ``easy`` and ``medium`` get wrong at least half the time 
 ``expert`` gets right; each ``mistake`` line is a self-play decision graded worse than
 ``best``. This module turns candidates into drills:
 
-* ``rating = 1000 + 400 * (share of levels wrong) - 100 * log2(gap)`` (the plan's seed
-  rating; the share averages random, easy, medium, hard and expert);
+* ``rating``: by default ``RATING_FORMULA = "bands"``: drills are ordered by the share of
+  levels wrong (random, easy, medium, hard, expert averaged), then, within a share band, by
+  the value gap (a smaller gap is harder), and the rank is stretched evenly over
+  ``RATING_MIN``..``RATING_MAX`` (600..1400). The orchestrator's call 2026-11-10 (Brian may
+  change it; docs/decisions/0004). Set ``RATING_FORMULA = "seed"`` for the plan's original
+  ``1000 + 400 * share - 100 * log2(gap)``, which spread only 548 points (A22 needs 600);
 * ``skill`` from the best move's reason keys (``SKILL_RULES``; app skills first);
 * ``prompt`` a ``drill.*`` key; ``source: "solver"``; ``solver: {samples, gap}``.
 
@@ -104,6 +108,27 @@ def prompt_for(candidate: dict[str, Any], skill: str) -> str:
     return "drill.best_move"
 
 
+RATING_FORMULA = "bands"  # or "seed"
+RATING_MIN = 600
+RATING_MAX = 1400
+
+
+def _share(candidate: dict[str, Any]) -> float:
+    wrong = candidate["wrong"]
+    return sum(wrong.values()) / len(wrong)
+
+
+def band_ratings(candidates: list[dict[str, Any]]) -> list[int]:
+    """Ratings for ``candidates`` (same order): rank by (share wrong, -gap), stretched evenly
+    over ``RATING_MIN``..``RATING_MAX``. Equal keys share a rating."""
+    keys = [(round(_share(c), 9), -float(c["gap"])) for c in candidates]
+    order = sorted(set(keys))
+    n = len(order)
+    pos = {k: i for i, k in enumerate(order)}
+    span = RATING_MAX - RATING_MIN
+    return [RATING_MIN + int(round(span * pos[k] / max(n - 1, 1))) for k in keys]
+
+
 def rating_for(candidate: dict[str, Any]) -> int:
     wrong = candidate["wrong"]
     share = sum(wrong.values()) / len(wrong)
@@ -117,7 +142,7 @@ def _action(a: Any) -> dict[str, Any]:
     return {"type": "action.play", **a}
 
 
-def to_drill(candidate: dict[str, Any]) -> dict[str, Any]:
+def to_drill(candidate: dict[str, Any], rating: int | None = None) -> dict[str, Any]:
     skill = skill_for(candidate)
     return {
         "id": f"big2-s{candidate['deal']:05d}-{candidate['turn']:02d}",
@@ -126,7 +151,7 @@ def to_drill(candidate: dict[str, Any]) -> dict[str, Any]:
         "prompt": prompt_for(candidate, skill),
         "position": candidate["position"],
         "seat": candidate["seat"],
-        "rating": rating_for(candidate),
+        "rating": rating_for(candidate) if rating is None else rating,
         "answers": [
             {"action": _action(a["action"]), "grade": a["grade"], "reasons": a["reasons"]}
             for a in candidate["answers"]
@@ -143,7 +168,9 @@ def read_raw(path: str | Path) -> list[dict[str, Any]]:
 
 def build_drills(raw: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Drills from the miner's candidate lines, by rating."""
-    drills = [to_drill(c) for c in raw if c.get("type") == "candidate"]
+    cands = [c for c in raw if c.get("type") == "candidate"]
+    ratings = band_ratings(cands) if RATING_FORMULA == "bands" else [None] * len(cands)
+    drills = [to_drill(c, r) for c, r in zip(cands, ratings)]
     drills.sort(key=lambda d: (d["rating"], d["id"]))
     return drills
 

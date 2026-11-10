@@ -33,7 +33,7 @@ Add `?botDelay=0` to the URL to make bots move instantly (default 700 ms per mov
 |---|---|
 | Easy | Greedy rule-based bot (sheds its weakest cards first, 10% random) |
 | Medium | Solver, 300 simulations per move |
-| Hard | Solver, 2,000 simulations per move |
+| Hard | Solver, 500 simulations per move |
 | Expert | Solver, 10,000 simulations per move on 4 threads |
 | RL network | The chosen network (see below), ~1 ms per move |
 | RL network + search | The network plus rollout search (~0.2 s per move) |

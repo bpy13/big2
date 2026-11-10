@@ -5,7 +5,7 @@ import { useEscape } from '../useEscape'
 const DIFFICULTY_HELP: Record<string, string> = {
   easy: 'Greedy bot: sheds its weakest cards first.',
   medium: 'Solver with 300 simulations per move.',
-  hard: 'Solver with 2,000 simulations per move.',
+  hard: 'Solver with 500 simulations per move.',
   expert: 'Solver with 10,000 simulations per move (4 threads).',
   rl: 'The chosen network, one forward pass per move. Only for rules a network was trained for.',
   rl_search: 'RL network + search: plays out sampled deals with the network for its top moves. Only for rules a network was trained for.',

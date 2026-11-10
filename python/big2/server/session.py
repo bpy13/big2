@@ -31,7 +31,7 @@ from big2.server import models
 DIFFICULTIES: dict[str, str] = {
     "easy": "greedy:epsilon=0.1",
     "medium": "ismcts:iterations=300",
-    "hard": "ismcts:iterations=2000",
+    "hard": "ismcts:iterations=500",
     "expert": "ismcts:iterations=10000,threads=4",
 }
 
