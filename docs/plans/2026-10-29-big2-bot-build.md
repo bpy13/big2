@@ -721,7 +721,7 @@ to goes through bot-notes (Task 10).
     (`RulesMask`, `NetSampler`, `infoset_endgame`), what `quality` would carry (`{"samples": n}` or
     `{"exact": true}`) once they accept B20, and the B2/B3 results in three lines.
 
-- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result)
+- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (taken: slot 1, 2026-11-10 12:00)
   (Job 47 is a pilot, not the run: it took 17 minutes, not 1–2 CPU-days, and its rollouts
   played ISMCTS-100, not `expert`'s ISMCTS-10,000. Pilot results, 40 deals each: 1+3 −1.35 ± 3.75,
   ABAB −0.59 ± 1.92, 2.6 s per searched decision; files in
