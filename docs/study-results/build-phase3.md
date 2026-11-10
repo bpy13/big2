@@ -354,6 +354,19 @@ What differs from the plan, and why:
   games. `probe-eval` therefore also plays each probe at the snapshot with the games of the
   slowest probe. A17 is read on that column too.
 
+### 6.1 From-scratch probe against `expert` (Task 33)
+
+Status 2026-11-10: code done, job queued (see board); numbers below when it ends.
+
+Task 22's probes start from the distilled network, so they may share the teacher's blind spots.
+This one starts from fresh weights (same net shape as `models/big2-distilled-duty.pt`), three
+frozen `expert` seats, 10 h on the GPU lane. Code: `experiments/build_phase3.py probe --probes
+scratch_expert` (no `init`) and `probe-scratch-eval` (the probe's end vs three `expert`, 1,000
+deals, 1 + 3; the mean score is the gain, the match being zero-sum). Job
+`runs\probe_scratch_expert\run.ps1`; check `runs\probe_scratch_expert\progress.json`.
+Caveat from the note above: about 88,000 games in 10 h may be too few to learn the game from
+nothing, so a gain near or below 0 is possible and would say so.
+
 ## 7. Cross-play of two seeds (Task 23)
 
 Queued in the same job. The plan's second seed reuses round N's command. The labels exist, so

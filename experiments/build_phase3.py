@@ -41,6 +41,8 @@ Usage::
   PUCT-2000 slot filled by ``expert``, the bot that ships (see ``final``).
 * ``seeds-train``, ``seeds-match`` (Task 23, bar A18): a second network from fresh weights
   (seed 1) on the labels of rounds 1-3, then PUCT-2000 r3 against PUCT-2000 of that network.
+* ``probe-scratch-eval`` (Task 33): the from-scratch probe (``probe --probes scratch_expert``,
+  fresh weights, three `expert` seats) played against `expert`, 1 + 3.
 * ``probe``, ``probe-eval`` (Task 22, bar A17): best-response probes. A learner in one seat
   trains against three frozen seats of the candidate. Every probe starts from the same
   distilled network: a search opponent allows too few games for a learner from scratch.
@@ -105,6 +107,8 @@ PROBES = {
     "dmc10h": (DMC_10H, 600),
     "expert": (EXPERT, 600),
 }
+#: Task 33: probes from fresh weights (no ``init``), same net shape as ``PROBE_INIT``.
+SCRATCH_PROBES = {"scratch_expert": (EXPERT, 600)}
 #: Round 3's PUCT setting (build-phase3.md §1).
 R3_PKNN = ROOT / "runs" / "net_r3" / "pvnet-r3.pknn"
 R3_LAMBDA = 0.5
@@ -703,7 +707,8 @@ def probe(args: argparse.Namespace, progress: Progress) -> None:
 
     net = NetConfig(**torch.load(PROBE_INIT, map_location="cpu", weights_only=False)["net_config"])
     for name in args.probes:
-        opponents, minutes = PROBES[name]
+        opponents, minutes = (PROBES | SCRATCH_PROBES)[name]
+        init = None if name in SCRATCH_PROBES else PROBE_INIT
         minutes = args.probe_minutes or minutes
         run = ROOT / "runs" / f"probe_{name}{args.tag}"
         if (run / "results.json").exists():
@@ -738,14 +743,14 @@ def probe(args: argparse.Namespace, progress: Progress) -> None:
             rules=Rules().kwargs(),
             net=net,
         )
-        train(cfg, resume=str(latest) if latest.exists() else None, init=PROBE_INIT, log=log)
+        train(cfg, resume=str(latest) if latest.exists() else None, init=init, log=log)
         info = torch.load(latest, map_location="cpu", weights_only=False)["info"]
         _write_json(
             run / "results.json",
             {
                 "probe": name,
                 "opponents": opponents,
-                "init": PROBE_INIT,
+                "init": init,
                 "iter": info["iter"],
                 "games": info["games"],
                 "samples": info["samples"],
@@ -754,6 +759,43 @@ def probe(args: argparse.Namespace, progress: Progress) -> None:
             },
         )
         progress.update(None, done=name)
+
+
+def probe_scratch_eval(args: argparse.Namespace, progress: Progress) -> None:
+    """Task 33: plays the from-scratch probe's end against three `expert`, 1 + 3. The mean
+    score of that match is the probe's gain (zero-sum, so parity is 0)."""
+    from big2.eval.harness import play_match
+
+    name = "a_probe_scratch"
+    if _done(args, name):
+        return
+    run = ROOT / "runs" / f"probe_scratch_expert{args.tag}"
+    games = json.loads((run / "results.json").read_text())["games"]
+    rel = (run / "latest.pt").as_posix().removeprefix(ROOT.as_posix() + "/")
+    progress.update(f"scratch_expert_end: {rel} vs expert")
+    r = play_match(
+        f"dmc:checkpoint={rel}",
+        EXPERT,
+        "1+3",
+        args.deals,
+        seed=args.seed,
+        workers=args.workers,
+        cache_dir=ROOT / "runs" / args.out / name / "end",
+        block=args.block,
+    ).to_dict()
+    lo, hi = r["ci95"]
+    lines = [
+        f"From-scratch probe (fresh weights, three frozen `expert`), {games:,} training games; "
+        f"{args.deals:,} deals, 1 + 3.",
+        "",
+        "| Frozen seats | Games | Gain (mean score) | 95 % interval |",
+        "|---|---:|---:|---|",
+        f"| expert (`{EXPERT}`) | {games:,} | {r['mean']:+.2f} | [{lo:+.2f}, {hi:+.2f}] |",
+        "",
+        f"Interval excludes 0: {lo > 0 or hi < 0}",
+    ]
+    _finish(args, name, {"games": games, "end": r}, lines)
+    progress.update(None, done=name)
 
 
 def _snapshot_at(run: Path, games: int) -> Path:
@@ -846,6 +888,7 @@ COMMANDS = {
     "seeds-match": seeds_match,
     "probe": probe,
     "probe-eval": probe_eval,
+    "probe-scratch-eval": probe_scratch_eval,
 }
 #: What ``all`` runs (the later commands have their own job).
 ALL = ["rules-mask", "endgame"]
@@ -858,6 +901,7 @@ CELLS = {
     "seeds-train": ["seed B training"],
     "seeds-match": ["a_r3_vs_seedB 1+3", "a_r3_vs_seedB ABAB"],
     "probe": list(PROBES),
+    "probe-scratch-eval": ["scratch_expert_end"],
     "probe-eval": [f"{n}_{part}" for n in PROBES for part in ("start", "end")],
 }
 
@@ -883,7 +927,7 @@ def main() -> None:
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--train-minutes", type=float, default=180.0, help="seeds-train: budget")
     ap.add_argument("--gpu-wait", type=int, default=120, help="minutes to wait for a free GPU")
-    ap.add_argument("--probes", nargs="+", choices=list(PROBES), default=list(PROBES))
+    ap.add_argument("--probes", nargs="+", choices=[*PROBES, *SCRATCH_PROBES], default=list(PROBES))
     ap.add_argument("--probe-minutes", type=float, default=0, help="0: the plan's budgets")
     ap.add_argument("--tag", default="", help="suffix for the probe folders (a test run)")
     args = ap.parse_args()

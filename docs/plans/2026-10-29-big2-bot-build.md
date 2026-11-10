@@ -735,7 +735,7 @@ to goes through bot-notes (Task 10).
     fits 2 CPU-days. No bar is set: a gain whose interval excludes 0 goes to `docs/inbox.md` as
     a question for Brian.
 
-- [ ] **Task 33: Best-response probe trained from scratch** `[parallel-ok]` **[GPU: 10 h, job queue gpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (taken: slot 1, 2026-11-10 12:30)
+- [ ] **Task 33: Best-response probe trained from scratch** `[parallel-ok]` **[GPU: 10 h, job queue gpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (waiting: queue job 49, from-scratch probe, gpu lane; code done, a worker records the numbers in §6.1 and ticks after it ends)
   (Added 2026-11-10 on Brian's word "Yes, add all three". Task 22's probes start from the
   distilled network, so they may share the teacher's blind spots.)
   - What: Task 22's probe (`dmc.py --opponents`, `build_phase3.py probe`), but from fresh
