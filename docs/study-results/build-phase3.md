@@ -363,6 +363,22 @@ start. Then PUCT-2000 λ = 0.5 r3 vs seed B, 1,000 deals, both lineups (A18: the
 0). No network ships, so this measures how repeatable the teaching network is. No shipped bot
 depends on it.
 
+## 7a. Rollout best response against `expert` (Task 32)
+
+Queued as hkq job 47 (cpu lane, `runs/rollout_br/run.ps1`); numbers go here when it ends
+(`runs/rollout_br/results.json`, progress in `runs/rollout_br/progress.json`).
+
+`experiments/rollout_br.py`: the attacker tries every legal move; for each of 8 deals of the
+hidden cards (`determinize`, the same 8 for every move) it plays the move and the rest of the game
+with all four seats as `expert`'s code (ISMCTS + exact endgame), and keeps the best mean score. No
+training. The three real opponents play the full `expert` (ISMCTS-10,000). **Budget choice:** a
+full `expert` game takes 20 s (measured), so rollouts with ISMCTS-10,000 inside would cost about
+a day per deal; the seats inside rollouts use ISMCTS-100 (the attacker is therefore a weak best
+response: a gain is real, a null result bounds only this attacker). 40 deals per lineup, four
+rotations each, `1+3` and `ABAB` (attackers in seats 0 and 2). Expert vs expert is 0 by symmetry,
+so the attacker's mean score per deal is its gain. Estimated 1-2 CPU-days; resumable and the
+deal count can be raised (same seeds).
+
 ## 8. Final 10,000-deal matches (Task 24)
 
 Queued in the same job. The plan named PUCT-2000 (final). **This measures the bot that ships by
