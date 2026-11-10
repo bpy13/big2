@@ -721,6 +721,32 @@ to goes through bot-notes (Task 10).
     (`RulesMask`, `NetSampler`, `infoset_endgame`), what `quality` would carry (`{"samples": n}` or
     `{"exact": true}`) once they accept B20, and the B2/B3 results in three lines.
 
+- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result)
+  (Added 2026-11-10 on Brian's word "Yes, add all three", from the strength-check research: no
+  outside test of `expert` exists, and Charlesworth's network only ties it, A16.)
+  - What: one seat plays a best response found by rollouts. At each decision it tries every legal
+    move and plays each out many times, with the other three seats played by `expert`'s own code
+    (ISMCTS-10,000 + exact endgame). It keeps the move with the best mean. No training.
+  - Files: create `experiments/rollout_br.py` and a test that runs it on a few deals; add a
+    section to `docs/study-results/build-phase3.md`; `runs/rollout_br/run.ps1` (job queue,
+    `hkq.ps1 add -Lane cpu`, reads `$env:HKQ_THREADS`, resumes from `progress.json`).
+  - Done when: the section records the attacker's mean score per deal against three `expert`,
+    with a 95 % interval, in both lineups, and the deal count. Choose the deal count so the run
+    fits 2 CPU-days. No bar is set: a gain whose interval excludes 0 goes to `docs/inbox.md` as
+    a question for Brian.
+
+- [ ] **Task 33: Best-response probe trained from scratch** `[parallel-ok]` **[GPU: 10 h, job queue gpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result)
+  (Added 2026-11-10 on Brian's word "Yes, add all three". Task 22's probes start from the
+  distilled network, so they may share the teacher's blind spots.)
+  - What: Task 22's probe (`dmc.py --opponents`, `build_phase3.py probe`), but from fresh
+    weights, with three `expert` seats frozen. Reuse Task 22's code; add only a from-scratch flag
+    if the code lacks one.
+  - Files: `runs/probe_scratch_expert/run.ps1` (job queue, `hkq.ps1 add -Lane gpu`); the probe
+    section (§6) of `docs/study-results/build-phase3.md`.
+  - Done when: §6 records the probe's gain against `expert` at 1,000 deals with a 95 % interval,
+    beside Task 22's distilled-start probes. Check: `progress.json`. Resume: `--resume
+    runs/probe_scratch_expert/latest.pt`. A gain whose interval excludes 0 goes to the inbox.
+
 ## Phase 4 – Teaching depth (opus; Task 27 fable)
 
 The teaching code lives in a new crate we own, `crates/teach` (package `big2-teach`), so the app
