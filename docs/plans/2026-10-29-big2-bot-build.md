@@ -769,7 +769,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     app's current lines are 1 / 3 / 9 points; open question 3 asks Brian which to ship. Both
     tables are in `crates/teach/README.md`.
 
-- [ ] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27) (taken: slot 3, 2026-11-10 21:00)
+- [x] **Task 28: Drill miner, seed ratings, mistake clustering** **[long: ~3 h CPU]** (after 26, 27)
   (**code done 2026-10-30, tiny run only; the full run is pending.** Miner in Rust:
   `big2-teach mine` (self-play by easy, medium, hard, hard; paired table of 600 deals per
   decision; candidate = gap ≥ 2 with interval above 0, easy and medium wrong on ≥ half of 16
@@ -780,9 +780,9 @@ stream can call it from `crates/app-api` without us touching their crate.
   (incl. a native 4-deal run validated against the §6 shape). Positions come from ISMCTS
   self-play, not PUCT (open items). **Full run done 2026-10-30** (700 deals in 185 s;
   `build-phase4.md` §2): 502 drills, every §6 field present, 50-drill audit file, 55 mistake
-  clusters beside the app's skill list. **Not ticked:** ratings span 645–1,193 (548 points;
-  A22 needs ≥ 600). The default fix (rate by the gap within each share band) changes the
-  formula and waits for Brian (`docs/open-items.md`). `drills/big2.json` is not committed yet.)
+  clusters beside the app's skill list. **Ticked 2026-11-10 (slot 3):** the seed formula spread 548 points (A22 needs ≥ 600), so the
+  inbox default is applied (orchestrator's call 2026-11-10; Brian may change it): rank by share wrong, then
+  by gap, stretched over 600–1,400 (`RATING_FORMULA = "bands"` in `big2/teach/drills.py`; `"seed"` restores the old formula; decision 0004). Re-run: 553 drills, ratings 600–1,400, `drills/big2.json` committed.)
   - Files: create `python/big2/teach/drills.py` (mine positions from PUCT self-play where the
     ladder disagrees: `easy` and `medium` wrong, `expert` right, value gap ≥ 2 points; rating =
     1000 + 400 × (share of levels wrong) − 100 × log2(gap); emit the engine-interface `Drill`

@@ -173,3 +173,16 @@ def test_native_miner_output_validates(tmp_path: Path) -> None:
     assert any(r["type"] == "mistake" for r in raw)
     for d in build_drills(raw):
         assert validate_drill(d) == [], d["id"]
+
+
+def test_band_ratings_order_and_spread() -> None:
+    from big2.teach.drills import RATING_MAX, RATING_MIN, band_ratings
+
+    easy = candidate(gap=8.0)
+    hard = candidate(gap=2.0)
+    wrong_more = candidate(
+        gap=8.0, wrong={"random": 1.0, "easy": 1.0, "medium": 1.0, "hard": 1.0, "expert": 0.0}
+    )
+    r = band_ratings([easy, hard, wrong_more])
+    assert r[0] == RATING_MIN and r[2] == RATING_MAX
+    assert r[0] < r[1] < r[2]  # a smaller gap is harder within a band; more levels wrong is harder
