@@ -721,7 +721,7 @@ to goes through bot-notes (Task 10).
     (`RulesMask`, `NetSampler`, `infoset_endgame`), what `quality` would carry (`{"samples": n}` or
     `{"exact": true}`) once they accept B20, and the B2/B3 results in three lines.
 
-- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (waiting: queue job 66 (was 50, then 59; re-queued 2026-11-11), full run, cpu lane; est. ~37 h wall on 8 threads (60 deals x 2 lineups, 8 rollouts, rollout iterations 10,000, ~17,700 CPU-s per deal pair from the pilot); output runs
+- [ ] **Task 32: Rollout best response against the shipped `expert`** `[parallel-ok]` **[long: 1–2 CPU-days, job queue cpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (waiting: queue job 74 (re-queued again) (was 50, then 59; re-queued 2026-11-11), full run, cpu lane; est. ~37 h wall on 8 threads (60 deals x 2 lineups, 8 rollouts, rollout iterations 10,000, ~17,700 CPU-s per deal pair from the pilot); output runs
 ollout_br_full in the big2-workers worktree (needs its copied pythonbig2_core.pyd); resume: rerun runs
 ollout_br
 un.ps1 through the queue, raise --deals in it to add deals (same seeds, same deals.jsonl); a worker then records pilot and run in §7a and ticks)
