@@ -3,6 +3,4 @@
 ## Workers
 
 ## Results
-
-
-- 2026-11-10 slot 1: Task 27 ticked (A21 = compatible agreement, decision 0003; teach tests 38 pass) and Task 16 ticked (bot-notes entry found in hk-games). Task 29 left for the next worker.
+- Task 29 (slot 3, 2026-11-10): ticked. `hard` = ISMCTS-500, `expert` = ISMCTS-10,000 + exact endgame; strict order, top gap +1.02 (A23 bar 1.5, short, recorded). Ladder test passes.

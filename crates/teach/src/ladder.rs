@@ -11,7 +11,8 @@
 //!
 //! `hard` and `expert` are ISMCTS, not the proposal's PUCT-300 / PUCT-2000: PUCT
 //! has not beaten ISMCTS yet (`docs/open-items.md`, 2026-10-30: "bot levels stay on
-//! ISMCTS"), and these are the app's current budgets (2,000 and 10,000).
+//! ISMCTS"). Budgets 500 and 10,000: inbox default (a), orchestrator's call 2026-11-10: `hard` at 2,000 was
+//! level with `expert` (-0.03); at 500 the order is strict, top gap +1.02 (A23 asks 1.5; recorded short).
 //!
 //! The ladder lives here, not in `crates/big2/src/bots/ladder.rs` as the plan
 //! said: `hard` and `expert` need `big2-search`, which `big2-big2` cannot depend
@@ -40,7 +41,7 @@ pub const MEDIUM_TEMPERATURE: f64 = 1.0;
 /// `easy`'s random-move share.
 pub const EASY_EPSILON: f64 = 0.1;
 /// ISMCTS simulations of `hard` and `expert`.
-pub const HARD_ITERATIONS: u64 = 2_000;
+pub const HARD_ITERATIONS: u64 = 500;
 pub const EXPERT_ITERATIONS: u64 = 10_000;
 
 /// ISMCTS as a policy (one thread, greedy rollouts with ε 0.1, as the app). A
@@ -208,7 +209,7 @@ mod tests {
         let LadderBot::Search(e) = LadderBot::expert() else {
             panic!()
         };
-        assert_eq!((h.iterations, e.iterations), (2_000, 10_000));
+        assert_eq!((h.iterations, e.iterations), (500, 10_000));
         assert!(h.infoset_endgame.is_none() && e.infoset_endgame.is_some());
         let LadderBot::Easy(m) = LadderBot::easy() else {
             panic!()
