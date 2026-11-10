@@ -88,44 +88,63 @@ def test_rating_follows_the_seed_formula() -> None:
     assert rating_for(candidate(gap=2.0)) > rating_for(c)
 
 
-def test_skill_mapping() -> None:
-    assert skill_for(candidate()) == "skill.control"
-    pass_best = candidate(
-        answers=[
-            {
-                "action": "pass",
-                "grade": "best",
-                "reasons": [{"key": "reason.control.pass_to_keep", "args": {"card": "Kd"}}],
-            },
-            {
-                "action": {"cards": ["Kd"], "combo": "combo.single"},
-                "grade": "mistake",
-                "reasons": [],
-            },
-        ]
-    )
-    assert skill_for(pass_best) == "skill.when_to_pass"
-    finish = candidate(
-        answers=[
-            {
-                "action": {"cards": ["9c"], "combo": "combo.single"},
-                "grade": "best",
-                "reasons": [{"key": "reason.tempo.plays_to_out", "args": {"mine": 2}}],
-            }
-        ]
-    )
+QUIET = [
+    ["4d", "9c", "Kd", "2c", "5s"],
+    ["7s", "8h", "Js", "Qs"],
+    ["3c", "4h", "6d", "7d"],
+    ["4c", "8d", "9d", "Ts"],
+]
+PLAY = {"player": 2, "cards": ["Ah"], "combo": "combo.single"}
+SINGLE_9 = {"cards": ["9c"], "combo": "combo.single"}
+
+
+def themed(best: object, keys: list[str], hands: list[list[str]] = QUIET, **over: object) -> dict:
+    """A candidate whose best answer is ``best`` with reason ``keys``; the runner-up is a pass."""
+    answers = [
+        {"action": best, "grade": "best", "reasons": [{"key": k, "args": {}} for k in keys]},
+        {"action": "pass", "grade": "mistake", "reasons": []},
+    ]
+    return candidate(position=position(hands, 0, PLAY), answers=answers, **over)
+
+
+def test_theme_per_rule() -> None:
+    # One case per rule of skill_for, in rule order.
+    assert skill_for(themed(SINGLE_9, ["reason.counterfactual.forced"])) == "skill.endgame_counting"
+    assert skill_for(themed(SINGLE_9, ["reason.tempo.plays_to_out"])) == "skill.b2_mixed"
+    finish = themed(SINGLE_9, [])
+    finish["answers"][0]["reasons"] = [{"key": "reason.tempo.plays_to_out", "args": {"mine": 2}}]
     assert skill_for(finish) == "skill.finish_in_two"
-    twos = candidate(
-        answers=[
-            {"action": KD, "grade": "best", "reasons": []},
-            {
-                "action": {"cards": ["2c"], "combo": "combo.single"},
-                "grade": "mistake",
-                "reasons": [],
-            },
-        ]
-    )
+    twos = themed(KD, [])
+    twos["answers"][1] = {"action": TWO, "grade": "mistake", "reasons": []}
     assert skill_for(twos) == "skill.saving_twos"
+    assert skill_for(themed("pass", ["reason.control.pass_to_keep"])) == "skill.when_to_pass"
+    runner = [QUIET[0], ["7s", "8h"], QUIET[2], QUIET[3]]
+    assert skill_for(themed(SINGLE_9, [], runner)) == "skill.b2_stop_runner"
+    assert skill_for(themed(SINGLE_9, ["reason.value.score_vs_win"])) == "skill.b2_penalty"
+    assert skill_for(themed(SINGLE_9, ["reason.plan.breaks"])) == "skill.b2_break_five"
+    straight = {"cards": ["3d", "4d", "5d", "6d", "7s"], "combo": "combo.straight"}
+    assert skill_for(themed(straight, [])) == "skill.b2_break_five"
+    assert skill_for(themed(SINGLE_9, ["reason.control.safe_single"])) == "skill.b2_take_control"
+    lead = themed(SINGLE_9, [], following=False)
+    assert skill_for(lead) == "skill.b2_singles_order"
+    assert skill_for(themed(SINGLE_9, [])) == "skill.b2_mixed"
+
+
+def test_every_theme_is_a_known_key() -> None:
+    from big2.teach.drills import THEMES
+
+    for c in (themed(SINGLE_9, []), themed("pass", []), themed(SINGLE_9, [], following=False)):
+        assert skill_for(c) in THEMES
+
+
+def test_brilliant_answers_are_validated() -> None:
+    brilliant = [{"cards": ["2c"], "combo": "combo.single"}]
+    c = candidate(brilliant_answers=brilliant)
+    d = build_drills([c])[0]
+    assert d["brilliant_answers"] == [{"type": "action.play", **brilliant[0]}]
+    assert validate_drill(d) == []
+    d["brilliant_answers"] = [{"type": "action.play", "cards": ["Ah"], "combo": "combo.single"}]
+    assert "brilliant_answers must be among the answers" in validate_drill(d)
 
 
 def test_validate_catches_bad_drills() -> None:

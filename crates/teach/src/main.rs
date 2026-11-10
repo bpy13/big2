@@ -13,7 +13,7 @@
 //!                    [--hard-iterations 2000] [--expert-iterations 10000] [--all-pairs 1]
 //! big2-teach mine    --out DIR [--games 200] [--deals 600] [--threads 8] [--chunk 32]
 //!                    [--qnet ...] [--hard-iterations 2000] [--expert-iterations 10000]
-//!                    [--samples 16] [--min-gap 2]
+//!                    [--samples 16] [--min-gap 2] [--deep-mult 4]
 //! ```
 //!
 //! * `audit` — positions from noisy greedy self-play; for each, the paired
@@ -40,7 +40,7 @@ use big2_teach::ladder::{LadderBot, EASY_RATES, LEVELS, MEDIUM_RATES, MEDIUM_TEM
 use big2_teach::ledger::DecisionTable;
 use big2_teach::{
     deal_strength, evaluate_paired, grade_from_table, grade_paired_table, reasons, Graded, Ledger,
-    PairedConfig,
+    MoveTable, PairedConfig,
 };
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -635,6 +635,37 @@ fn wrong_share(
     wrong as f64 / n as f64
 }
 
+/// Puzzle task 5: the answers (among the top four shown) that a deeper solve rates at least as
+/// high as it rates the normal solve's best, other than that best. The deeper solve uses `mult`
+/// times the deals and its own seed, so it is not the same sample as the first one.
+fn brilliant_answers(s: &State, table: &MoveTable, deals: u64, mult: u64, seed: u64) -> Vec<Value> {
+    if mult <= 1 {
+        return Vec::new();
+    }
+    let cfg = PairedConfig {
+        deals: deals * mult,
+        seed: seed ^ 0x5EED_B21,
+        ..PairedConfig::default()
+    };
+    let deep = evaluate_paired(s, &cfg);
+    let best = table.best().action;
+    let Some(best_row) = deep.rows.iter().find(|r| r.action == best) else {
+        return Vec::new();
+    };
+    table
+        .rows
+        .iter()
+        .take(4)
+        .filter(|r| r.action != best)
+        .filter(|r| {
+            deep.rows
+                .iter()
+                .any(|d| d.action == r.action && d.mean >= best_row.mean)
+        })
+        .map(|r| action_json(r.action))
+        .collect()
+}
+
 /// One self-play deal: seats played by easy, medium, hard, hard (rotated by the
 /// deal index). Every decision with a choice gets a paired table; a decision
 /// where a level erred is a graded mistake; a decision with a clear best move
@@ -644,6 +675,7 @@ fn mine_deal(o: &Opts, bots: &[LadderBot], d: u64) -> Vec<Value> {
     let deals = o.num("deals", 600);
     let samples = o.num("samples", 16);
     let min_gap = o.num("min-gap", 2) as f64;
+    let mult = o.num("deep-mult", 4).max(1);
     let thresholds = PairedConfig::default().thresholds;
     let seat_level = |p: usize| [1usize, 2, 3, 3][(p + d as usize) % 4];
     let mut rng = ChaCha8Rng::seed_from_u64(0xD811_0000 + d);
@@ -698,8 +730,10 @@ fn mine_deal(o: &Opts, bots: &[LadderBot], d: u64) -> Vec<Value> {
                                 })
                             })
                             .collect();
+                        let brilliant = brilliant_answers(&s, &table, deals, mult, cfg.seed);
                         out.push(json!({
                             "type": "candidate", "deal": d, "turn": turn, "seat": p,
+                            "brilliant_answers": brilliant,
                             "position": drill_position(&s, 0xD811_0000 + d),
                             "following": s.current_play().is_some(),
                             "best_keys": keys,

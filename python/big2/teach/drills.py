@@ -14,7 +14,8 @@ interval above 0) that ``easy`` and ``medium`` get wrong at least half the time 
   ``RATING_MIN``..``RATING_MAX`` (600..1400). The orchestrator's call 2026-11-10 (Brian may
   change it; docs/decisions/0004). Set ``RATING_FORMULA = "seed"`` for the plan's original
   ``1000 + 400 * share - 100 * log2(gap)``, which spread only 548 points (A22 needs 600);
-* ``skill`` from the best move's reason keys (``SKILL_RULES``; app skills first);
+* ``skill`` (the puzzle theme) from ``skill_for``, following themes.md; ``brilliant_answers``
+  from a deeper solve (``--deep-mult`` times the deals);
 * ``prompt`` a ``drill.*`` key; ``source: "solver"``; ``solver: {samples, gap}``.
 
 Positions come from ISMCTS self-play (the ladder's ``hard`` level), not PUCT self-play as
@@ -45,15 +46,17 @@ APP_PROMPTS = {
     "skill.saving_twos": "drill.keep_the_two",
     "skill.endgame_counting": "drill.count_the_rest",
 }
-#: New skills this miner proposes (keys for the app's dictionaries; bot-notes lists them).
+#: The themes of hk-games ``docs/puzzles/themes.md`` (big2 rows) that are new to the app.
 NEW_SKILLS = (
-    "skill.keep_the_plan",
-    "skill.control",
-    "skill.score_vs_win",
-    "skill.kingmaking",
-    "skill.general",
+    "skill.b2_break_five",
+    "skill.b2_take_control",
+    "skill.b2_stop_runner",
+    "skill.b2_penalty",
+    "skill.b2_singles_order",
+    "skill.b2_mixed",
 )
-#: First matching rule wins: (reason key of the best move, skill).
+#: Mistake clustering only (``cluster.py``): reason key of the best move -> a proposed skill.
+#: Puzzle themes come from ``skill_for`` instead.
 SKILL_RULES: tuple[tuple[str, str], ...] = (
     ("reason.counterfactual.forced", "skill.endgame_counting"),
     ("reason.control.pass_to_keep", "skill.when_to_pass"),
@@ -64,6 +67,8 @@ SKILL_RULES: tuple[tuple[str, str], ...] = (
     ("reason.value.score_vs_win", "skill.score_vs_win"),
     ("reason.helps_seat", "skill.kingmaking"),
 )
+#: Every theme key a puzzle can carry (the app's four plus the new ones).
+THEMES = tuple(APP_PROMPTS) + NEW_SKILLS
 
 
 def _keys(answer: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -74,30 +79,62 @@ def _has_two(action: Any) -> bool:
     return isinstance(action, dict) and any(c.startswith("2") for c in action.get("cards", []))
 
 
+def _combo(action: Any) -> str:
+    return action.get("combo", "") if isinstance(action, dict) else ""
+
+
 def skill_for(candidate: dict[str, Any]) -> str:
-    """The drill's skill from its best answer's reason keys (and two special cases)."""
+    """The puzzle's theme (``skill.*`` key). First matching rule wins, in the order of the
+    "Found by" column of themes.md; none matches -> ``skill.b2_mixed``."""
     answers = candidate["answers"]
     best = answers[0]
     keys = _keys(best)
+    seat = candidate["seat"]
+    hands = candidate["position"]["start"]["hands"]
+    # skill.endgame_counting: the best move depends on what the exact endgame knows.
+    if "reason.counterfactual.forced" in keys:
+        return "skill.endgame_counting"
+    # skill.finish_in_two: the player can go out in two plays with the right order.
     plays = keys.get("reason.tempo.plays_to_out")
-    if (
-        plays is not None
-        and plays.get("mine", 99) <= 2
-        and "reason.counterfactual.forced" not in keys
-    ):
+    if plays is not None and plays.get("mine", 99) <= 2:
         return "skill.finish_in_two"
-    hand = candidate["position"]["start"]["hands"][candidate["seat"]]
+    # skill.saving_twos: the best move holds a 2 that the runner-up spends.
     if (
         not _has_two(best["action"])
-        and any(c.startswith("2") for c in hand)
+        and any(c.startswith("2") for c in hands[seat])
         and len(answers) > 1
         and _has_two(answers[1]["action"])
     ):
         return "skill.saving_twos"
-    for key, skill in SKILL_RULES:
-        if key in keys:
-            return skill
-    return "skill.general"
+    # skill.when_to_pass: pass is best while a beating play exists.
+    if best["action"] == "pass" and len(answers) > 1:
+        return "skill.when_to_pass"
+    # skill.b2_stop_runner: an opponent holds 1-3 cards.
+    if any(0 < len(h) <= 3 for p, h in enumerate(hands) if p != seat):
+        return "skill.b2_stop_runner"
+    # skill.b2_penalty: best lowers the cards left, not the win chance.
+    if "reason.value.score_vs_win" in keys:
+        return "skill.b2_penalty"
+    # skill.b2_break_five: best splits or keeps a five-card hand.
+    if "reason.plan.breaks" in keys or _combo(best["action"]) in FIVE_CARD:
+        return "skill.b2_break_five"
+    # skill.b2_take_control: best wins the lead to play the weak cards.
+    if any(k.startswith("reason.control.") for k in keys):
+        return "skill.b2_take_control"
+    # skill.b2_singles_order: best leads a specific low single or pair.
+    if not candidate.get("following") and _combo(best["action"]) in ("combo.single", "combo.pair"):
+        return "skill.b2_singles_order"
+    return "skill.b2_mixed"
+
+
+#: Combos of five cards (the engine's names).
+FIVE_CARD = (
+    "combo.straight",
+    "combo.flush",
+    "combo.full_house",
+    "combo.four_of_a_kind",
+    "combo.straight_flush",
+)
 
 
 def prompt_for(candidate: dict[str, Any], skill: str) -> str:
@@ -156,6 +193,7 @@ def to_drill(candidate: dict[str, Any], rating: int | None = None) -> dict[str, 
             {"action": _action(a["action"]), "grade": a["grade"], "reasons": a["reasons"]}
             for a in candidate["answers"]
         ],
+        "brilliant_answers": [_action(a) for a in candidate.get("brilliant_answers", [])],
         "source": "solver",
         "solver": {"samples": candidate["samples"], "gap": candidate["gap"]},
     }
@@ -189,6 +227,9 @@ def validate_drill(d: dict[str, Any]) -> list[str]:
         errors.append("position.start needs four hands and current_player == seat")
     if not isinstance(d["rating"], int):
         errors.append("rating must be an integer")
+    for a in d.get("brilliant_answers", []):
+        if not any(r["action"] == a for r in d["answers"]):
+            errors.append("brilliant_answers must be among the answers")
     if not d["answers"] or d["answers"][0]["grade"] != "best":
         errors.append("the first answer must be the best move")
     for a in d["answers"]:
