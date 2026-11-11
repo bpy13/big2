@@ -10,6 +10,6 @@ Done when:
 - Every task in `docs/plans/2026-10-29-big2-bot-build.md` is ticked.
 
 Rules from hk-games: GPU or long CPU jobs go through the job queue
-(`C:\Users\brian\OneDrive\Documents\workspace\repo\bot-stream\tools\queue\hkq.ps1 add`), never started directly.
+(`C:\Users\brian\OneDrive\Documents\workspace\repo\.claude\job-queue\jobq.ps1 add`), never started directly.
 Never touch the standalone checkout `repo\big2` (Brian's files and running queue jobs live there);
 workers use this clone and its worktrees only.

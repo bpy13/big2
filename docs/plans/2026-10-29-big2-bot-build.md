@@ -759,7 +759,7 @@ un.ps1 through the queue, raise --deals in it to add deals (same seeds, same dea
   - What: Task 22's probe (`dmc.py --opponents`, `build_phase3.py probe`), but from fresh
     weights, with three `expert` seats frozen. Reuse Task 22's code; add only a from-scratch flag
     if the code lacks one.
-  - Files: `runs/probe_scratch_expert/run.ps1` (job queue, `hkq.ps1 add -Lane gpu`); the probe
+  - Files: `runs/probe_scratch_expert/run.ps1` (job queue, `jobq.ps1 add -Lane gpu`); the probe
     section (§6) of `docs/study-results/build-phase3.md`.
   - Done when: §6 records the probe's gain against `expert` at 1,000 deals with a 95 % interval,
     beside Task 22's distilled-start probes. Check: `progress.json`. Resume: `--resume
@@ -929,7 +929,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     their tests, `docs/research/results/` (a new results file), `docs/bot-notes` if the stream uses it.
   - Done when: a duplicate match (10,000 deals, seats rotated, same deals for both) of the win-chance
     bot against `expert` reports both the share of deals each wins and the points per deal, each with
-    a 95 % interval; the GPU training goes through `hkq.ps1` in the gpu lane.
+    a 95 % interval; the GPU training goes through `jobq.ps1` in the gpu lane.
   - Expected play (Brian, 2026-11-11: "It should pass greedily to optimize late game dominance"): the bot should learn to pass often and keep its strongest cards to control the end of the deal. The win-only target is meant to teach this, not a hand-written rule. Report how often each bot passes when it could play, and how many of its 2s and five-card hands it still holds when an opponent is down to 3 cards or fewer, for both bots.
 ## Self-review
 

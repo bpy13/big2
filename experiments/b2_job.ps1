@@ -1,7 +1,7 @@
 # Queue job for plan Task 21 (build-phase3.md §5): `expert` vs Charlesworth's released network,
 # his rules (four-card plays) and scoring (sum of the others' cards), 1,000 deals, both lineups.
 #
-#   powershell -NoProfile -File C:\Users\brian\OneDrive\Documents\workspace\repo\bot-stream\tools\queue\hkq.ps1 add -Lane cpu -Script C:\Users\brian\OneDrive\Documents\workspace\repo\big2\experiments\b2_job.ps1
+#   powershell -NoProfile -File C:\Users\brian\OneDrive\Documents\workspace\repo\.claude\job-queue\jobq.ps1 add -Lane cpu -Script C:\Users\brian\OneDrive\Documents\workspace\repo\big2\experiments\b2_job.ps1
 #
 # Needs runs\external\charlesworth\ (his two files, local only, gitignored). The queue sets
 # HKQ_THREADS and the CPU rules. Matches resume from saved blocks (runs\b2_charlesworth\);
