@@ -417,7 +417,7 @@ to goes through bot-notes (Task 10).
     `threads == 1` path on the calling thread (Task 2's rule). `c_puct` default 1.5; Task 15 tries
     1.0 and 2.5 on 300 deals and keeps the best.
 
-- [ ] **Task 15: Phase 2 matches** **[long: ~4 h CPU, headless]** (after 14) (waiting: Brian, does a recorded miss count as done)
+- [ ] **Task 15: Phase 2 matches** **[long: ~4 h CPU, headless]** (after 14) (Brian 2026-11-11, D95: a recorded miss counts as done for milestone 1)
   (**results in, bars failed; fallback running.** Job finished 2026-10-29 19:47; tables and
   verdicts in `build-phase2.md` §1–§4. A9 fails: PUCT-2000 vs ISMCTS-1000 at 1,000 deals −0.12
   [−0.78, +0.56] in `1+3`, −1.78 [−2.42, −1.13] in `ABAB`; at 0.5 s per move −1.81 and −2.44.
