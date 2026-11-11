@@ -419,6 +419,23 @@ rotations each, `1+3` and `ABAB` (attackers in seats 0 and 2). Expert vs expert 
 so the attacker's mean score per deal is its gain. Estimated 1-2 CPU-days; resumable and the
 deal count can be raised (same seeds).
 
+**Pilot (job 47, rollouts at ISMCTS-100, 40 deals per lineup, 2.6 s per searched decision):**
+`1+3` -1.35 ± 3.75, `ABAB` -0.59 ± 1.92. Both intervals include 0.
+
+**Full run (job 88, 2026-11-11, cpu lane, 4.8 h; `runs/rollout_br_full/results.json`):** rollouts
+play `expert` itself (ISMCTS-10,000 + exact endgame), 8 rollouts per move, 60 deals per lineup
+(120 deals), 68.7 s per searched decision. The attacker's mean score per deal against three
+`expert` (negative = worse than `expert`), 95 % interval:
+
+| Lineup | Deals | Mean | 95 % interval | Excludes 0 |
+|---|---|---|---|---|
+| `1+3` | 60 | -2.21 | ± 2.29 | no |
+| `ABAB` | 60 | -0.72 | ± 1.42 | no |
+
+No gain over `expert` in either lineup (means negative, intervals cover 0), so nothing goes to the
+inbox. With 8 rollouts per move the attacker is noisy: this bounds this attacker, not every
+possible one. The run took 4.8 h, well under the 1-2 CPU-day estimate.
+
 ## 8. Final 10,000-deal matches (Task 24)
 
 Queued in the same job. The plan named PUCT-2000 (final). **This measures the bot that ships by
