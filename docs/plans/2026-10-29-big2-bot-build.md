@@ -484,7 +484,7 @@ to goes through bot-notes (Task 10).
 
 ## Phase 3 – Iterate, belief, exact endgames, external bars (opus; Tasks 19, 20 fable)
 
-- [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]** (waiting: Brian, stop after round 3 if A9 still fails)
+- [x] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]** (closed 2026-11-11 by Brian: "For now ship the search bot as expert and queue the round 4 task as Milestone 2"; ISMCTS ships as `expert`, D97 in hk-games; round 4 is Task 17b)
   (**All three rounds done 2026-11-01; not ticked: A9 is not met in both lineups, so no network
   ships** (`build-phase3.md` §1). r3 PUCT-2000 λ 0.5 vs ISMCTS-1000 at 1,000 deals +1.06
   [+0.46, +1.67] 1+3 (passes), +0.66 [+0.08, +1.28] ABAB (fails); r3 vs the teacher ISMCTS-5000
@@ -559,6 +559,11 @@ to goes through bot-notes (Task 10).
     match if `results.json` exists).
   - Notes: 25 % random top-3 moves in labelling stay. GPU per round 2–4 h; check `nvidia-smi` first.
     If round 1 loses to round 0, do not run rounds 2–3; record it (proposal §10 row 3).
+
+- [ ] **Task 17b: Expert-iteration round 4** (waiting: milestone 2, Brian 2026-11-11: "For now ship the search bot as expert and queue the round 4 task as Milestone 2")
+  - Why: r3 PUCT-2000 vs ISMCTS-1000 at 1,000 deals: +1.06 (1+3, passes A9) and +0.66 (ABAB, fails);
+    r1 +0.46 / +0.16, r2 +0.76 / +0.86 (`docs/study-results/build-phase3.md`).
+  - Files and done when: as Task 17 for one more round, labelled by ISMCTS-5000, network from r3.
 
 - [x] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
   (**done 2026-10-30.** `RulesMask` in `belief.rs` (rejection sampler,
