@@ -917,6 +917,19 @@ stream can call it from `crates/app-api` without us touching their crate.
 
 ---
 
+## Phase 5 - A win-chance bot (milestone 2)
+
+- [ ] **Task 34: Train a model that maximises the chance of going out first, and match it against the best bot** (waiting: milestone 2, Brian 2026-11-11: "Add new task for Big2, at milestone 2, train a new model that only optimizes changes of winning (instead of EV) and have it compete against our best bot") **[GPU: hours, job queue gpu lane]**
+  - Why: every bot today maximises expected points (the cards-left penalty). Brian wants to see
+    a bot whose only goal is to win the deal (go out first), and how it fares against `expert`.
+  - What: the same training pipeline as today's best network, with the value target changed to
+    1 when the seat goes out first and 0 otherwise; the search uses that value too. Train it to the
+    same budget as the network it is compared with, so the objective is the only difference.
+  - Files: the training and search code the current network uses (a config switch, not a copy),
+    their tests, `docs/research/results/` (a new results file), `docs/bot-notes` if the stream uses it.
+  - Done when: a duplicate match (10,000 deals, seats rotated, same deals for both) of the win-chance
+    bot against `expert` reports both the share of deals each wins and the points per deal, each with
+    a 95 % interval; the GPU training goes through `hkq.ps1` in the gpu lane.
 ## Self-review
 
 - Every acceptance criterion A1–A24 maps to a task (table above). Every task has a "Done when"
