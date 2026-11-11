@@ -564,6 +564,10 @@ to goes through bot-notes (Task 10).
   - Why: r3 PUCT-2000 vs ISMCTS-1000 at 1,000 deals: +1.06 (1+3, passes A9) and +0.66 (ABAB, fails);
     r1 +0.46 / +0.16, r2 +0.76 / +0.86 (`docs/study-results/build-phase3.md`).
   - Files and done when: as Task 17 for one more round, labelled by ISMCTS-5000, network from r3.
+  - Brian 2026-11-11 (hidden-card network, answer "(a)"): the round's hidden-card network also guesses each
+    opponent's hand shape (five-card hands, pairs, triples, 2s and aces held) beside the per-card guess;
+    the search weights imagined deals by both; compare against the card-only network on the same test.
+    The round's labelling and opponent model are still to be settled with Brian before this task starts.
 
 - [x] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
   (**done 2026-10-30.** `RulesMask` in `belief.rs` (rejection sampler,
