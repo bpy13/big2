@@ -157,6 +157,23 @@ Tiny run (6 deals, `runs/p4_mine_tiny3/`): 2 drills (ratings 991 and 1085; skill
 `skill.score_vs_win`. App skills with no cluster yet: `endgame_counting`, `finish_in_two`,
 `saving_twos` (too few deals to say anything).
 
+**Puzzle pool (Task 5 of the hk-games puzzles plan, queue job 61, 2026-11-11).** `drills/big2-puzzles.json`:
+2,142 rows, 2,142 distinct ids, every row has `brilliant_answers`, ratings 600–1400 (spread 800).
+`pytest python/tests/test_drills.py`: 10 pass. Rows per theme (`skill`):
+
+| Theme | Rows |
+|---|---|
+| `skill.b2_stop_runner` | 686 |
+| `skill.b2_take_control` | 350 |
+| `skill.b2_penalty` | 347 |
+| `skill.b2_break_five` | 218 |
+| `skill.finish_in_two` | 168 |
+| `skill.b2_mixed` | 119 |
+| `skill.saving_twos` | 111 |
+| `skill.when_to_pass` | 107 |
+| `skill.b2_singles_order` | 36 |
+| `skill.endgame_counting` | 0 (under 30: no rule finds it yet) |
+
 ## 3. Ladder v2 (Task 29)
 
 **Full run (2026-10-30),** `python experiments/build_phase4.py ladder --threads 8`: 500
