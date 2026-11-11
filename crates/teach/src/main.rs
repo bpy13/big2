@@ -14,6 +14,7 @@
 //! big2-teach mine    --out DIR [--games 200] [--deals 600] [--threads 8] [--chunk 32]
 //!                    [--qnet ...] [--hard-iterations 2000] [--expert-iterations 10000]
 //!                    [--samples 16] [--min-gap 2] [--deep-mult 4]
+//!                    [--top-up 1 --deal-base N]  (only exact-endgame candidates)
 //! ```
 //!
 //! * `audit` — positions from noisy greedy self-play; for each, the paired
@@ -677,6 +678,9 @@ fn mine_deal(o: &Opts, bots: &[LadderBot], d: u64) -> Vec<Value> {
     let min_gap = o.num("min-gap", 2) as f64;
     let mult = o.num("deep-mult", 4).max(1);
     let thresholds = PairedConfig::default().thresholds;
+    // `--top-up 1`: run the exact endgame too and keep only candidates it proves (the
+    // `skill.endgame_counting` theme); without it no puzzle ever gets that tag.
+    let top_up = o.num("top-up", 0) == 1;
     let seat_level = |p: usize| [1usize, 2, 3, 3][(p + d as usize) % 4];
     let mut rng = ChaCha8Rng::seed_from_u64(0xD811_0000 + d);
     let mut s = State::new_deal(RuleSet::default(), &mut rng);
@@ -690,6 +694,7 @@ fn mine_deal(o: &Opts, bots: &[LadderBot], d: u64) -> Vec<Value> {
             let cfg = PairedConfig {
                 deals,
                 seed: d.wrapping_mul(10_007).wrapping_add(turn as u64),
+                endgame: top_up.then(InfosetConfig::default),
                 ..PairedConfig::default()
             };
             let table = evaluate_paired(&s, &cfg);
@@ -697,7 +702,7 @@ fn mine_deal(o: &Opts, bots: &[LadderBot], d: u64) -> Vec<Value> {
             let best_reasons = reasons(&s, &table, best);
             let keys: Vec<&str> = best_reasons.iter().map(|r| r.key).collect();
             let g = grade_from_table(&table, played, &thresholds, cfg.seed);
-            if g.grade != "best" {
+            if g.grade != "best" && !top_up {
                 out.push(json!({
                     "type": "mistake", "deal": d, "turn": turn,
                     "level": LEVELS[seat_level(p)], "grade": g.grade, "loss": round(g.loss, 3),
@@ -707,7 +712,8 @@ fn mine_deal(o: &Opts, bots: &[LadderBot], d: u64) -> Vec<Value> {
             let second = &table.rows[1];
             let gap = table.best().mean - second.mean;
             let gap_ci = grade_from_table(&table, second.action, &thresholds, cfg.seed).interval;
-            if gap >= min_gap && gap - gap_ci > 0.0 {
+            let wanted = !top_up || keys.contains(&"reason.counterfactual.forced");
+            if wanted && gap >= min_gap && gap - gap_ci > 0.0 {
                 let seed = cfg.seed ^ 0xA5A5;
                 let easy = wrong_share(&bots[1], &s, &legal, best, samples, seed);
                 let medium = wrong_share(&bots[2], &s, &legal, best, samples, seed + 1);
@@ -757,6 +763,8 @@ fn mine(o: &Opts) -> Result<(), String> {
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let games = o.num("games", 200);
     let chunk = o.num("chunk", 32).max(1);
+    // `--deal-base N`: deal numbers start at N (a top-up must not repeat the main run's ids).
+    let deal_base = o.num("deal-base", 0);
     let threads = o.num("threads", 8) as usize;
     rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
@@ -779,7 +787,7 @@ fn mine(o: &Opts) -> Result<(), String> {
         let end = (next + chunk).min(games);
         let lines: Vec<Vec<Value>> = (next..end)
             .into_par_iter()
-            .map(|d| mine_deal(o, &bots, d))
+            .map(|d| mine_deal(o, &bots, deal_base + d))
             .collect();
         let mut text = String::new();
         let (mut cands, mut mistakes) = (0, 0);
