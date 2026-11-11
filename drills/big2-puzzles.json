@@ -468149,5 +468149,6332 @@
    "samples": 600,
    "gap": 3.06
   }
+ },
+ {
+  "id": "big2-s200100-55",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625192868,
+   "start": {
+    "current_play": {
+     "cards": [
+      "5c"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "Jh"
+     ],
+     [
+      "4h"
+     ],
+     [
+      "5d",
+      "5s",
+      "6s",
+      "Ah"
+     ],
+     [
+      "3s",
+      "8c",
+      "Ts"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1363,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "5d",
+         "5s"
+        ],
+        "combo": "combo.pair"
+       }
+      },
+      "key": "reason.plan.keeps"
+     },
+     {
+      "args": {
+       "mine": 2,
+       "theirs": [
+        3.0,
+        1.0,
+        1.0
+       ]
+      },
+      "key": "reason.tempo.plays_to_out"
+     },
+     {
+      "args": {
+       "card": "Ah"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 5.39
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "5d",
+         "5s"
+        ],
+        "combo": "combo.pair"
+       }
+      },
+      "key": "reason.plan.keeps"
+     },
+     {
+      "args": {
+       "mine": 2,
+       "theirs": [
+        3.0,
+        1.0,
+        1.0
+       ]
+      },
+      "key": "reason.tempo.plays_to_out"
+     },
+     {
+      "args": {
+       "card": "Ah"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -5.39
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.36,
+        "win": 0.925
+       },
+       "deals": 600,
+       "played": {
+        "mean": -1.03,
+        "win": 0.475
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.54,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "unclear",
+    "reasons": [
+     {
+      "args": {
+       "card": "Ah"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.12
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.36,
+        "win": 0.925
+       },
+       "deals": 600,
+       "played": {
+        "mean": -2.75,
+        "win": 0.46
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 4.14,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "5d",
+         "5s"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "Ah"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.61
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.36,
+        "win": 0.925
+       },
+       "deals": 600,
+       "played": {
+        "mean": -3.25,
+        "win": 0.01
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.56,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 5.39
+  }
+ },
+ {
+  "id": "big2-s200115-59",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625192883,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "8s",
+      "Qs"
+     ],
+     [
+      "Jd",
+      "2s"
+     ],
+     [
+      "4s",
+      "6c"
+     ],
+     [
+      "7s"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 619,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.63
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.63
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 1.37,
+        "win": 0.453
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.97,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.63
+  }
+ },
+ {
+  "id": "big2-s200168-49",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625192936,
+   "start": {
+    "current_play": null,
+    "current_player": 2,
+    "hands": [
+     [
+      "5h",
+      "2c"
+     ],
+     [
+      "8d",
+      "Qc"
+     ],
+     [
+      "5s",
+      "2h"
+     ],
+     [
+      "3c",
+      "7s",
+      "9h"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1251,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.34
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.34
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.67,
+        "win": 0.958
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.83,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.34
+  }
+ },
+ {
+  "id": "big2-s200339-55",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625193107,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "6s",
+      "8s",
+      "Jd"
+     ],
+     [
+      "8d",
+      "8h",
+      "9s",
+      "2c"
+     ],
+     [
+      "Ah"
+     ],
+     [
+      "3s"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 972,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 12.63
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -12.63
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.63,
+        "win": 0.948
+       },
+       "deals": 600,
+       "played": {
+        "mean": -8.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 6.16,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 12.63
+  }
+ },
+ {
+  "id": "big2-s200499-49",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625193267,
+   "start": {
+    "current_play": {
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "8c",
+      "2c"
+     ],
+     [
+      "Th"
+     ],
+     [
+      "4c",
+      "5s",
+      "6s",
+      "9d",
+      "Qs"
+     ],
+     [
+      "9h"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 842,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 0.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.0,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 7.0
+  }
+ },
+ {
+  "id": "big2-s200530-46",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625193298,
+   "start": {
+    "current_play": {
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "5h",
+      "6h"
+     ],
+     [
+      "Jh",
+      "2d"
+     ],
+     [
+      "6d",
+      "7h",
+      "Th"
+     ],
+     [
+      "8h",
+      "Jc"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1121,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "delta": 1.61,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.75,
+        "win": 0.928
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.59,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.25
+  }
+ },
+ {
+  "id": "big2-s200801-45",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625193569,
+   "start": {
+    "current_play": {
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "9d",
+      "2s"
+     ],
+     [
+      "4c",
+      "5s",
+      "Kd"
+     ],
+     [
+      "6h",
+      "9s",
+      "Qs"
+     ],
+     [
+      "7h",
+      "2d"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 712,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.23
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.23
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 8.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.77,
+        "win": 0.938
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.96,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.23
+  }
+ },
+ {
+  "id": "big2-s200915-38",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625193683,
+   "start": {
+    "current_play": {
+     "cards": [
+      "7d"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "6h"
+     ],
+     [
+      "8d",
+      "8s",
+      "2h"
+     ],
+     [
+      "5c",
+      "Kh",
+      "Ad"
+     ],
+     [
+      "3c",
+      "Ks"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1288,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "8d",
+         "8s"
+        ],
+        "combo": "combo.pair"
+       }
+      },
+      "key": "reason.plan.keeps"
+     },
+     {
+      "args": {
+       "mine": 1,
+       "theirs": [
+        2.8,
+        1.9,
+        1.0
+       ]
+      },
+      "key": "reason.tempo.plays_to_out"
+     },
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.43
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "8d",
+         "8s"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.43
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.54,
+        "win": 0.925
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.11,
+        "win": 0.798
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.26,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "8d",
+         "8s"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.43
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.54,
+        "win": 0.925
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.11,
+        "win": 0.798
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.26,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.3
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.54,
+        "win": 0.925
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.24,
+        "win": 0.745
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.61,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.43
+  }
+ },
+ {
+  "id": "big2-s201159-56",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625193927,
+   "start": {
+    "current_play": {
+     "cards": [
+      "9c"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "4c",
+      "Td"
+     ],
+     [
+      "9h"
+     ],
+     [
+      "4h",
+      "6c",
+      "7h",
+      "9s"
+     ],
+     [
+      "5d"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 898,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "Td"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 4.01
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "Td"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -4.01
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 1.99,
+        "win": 0.525
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.54,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 4.01
+  }
+ },
+ {
+  "id": "big2-s201232-50",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194000,
+   "start": {
+    "current_play": {
+     "cards": [
+      "8c"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "Qs",
+      "As",
+      "2c"
+     ],
+     [
+      "Qd"
+     ],
+     [
+      "9c",
+      "Tc"
+     ],
+     [
+      "9h",
+      "Qc"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 805,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 9.69
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -9.69
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": -4.69,
+        "win": 0.038
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.69,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 9.69
+  }
+ },
+ {
+  "id": "big2-s201428-36",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194196,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "8h",
+      "8s"
+     ],
+     [
+      "3s",
+      "Kh",
+      "2h"
+     ],
+     [
+      "Qd"
+     ],
+     [
+      "5s",
+      "7h",
+      "Jd",
+      "Jc"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 860,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 10.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -10.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": -3.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 6.0,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 10.0
+  }
+ },
+ {
+  "id": "big2-s201589-52",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194357,
+   "start": {
+    "current_play": {
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "Tc",
+      "Jh"
+     ],
+     [
+      "9d"
+     ],
+     [
+      "Qs",
+      "2s"
+     ],
+     [
+      "5s",
+      "7s",
+      "Kd"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1195,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": -1.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.0,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 7.0
+  }
+ },
+ {
+  "id": "big2-s201670-54",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194438,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "9d",
+      "9h",
+      "Kc",
+      "2s"
+     ],
+     [
+      "5h",
+      "Tc",
+      "2h"
+     ],
+     [
+      "7s"
+     ],
+     [
+      "3s",
+      "8s"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1326,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.34
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.34
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.48,
+        "win": 0.942
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.14,
+        "win": 0.78
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.46,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -5.88
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.48,
+        "win": 0.942
+       },
+       "deals": 600,
+       "played": {
+        "mean": -0.39,
+        "win": 0.512
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.64,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.34
+  }
+ },
+ {
+  "id": "big2-s201811-54",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194579,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "5h"
+     ],
+     [
+      "Td",
+      "2h"
+     ],
+     [
+      "7s",
+      "Qc"
+     ],
+     [
+      "6c",
+      "8s",
+      "9d"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 935,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.48
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.48
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.53,
+        "win": 0.763
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.37,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.48
+  }
+ },
+ {
+  "id": "big2-s202056-47",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194824,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "3h",
+      "4h",
+      "6s"
+     ],
+     [
+      "5s"
+     ],
+     [
+      "3c",
+      "Js"
+     ],
+     [
+      "6d",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 674,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": -1.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.0,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 7.0
+  }
+ },
+ {
+  "id": "big2-s202084-51",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194852,
+   "start": {
+    "current_play": null,
+    "current_player": 2,
+    "hands": [
+     [
+      "6c",
+      "9s",
+      "Td"
+     ],
+     [
+      "5c",
+      "5s",
+      "Tc"
+     ],
+     [
+      "6h",
+      "2s"
+     ],
+     [
+      "6d",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1177,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.06
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.06
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 8.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 5.94,
+        "win": 0.977
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.18,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.06
+  }
+ },
+ {
+  "id": "big2-s202153-62",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625194921,
+   "start": {
+    "current_play": null,
+    "current_player": 2,
+    "hands": [
+     [
+      "6d"
+     ],
+     [
+      "6c"
+     ],
+     [
+      "3s",
+      "Td"
+     ],
+     [
+      "4h",
+      "5d"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1140,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "Td"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.16
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "Td"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.16
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 0.84,
+        "win": 0.447
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.94,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.16
+  }
+ },
+ {
+  "id": "big2-s202542-58",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625195310,
+   "start": {
+    "current_play": {
+     "cards": [
+      "5h"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "Tc"
+     ],
+     [
+      "8d"
+     ],
+     [
+      "9d",
+      "Th"
+     ],
+     [
+      "7d",
+      "8h",
+      "Td"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1307,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Th"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "Th"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.52
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "Th"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.52
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.48,
+        "win": 0.59
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.64,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "Th"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -4.07
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 0.93,
+        "win": 0.557
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.35,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.52
+  }
+ },
+ {
+  "id": "big2-s202549-53",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625195317,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "5c",
+      "2s"
+     ],
+     [
+      "6d",
+      "9s",
+      "As"
+     ],
+     [
+      "3c",
+      "5d",
+      "8c"
+     ],
+     [
+      "6s"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1065,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.42
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.42
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.59,
+        "win": 0.81
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.01,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.42
+  }
+ },
+ {
+  "id": "big2-s202750-60",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625195518,
+   "start": {
+    "current_play": {
+     "cards": [
+      "8c"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "7h",
+      "9h",
+      "Td"
+     ],
+     [
+      "3s"
+     ],
+     [
+      "9c",
+      "Js"
+     ],
+     [
+      "7c",
+      "Ts"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1233,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "Js"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.27
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "Js"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.27
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.73,
+        "win": 0.782
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.65,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "unclear",
+    "reasons": [
+     {
+      "args": {
+       "card": "Js"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.94
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.06,
+        "win": 0.78
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.87,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.27
+  }
+ },
+ {
+  "id": "big2-s203081-48",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625195849,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "9s",
+      "2d"
+     ],
+     [
+      "3s"
+     ],
+     [
+      "3h",
+      "7h",
+      "Ac"
+     ],
+     [
+      "7d",
+      "7s"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 953,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.32
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.32
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.68,
+        "win": 0.793
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.44,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.32
+  }
+ },
+ {
+  "id": "big2-s203771-50",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625196539,
+   "start": {
+    "current_play": {
+     "cards": [
+      "5d"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "8s",
+      "9s",
+      "Td",
+      "Ts"
+     ],
+     [
+      "7d",
+      "9d"
+     ],
+     [
+      "7h",
+      "Qh"
+     ],
+     [
+      "7c",
+      "Qs"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1344,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "Qs"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.56
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "Qs"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.56
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 8.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 5.44,
+        "win": 0.967
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.66,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "unclear",
+    "reasons": [
+     {
+      "args": {
+       "card": "Qs"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.8
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 8.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 5.2,
+        "win": 0.965
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.63,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.56
+  }
+ },
+ {
+  "id": "big2-s204100-58",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625196868,
+   "start": {
+    "current_play": null,
+    "current_player": 2,
+    "hands": [
+     [
+      "8c",
+      "9d",
+      "Tc"
+     ],
+     [
+      "6h",
+      "Th"
+     ],
+     [
+      "4d",
+      "2h"
+     ],
+     [
+      "5d",
+      "Jd"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1158,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.57
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.57
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.43,
+        "win": 0.975
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.44,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.57
+  }
+ },
+ {
+  "id": "big2-s204258-60",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197026,
+   "start": {
+    "current_play": {
+     "cards": [
+      "9c"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "4d",
+      "6h"
+     ],
+     [
+      "7h",
+      "9d"
+     ],
+     [
+      "7c",
+      "2d"
+     ],
+     [
+      "4s"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1102,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.76
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "delta": 1.5,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "unclear",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.76
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.24,
+        "win": 0.848
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.97,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.76
+  }
+ },
+ {
+  "id": "big2-s204398-40",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197166,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Qd"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "3s",
+      "4s",
+      "Jd"
+     ],
+     [
+      "6d"
+     ],
+     [
+      "5h",
+      "5s",
+      "8c",
+      "Ks"
+     ],
+     [
+      "Tc",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 786,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.88
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "unclear",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.88
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 8.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 5.12,
+        "win": 0.77
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.72,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.88
+  }
+ },
+ {
+  "id": "big2-s204476-49",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197244,
+   "start": {
+    "current_play": null,
+    "current_player": 1,
+    "hands": [
+     [
+      "Th"
+     ],
+     [
+      "6d",
+      "6s",
+      "2d"
+     ],
+     [
+      "4s",
+      "Ts",
+      "Kd"
+     ],
+     [
+      "4h",
+      "Tc"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1381,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "6d",
+         "6s"
+        ],
+        "combo": "combo.pair"
+       }
+      },
+      "key": "reason.plan.keeps"
+     },
+     {
+      "args": {
+       "mine": 1,
+       "theirs": [
+        2.2,
+        1.8,
+        1.0
+       ]
+      },
+      "key": "reason.tempo.plays_to_out"
+     },
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "6d",
+         "6s"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.57,
+        "win": 0.928
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.32,
+        "win": 0.707
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.35,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "6d",
+         "6s"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.57,
+        "win": 0.928
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.32,
+        "win": 0.707
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.35,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6d",
+      "6s"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "mine": 1,
+       "theirs": [
+        2.2,
+        1.8,
+        1.0
+       ]
+      },
+      "key": "reason.tempo.plays_to_out"
+     },
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.51
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.57,
+        "win": 0.928
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.06,
+        "win": 0.315
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 4.72,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.25
+  }
+ },
+ {
+  "id": "big2-s204531-49",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197299,
+   "start": {
+    "current_play": null,
+    "current_player": 0,
+    "hands": [
+     [
+      "3c",
+      "Kh"
+     ],
+     [
+      "6c",
+      "Tc",
+      "Jc"
+     ],
+     [
+      "3s",
+      "8d"
+     ],
+     [
+      "3h",
+      "7d"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1047,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "Kh"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.57
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "Kh"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.57
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.43,
+        "win": 0.968
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.53,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.57
+  }
+ },
+ {
+  "id": "big2-s204877-52",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197645,
+   "start": {
+    "current_play": {
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "Kc"
+     ],
+     [
+      "2c"
+     ],
+     [
+      "5d",
+      "5h",
+      "2s"
+     ],
+     [
+      "7s",
+      "9d",
+      "Ts"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 823,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 9.61
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -9.61
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.61,
+        "win": 0.93
+       },
+       "deals": 600,
+       "played": {
+        "mean": -5.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.99,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 9.61
+  }
+ },
+ {
+  "id": "big2-s204885-36",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197653,
+   "start": {
+    "current_play": {
+     "cards": [
+      "9d"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "3c",
+      "3h"
+     ],
+     [
+      "5d",
+      "Ad",
+      "Ac"
+     ],
+     [
+      "7h"
+     ],
+     [
+      "Td",
+      "Tc",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1270,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "Td",
+         "Tc"
+        ],
+        "combo": "combo.pair"
+       }
+      },
+      "key": "reason.plan.keeps"
+     },
+     {
+      "args": {
+       "mine": 1,
+       "theirs": [
+        1.9,
+        2.6,
+        1.0
+       ]
+      },
+      "key": "reason.tempo.plays_to_out"
+     },
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "Td",
+         "Tc"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.74,
+        "win": 0.96
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.5,
+        "win": 0.813
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.36,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "combo": {
+        "cards": [
+         "Td",
+         "Tc"
+        ],
+        "combo": "combo.pair"
+       },
+       "cost": 1
+      },
+      "key": "reason.plan.breaks"
+     },
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.25
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.74,
+        "win": 0.96
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.5,
+        "win": 0.813
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.36,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.14
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.74,
+        "win": 0.96
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.6,
+        "win": 0.767
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.56,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.25
+  }
+ },
+ {
+  "id": "big2-s205212-45",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625197980,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "Qc",
+      "2h"
+     ],
+     [
+      "2d"
+     ],
+     [
+      "3s",
+      "4h",
+      "5h",
+      "9h"
+     ],
+     [
+      "8c",
+      "Th"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1084,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 0.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.0,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 7.0
+  }
+ },
+ {
+  "id": "big2-s205750-55",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625198518,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Ad"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "4d",
+      "9d"
+     ],
+     [
+      "9h"
+     ],
+     [
+      "7d",
+      "7c"
+     ],
+     [
+      "6s",
+      "2c"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1009,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.72
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.72
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 1.28,
+        "win": 0.573
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.82,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.72
+  }
+ },
+ {
+  "id": "big2-s206150-45",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625198918,
+   "start": {
+    "current_play": {
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "3h",
+      "5d"
+     ],
+     [
+      "Kd",
+      "Ks",
+      "2c"
+     ],
+     [
+      "9s",
+      "Js",
+      "Kh"
+     ],
+     [
+      "4h",
+      "6d"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 767,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 5.05
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -5.05
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.97,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 1.92,
+        "win": 0.693
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.11,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 5.05
+  }
+ },
+ {
+  "id": "big2-s206201-55",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625198969,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Ad"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "5h"
+     ],
+     [
+      "3h"
+     ],
+     [
+      "5d",
+      "2h"
+     ],
+     [
+      "4h",
+      "5s",
+      "6d"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1084,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -7.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": -2.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.0,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 7.0
+  }
+ },
+ {
+  "id": "big2-s206253-62",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199021,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "7h",
+      "Th"
+     ],
+     [
+      "4s",
+      "5s"
+     ],
+     [
+      "4c"
+     ],
+     [
+      "5d",
+      "5c",
+      "8d",
+      "2s"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 749,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 5.54
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -5.54
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.34,
+        "win": 0.912
+       },
+       "deals": 600,
+       "played": {
+        "mean": -1.2,
+        "win": 0.595
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 4.15,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 5.54
+  }
+ },
+ {
+  "id": "big2-s206456-50",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199224,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "4s",
+      "2s"
+     ],
+     [
+      "3c",
+      "8d"
+     ],
+     [
+      "8s",
+      "Td",
+      "Qs"
+     ],
+     [
+      "7s"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 656,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.71
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.71
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.29,
+        "win": 0.73
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.7,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.71
+  }
+ },
+ {
+  "id": "big2-s206783-56",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199551,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "Tc"
+     ],
+     [
+      "6c",
+      "6h",
+      "2c"
+     ],
+     [
+      "3s",
+      "5h",
+      "Th"
+     ],
+     [
+      "9c"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 600,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 9.53
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -9.53
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.53,
+        "win": 0.915
+       },
+       "deals": 600,
+       "played": {
+        "mean": -5.0,
+        "win": 0.0
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 5.93,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 9.53
+  }
+ },
+ {
+  "id": "big2-s206958-49",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199726,
+   "start": {
+    "current_play": {
+     "cards": [
+      "8d"
+     ],
+     "combo": "combo.single",
+     "player": 1
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "2d"
+     ],
+     [
+      "2h"
+     ],
+     [
+      "Kh",
+      "2s"
+     ],
+     [
+      "3s",
+      "4c",
+      "5c",
+      "6h",
+      "8c"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1400,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.11
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.11
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.89,
+        "win": 0.703
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.77,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.27
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.73,
+        "win": 0.672
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.25,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.11
+  }
+ },
+ {
+  "id": "big2-s207085-59",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199853,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 3,
+    "hands": [
+     [
+      "6h",
+      "2c"
+     ],
+     [
+      "3h",
+      "5c",
+      "6d",
+      "7d"
+     ],
+     [
+      "Jc"
+     ],
+     [
+      "9c",
+      "9h",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 879,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 4.26
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 3
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -4.26
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.7,
+        "win": 0.957
+       },
+       "deals": 600,
+       "played": {
+        "mean": 2.44,
+        "win": 0.718
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.95,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 4.26
+  }
+ },
+ {
+  "id": "big2-s207135-53",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199903,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 2,
+    "hands": [
+     [
+      "3s",
+      "5c"
+     ],
+     [
+      "5h",
+      "8s"
+     ],
+     [
+      "8h",
+      "2h"
+     ],
+     [
+      "5s"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 916,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.94
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "delta": 1.11,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.94
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 1.06,
+        "win": 0.655
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 4.1,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.94
+  }
+ },
+ {
+  "id": "big2-s207172-59",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625199940,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Qc"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "Td"
+     ],
+     [
+      "4c",
+      "2h"
+     ],
+     [
+      "4d",
+      "4s"
+     ],
+     [
+      "5s",
+      "6d"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 991,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 4.31
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -4.31
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 5.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 0.69,
+        "win": 0.625
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.08,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 4.31
+  }
+ },
+ {
+  "id": "big2-s207391-63",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625200159,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "6h",
+      "7d"
+     ],
+     [
+      "2s"
+     ],
+     [
+      "6s",
+      "9s"
+     ],
+     [
+      "3c",
+      "3s",
+      "4s",
+      "6c",
+      "7c"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 637,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "points": 3.2
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "delta": 2.17,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     },
+     {
+      "args": {
+       "plays": 1,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.2
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 9.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 5.81,
+        "win": 0.823
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 4.5,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.2
+  }
+ },
+ {
+  "id": "big2-s207421-44",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625200189,
+   "start": {
+    "current_play": {
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single",
+     "player": 2
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "5h",
+      "Th"
+     ],
+     [
+      "3s",
+      "2c"
+     ],
+     [
+      "4h",
+      "6d",
+      "6h"
+     ],
+     [
+      "3h",
+      "7d"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1028,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 3.1
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2c"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -3.1
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 3.9,
+        "win": 0.912
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 2.19,
+       "seat": 2
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 3.1
+  }
+ },
+ {
+  "id": "big2-s207746-53",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625200514,
+   "start": {
+    "current_play": null,
+    "current_player": 2,
+    "hands": [
+     [
+      "3s",
+      "2c"
+     ],
+     [
+      "Ah"
+     ],
+     [
+      "Ks",
+      "2s"
+     ],
+     [
+      "3c",
+      "7h",
+      "Tc"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1214,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 2.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 2
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "inaccuracy",
+    "reasons": [
+     {
+      "args": {
+       "card": "2s"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -2.0
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 6.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 4.0,
+        "win": 0.798
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 1.97,
+       "seat": 3
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 2.0
+  }
+ },
+ {
+  "id": "big2-s207848-51",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625200616,
+   "start": {
+    "current_play": {
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single",
+     "player": 0
+    },
+    "current_player": 1,
+    "hands": [
+     [
+      "8h",
+      "9d",
+      "2d"
+     ],
+     [
+      "4d",
+      "4s",
+      "Qd",
+      "2h"
+     ],
+     [
+      "4h"
+     ],
+     [
+      "5c"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 730,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 5.67
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 9,
+       "result": "win",
+       "winner": 1
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2h"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -5.67
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 4.67,
+        "win": 0.953
+       },
+       "deals": 600,
+       "played": {
+        "mean": -1.0,
+        "win": 0.573
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 3.11,
+       "seat": 0
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 5.67
+  }
+ },
+ {
+  "id": "big2-s207938-56",
+  "game": "big2",
+  "skill": "skill.endgame_counting",
+  "prompt": "drill.count_the_rest",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 3625200706,
+   "start": {
+    "current_play": {
+     "cards": [
+      "4d"
+     ],
+     "combo": "combo.single",
+     "player": 3
+    },
+    "current_player": 0,
+    "hands": [
+     [
+      "8h",
+      "2d"
+     ],
+     [
+      "9h"
+     ],
+     [
+      "5c",
+      "6s",
+      "7h",
+      "Ts",
+      "Qh"
+     ],
+     [
+      "8s"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 693,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.safe_single"
+     },
+     {
+      "args": {
+       "points": 6.73
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "plays": 5,
+       "result": "win",
+       "winner": 0
+      },
+      "key": "reason.counterfactual.forced"
+     }
+    ]
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [
+     {
+      "args": {
+       "card": "2d"
+      },
+      "key": "reason.control.highest_out"
+     },
+     {
+      "args": {
+       "points": -6.73
+      },
+      "key": "reason.value.gap"
+     },
+     {
+      "args": {
+       "best": {
+        "mean": 7.0,
+        "win": 1.0
+       },
+       "deals": 600,
+       "played": {
+        "mean": 0.27,
+        "win": 0.047
+       }
+      },
+      "key": "reason.counterfactual.outcomes"
+     },
+     {
+      "args": {
+       "delta": 4.68,
+       "seat": 1
+      },
+      "key": "reason.helps_seat"
+     }
+    ]
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "solver": {
+   "samples": 600,
+   "gap": 6.73
+  }
  }
 ]
