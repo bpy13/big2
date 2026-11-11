@@ -484,7 +484,7 @@ to goes through bot-notes (Task 10).
 
 ## Phase 3 – Iterate, belief, exact endgames, external bars (opus; Tasks 19, 20 fable)
 
-- [ ] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]** (waiting: Brian, stop after round 3 if A9 still fails)
+- [x] **Task 17: Expert-iteration rounds 1–3** **[long: per round ~6 h CPU labelling + 2–4 GPU-h + 2 h CPU eval; headless]** (closed 2026-11-11 by Brian: "For now ship the search bot as expert and queue the round 4 task as Milestone 2"; ISMCTS ships as `expert`, D97 in hk-games; round 4 is Task 17b)
   (**All three rounds done 2026-11-01; not ticked: A9 is not met in both lineups, so no network
   ships** (`build-phase3.md` §1). r3 PUCT-2000 λ 0.5 vs ISMCTS-1000 at 1,000 deals +1.06
   [+0.46, +1.67] 1+3 (passes), +0.66 [+0.08, +1.28] ABAB (fails); r3 vs the teacher ISMCTS-5000
@@ -559,6 +559,15 @@ to goes through bot-notes (Task 10).
     match if `results.json` exists).
   - Notes: 25 % random top-3 moves in labelling stay. GPU per round 2–4 h; check `nvidia-smi` first.
     If round 1 loses to round 0, do not run rounds 2–3; record it (proposal §10 row 3).
+
+- [ ] **Task 17b: Expert-iteration round 4** (waiting: milestone 2, Brian 2026-11-11: "For now ship the search bot as expert and queue the round 4 task as Milestone 2")
+  - Why: r3 PUCT-2000 vs ISMCTS-1000 at 1,000 deals: +1.06 (1+3, passes A9) and +0.66 (ABAB, fails);
+    r1 +0.46 / +0.16, r2 +0.76 / +0.86 (`docs/study-results/build-phase3.md`).
+  - Files and done when: as Task 17 for one more round, labelled by ISMCTS-5000, network from r3.
+  - Brian 2026-11-11 (hidden-card network, answer "(a)"): the round's hidden-card network also guesses each
+    opponent's hand shape (five-card hands, pairs, triples, 2s and aces held) beside the per-card guess;
+    the search weights imagined deals by both; compare against the card-only network on the same test.
+    The round's labelling and opponent model are still to be settled with Brian before this task starts.
 
 - [x] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
   (**done 2026-10-30.** `RulesMask` in `belief.rs` (rejection sampler,
@@ -908,6 +917,20 @@ stream can call it from `crates/app-api` without us touching their crate.
 
 ---
 
+## Phase 5 - A win-chance bot (milestone 2)
+
+- [ ] **Task 34: Train a model that maximises the chance of going out first, and match it against the best bot** (waiting: milestone 2, Brian 2026-11-11: "Add new task for Big2, at milestone 2, train a new model that only optimizes changes of winning (instead of EV) and have it compete against our best bot") **[GPU: hours, job queue gpu lane]**
+  - Why: every bot today maximises expected points (the cards-left penalty). Brian wants to see
+    a bot whose only goal is to win the deal (go out first), and how it fares against `expert`.
+  - What: the same training pipeline as today's best network, with the value target changed to
+    1 when the seat goes out first and 0 otherwise; the search uses that value too. Train it to the
+    same budget as the network it is compared with, so the objective is the only difference.
+  - Files: the training and search code the current network uses (a config switch, not a copy),
+    their tests, `docs/research/results/` (a new results file), `docs/bot-notes` if the stream uses it.
+  - Done when: a duplicate match (10,000 deals, seats rotated, same deals for both) of the win-chance
+    bot against `expert` reports both the share of deals each wins and the points per deal, each with
+    a 95 % interval; the GPU training goes through `hkq.ps1` in the gpu lane.
+  - Expected play (Brian, 2026-11-11: "It should pass greedily to optimize late game dominance"): the bot should learn to pass often and keep its strongest cards to control the end of the deal. The win-only target is meant to teach this, not a hand-written rule. Report how often each bot passes when it could play, and how many of its 2s and five-card hands it still holds when an opponent is down to 3 cards or fewer, for both bots.
 ## Self-review
 
 - Every acceptance criterion A1–A24 maps to a task (table above). Every task has a "Done when"

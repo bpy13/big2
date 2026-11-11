@@ -6,6 +6,10 @@ Example, Why it matters, Options with the Default marked. The orchestrator turns
 ## Open
 
 ## Answered
+
+**Should big2 stop after training round 3 and ship the search bot as `expert`?** (Task 17) r3
+misses A9 in the ABAB lineup (+0.66, bar +1.0).
+Brian (2026-11-11): "For now ship the search bot as expert and queue the round 4 task as Milestone 2"
 **Which agreement measure should the A21 grader bar use?**
 - What it is: Task 27's re-grade gives 90.2 % same grade across seeds (strict) and 97.6 % compatible (counting `unclear` as agreeing). The bar is 95 %.
 - Example: a move graded `mistake` once and `unclear` the second time counts as a disagreement under strict, an agreement under compatible.
