@@ -383,7 +383,13 @@ What differs from the plan, and why:
 
 ### 6.1 From-scratch probe against `expert` (Task 33)
 
-Status 2026-11-10: code done, job queued (see board); numbers below when it ends.
+Status 2026-11-14: done (job 69, 600 min, 98,176 games, 1,066,505 samples; end snapshot `runs\probe_scratch_expert\latest.pt`).
+
+**Result (1,000 deals, 1 + 3, vs three `expert`):** gain **-2.57**, 95 % interval [-3.04, -2.09]
+(learner win rate 12.5 %, `expert` seats 29.2 %; paired diff -3.43 [-4.04, -2.82]). The interval
+excludes 0 but on the losing side: the from-scratch probe is clearly worse than `expert`, so it
+found no exploit (no positive gain to send to the inbox). As the caveat below predicted, about
+98,000 games are too few to learn the game from nothing. Raw: `runs\probe_scratch\a_probe_scratch\results.json`.
 
 Task 22's probes start from the distilled network, so they may share the teacher's blind spots.
 This one starts from fresh weights (same net shape as `models/big2-distilled-duty.pt`), three

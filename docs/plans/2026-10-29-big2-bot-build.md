@@ -753,7 +753,7 @@ un.ps1 through the queue, raise --deals in it to add deals (same seeds, same dea
     fits 2 CPU-days. No bar is set: a gain whose interval excludes 0 goes to `docs/inbox.md` as
     a question for Brian.
 
-- [ ] **Task 33: Best-response probe trained from scratch** `[parallel-ok]` **[GPU: 10 h, job queue gpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (ready 2026-11-14: queue job 69 finished 11:19, exit 0; training 600 min, 98,176 games, last learner score -3.86 (`runs\probe_scratch_expert\progress.json`); the 1,000-deal match is in `runs\probe_scratch\` of `C:\Users\brian\OneDrive\Documents\workspace\repo\.worktrees\big2-workers`; a worker records the numbers in §6.1 and ticks)
+- [x] **Task 33: Best-response probe trained from scratch** `[parallel-ok]` **[GPU: 10 h, job queue gpu lane]** (beside earlier phases: it tests the bot that ships now and needs no Task 15 or 17 result) (ready 2026-11-14: queue job 69 finished 11:19, exit 0; training 600 min, 98,176 games, last learner score -3.86 (`runs\probe_scratch_expert\progress.json`); the 1,000-deal match is in `runs\probe_scratch\` of `C:\Users\brian\OneDrive\Documents\workspace\repo\.worktrees\big2-workers`; a worker records the numbers in §6.1 and ticks)
   (Added 2026-11-10 on Brian's word "Yes, add all three". Task 22's probes start from the
   distilled network, so they may share the teacher's blind spots.)
   - What: Task 22's probe (`dmc.py --opponents`, `build_phase3.py probe`), but from fresh
