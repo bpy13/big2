@@ -27,6 +27,17 @@ training); distilling the solver into a network gives nearly the solver's
 strength at a fraction of the cost. Details: [Phase 1](docs/study-results/phase1-solver.md),
 [Phase 3](docs/study-results/phase3-rl.md).
 
+Later bot-building run ([build-phase3](docs/study-results/build-phase3.md), duplicate deals, last-card duty on):
+
+| Question | Result |
+|---|---|
+| Does the network-guided search (PUCT-2000, three rounds of expert iteration) beat ISMCTS-1000? | +1.06 (1+3), +0.66 (ABAB) points per game; ties its teacher ISMCTS-5000 (+0.04, -0.00) |
+| Which bot ships as `expert`? | ISMCTS-10,000 + exact endgame; no model file ships |
+| `expert` vs ISMCTS-1000, 10,000 deals | +0.92 (1+3), +1.01 (ABAB) paired |
+| `expert` vs Charlesworth's published network, 1,000 deals | +0.06 ± 0.26, +0.04 ± 0.30: a tie |
+| Can a learner exploit `expert`? | No: probe ends at +0.01, from scratch -2.57, rollout attacker -2.21 ± 2.29 |
+| Does a learned belief help the search? | No (+0.40, +0.24; intervals include 0): teaching only |
+
 > Status: **Phases 1–3 complete** — rules engine, search solver, CLI, web UI with
 > study mode, and reinforcement-learning agents compared head-to-head with the solver.
 

@@ -61,6 +61,13 @@ reason keys from the move table, the paired grader (σ lines, `unclear`) and the
 ledger ([crates/teach/README.md](../crates/teach/README.md)). The app stream calls it from
 `crates/app-api`; its `big2-teach` program runs the phase-4 experiments natively.
 
+**New in phase 3** (all in `crates/search` unless noted): `puct.rs` (PUCT with the policy-value
+network, `big2_big2::pvnet::PvNet`), `belief.rs` (`RulesMask`: deals that the last-card duty
+excludes; `NetSampler`: deals weighted by a learned belief, `big2_big2::belief_net::BeliefNet`),
+and `infoset_endgame.rs` (`infoset_endgame`: every deal of the hidden cards solved by max^n, with
+`Forced` proofs). Python side: `rl/belief.py`, `experiments/expert_iteration.py` and
+`experiments/build_phase3.py`. Results: [study-results/build-phase3.md](study-results/build-phase3.md).
+
 **`crates/search-wasm`** (`big2-search-wasm`) is a timing harness, never shipped. It runs the
 same steps in Node WebAssembly and natively (`experiments/wasm_timing.mjs`), so a table's two
 columns come from the same code and the same positions.

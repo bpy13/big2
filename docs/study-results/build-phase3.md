@@ -500,16 +500,23 @@ Win rate stays near 25 %: the gain comes from score margin, not from winning mor
 run of §5 (A19's second half was not run at 10,000 deals; PUCT-2000 was not run either, see above).
 ## 9. Summary (Task 25)
 
-Filled in as the job ends. Numbers so far, each with its source:
+Status 2026-11-17: Tasks 17–24, 32 and 33 are done. Each number has its source file beside it
+(paths under `runs/` are in the checkout that ran the job; the section of each result names it).
+No network passed A9, so **no model file ships and `expert` stays ISMCTS-10,000 + exact endgame**
+(Brian, 2026-11-11: "For now ship the search bot as expert").
 
 | Bar | Result | Source | Verdict |
 |---|---|---|---|
 | A9 | r3 vs ISMCTS-1000: +1.06 (1+3), +0.66 (ABAB) | `runs/round3/results.json` | not met |
 | A11 | PUCT-2000: 0.83 s app build, 0.28 s SIMD; move change 3.0 % | `runs/wasm_timing/puct.json`, `puct_simd.json` | time not met in the app build; move change met |
 | A12 | not run (A9 failed) | `runs/round3/results.json` | stop rule applied |
-| A13 | mask loses nothing | `runs/p3_matches/a_rules_mask/results.json` | met |
-| A14 | Task 19 not started | – | open |
+| A13 | mask loses nothing: +0.20 (1+3), +0.08 (ABAB), intervals include 0 | `runs/p3_matches/a_rules_mask/results.json` | met |
+| A14 | learned belief vs rules mask: +0.40 [-0.12, +0.91] (1+3), +0.24 [-0.36, +0.81] (ABAB); held-out log-lik -1.0007 vs -1.0486 | `runs/belief/v1/results.json`, `runs/belief_r1/a_belief_net/results.json` (slot-2 worktree) | missed: teaching only |
 | A15 | 94.2 % agreement; 0.36 s at most in Node at 10 cards | `runs/p3_matches/b_endgame/results.json`, `runs/wasm_timing/endgame.json` | agreement missed by 0.8; time met |
 | A16 | +0.06 ± 0.26 (1+3), +0.04 ± 0.30 (ABAB) vs Charlesworth, his rules | `runs/b2_charlesworth/b2_charlesworth/results.json` | missed: intervals include 0 |
+| A17 | probe gain vs `expert` +1.82 (end +0.01); ISMCTS-1000 +3.05; DMC-10h +1.75 | `runs/probe_eval/a_probes/results.json` | missed; no exploit (end score +0.01) |
+| A18 | seed B vs seed 0: +0.25 [-0.19, +0.70] (1+3), -0.02 [-0.52, +0.49] (ABAB) | `runs/seed_crossplay/a_r3_vs_seedB/results.json` | met |
 | A19 | `expert` vs ISMCTS-1000, 10,000 deals: paired +0.92 (1+3), +1.01 (ABAB); Charlesworth only at 1,000 deals (§5) | `runs/final_matches/a_expert_vs_ismcts1000/results.json` | met for ISMCTS-1000; Charlesworth at 1,000 deals |
-| Teacher rule | r3 vs ISMCTS-5000: +0.04, −0.00 | `runs/round3/vs_teacher/results.json` | teacher stays |
+| Teacher rule | r3 vs ISMCTS-5000: +0.04, -0.00 | `runs/round3/vs_teacher/results.json` | teacher stays |
+| Task 32 | rollout attacker vs three `expert`: -2.21 ± 2.29 (1+3), -0.72 ± 1.42 (ABAB), 60 deals each | `runs/rollout_br_full/results.json` | no gain over `expert` |
+| Task 33 | from-scratch probe vs three `expert`: -2.57 [-3.04, -2.09], 98,176 games | `runs/probe_scratch/a_probe_scratch/results.json` | no exploit found |

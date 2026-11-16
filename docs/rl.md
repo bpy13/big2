@@ -142,6 +142,15 @@ calibration slope on held-out shards, and plays PUCT-2000 against ISMCTS-1000. E
 resumes. Three rounds ran: the gain levelled off at about +0.85 points against ISMCTS-1000,
 and r3 ties its teacher, so no network replaced it.
 
+**Belief net** (`python/big2/rl/belief.py`, build plan Task 19; results in
+`build-phase3.md` §3). State features -> 320 -> 256 -> `52 x 3` logits added to a hand-size
+baseline: the chance that each seat holds each hidden card. Trained on self-play positions
+with the true hands as labels, exported as `.pknn` (`big2-belief`), read by
+`big2_big2::belief_net::BeliefNet` and used by `big2_search::NetSampler`
+(`analyze(belief="net", belief_net=...)`). Round 1 beat the baseline in held-out log-likelihood
+(-1.0007 against -1.0486 per card) but not PUCT-2000 with the rules mask in play (+0.40,
++0.24, intervals include 0), so it is teaching only.
+
 **Best-response probe** (`big2 rl train --opponents <spec>`, build plan Task 22). The
 learner holds one random seat per game and three seats play the frozen spec. What it gains
 measures how exploitable that agent is. `experiments/build_phase3.py probe` starts every

@@ -5,6 +5,12 @@ Example, Why it matters, Options with the Default marked. The orchestrator turns
 
 ## Open
 
+**May a big2 worker add the phase 3 entry to hk-games `docs/streams/bot-notes.md`?** (Task 25)
+- What it is: Task 25's last step is an entry in the hk-games checkout. The permission system refused my edit there (outside the big2 worktree). The finished text is `docs/bot-notes-phase3-entry.md` in big2.
+- Example: the entry says no model file ships, lists `RulesMask`, `NetSampler`, `infoset_endgame`, what `quality` carries, and the B2/B3 results in three lines.
+- Why it matters: Task 25 stays "(waiting: inbox)" until the entry is in bot-notes (A24). Everything else in Task 25 is done and pushed.
+- Options: (a) you or the orchestrator paste the file into bot-notes.md, newest first; (b) allow workers to commit that one file in hk-games. Default: (a).
+
 ## Answered
 
 **Should big2 stop after training round 3 and ship the search bot as `expert`?** (Task 17) r3
