@@ -560,15 +560,6 @@ to goes through bot-notes (Task 10).
   - Notes: 25 % random top-3 moves in labelling stay. GPU per round 2–4 h; check `nvidia-smi` first.
     If round 1 loses to round 0, do not run rounds 2–3; record it (proposal §10 row 3).
 
-- [ ] **Task 17b: Expert-iteration round 4** (waiting: milestone 2, Brian 2026-11-11: "For now ship the search bot as expert and queue the round 4 task as Milestone 2")
-  - Why: r3 PUCT-2000 vs ISMCTS-1000 at 1,000 deals: +1.06 (1+3, passes A9) and +0.66 (ABAB, fails);
-    r1 +0.46 / +0.16, r2 +0.76 / +0.86 (`docs/study-results/build-phase3.md`).
-  - Files and done when: as Task 17 for one more round, labelled by ISMCTS-5000, network from r3.
-  - Brian 2026-11-11 (hidden-card network, answer "(a)"): the round's hidden-card network also guesses each
-    opponent's hand shape (five-card hands, pairs, triples, 2s and aces held) beside the per-card guess;
-    the search weights imagined deals by both; compare against the card-only network on the same test.
-    The round's labelling and opponent model are still to be settled with Brian before this task starts.
-
 - [x] **Task 18: Hard-constraint belief from the rules** `[parallel-ok]`
   (**done 2026-10-30.** `RulesMask` in `belief.rs` (rejection sampler,
   counters, `Sampler::weight`), `Rewind::history_consistent` (State: one backward pass over
@@ -918,6 +909,17 @@ stream can call it from `crates/app-api` without us touching their crate.
 ---
 
 ## Phase 5 - A win-chance bot (milestone 2)
+
+Task 17b was moved here from Phase 3 on 2026-11-17 by the orchestrator: it waits for milestone 2, and under the phase rule it held Tasks 22 to 25 and 31, whose job ended on 2026-11-03 (`runs\b25_tasks22_24\progress.json`: step done) and which only need their results written up.
+
+- [ ] **Task 17b: Expert-iteration round 4** (waiting: milestone 2, Brian 2026-11-11: "For now ship the search bot as expert and queue the round 4 task as Milestone 2")
+  - Why: r3 PUCT-2000 vs ISMCTS-1000 at 1,000 deals: +1.06 (1+3, passes A9) and +0.66 (ABAB, fails);
+    r1 +0.46 / +0.16, r2 +0.76 / +0.86 (`docs/study-results/build-phase3.md`).
+  - Files and done when: as Task 17 for one more round, labelled by ISMCTS-5000, network from r3.
+  - Brian 2026-11-11 (hidden-card network, answer "(a)"): the round's hidden-card network also guesses each
+    opponent's hand shape (five-card hands, pairs, triples, 2s and aces held) beside the per-card guess;
+    the search weights imagined deals by both; compare against the card-only network on the same test.
+    The round's labelling and opponent model are still to be settled with Brian before this task starts.
 
 - [ ] **Task 34: Train a model that maximises the chance of going out first, and match it against the best bot** (waiting: milestone 2, Brian 2026-11-11: "Add new task for Big2, at milestone 2, train a new model that only optimizes changes of winning (instead of EV) and have it compete against our best bot") **[GPU: hours, job queue gpu lane]**
   - Why: every bot today maximises expected points (the cards-left penalty). Brian wants to see
