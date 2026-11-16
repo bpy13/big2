@@ -3,6 +3,7 @@
 ## Workers
 
 ## Results
+- Task 22 (slot 1, 2026-11-17): ticked. Probes (job b25_tasks22_24, 1,000 deals) vs `expert` gain +1.82 (end score +0.01, no exploit), ISMCTS-1000 +3.05, DMC-10h +1.75; A17 and the greedy validation missed, recorded in §6.0.
 - Task 33 (slot 1, 2026-11-14): ticked. From-scratch probe (job 69, 98,176 games) vs three `expert`, 1,000 deals: gain -2.57 [-3.04, -2.09]; no exploit found. Recorded in §6.1.
 - Task 19 (slot 1, 2026-11-10): ticked. Learned belief round 1: held-out log-lik -1.0007 vs -1.0486 uniform; 300-deal match paired +0.40 [-0.12, +0.91] (1+3), +0.24 [-0.36, +0.81] (ABAB). A14 missed: teaching only.
 - Task 32 (slot 1, 2026-11-10): rerun queued, **not ticked**: queue job 50 (cpu lane, `hkq.ps1 log 50`; `runs/rollout_br_full/progress.json` in the big2-workers worktree) plays 60 deals x 2 lineups with rollouts at ISMCTS-10,000, est. ~37 h wall. Then §7a of build-phase3.md gets the pilot and run numbers and the task is ticked.

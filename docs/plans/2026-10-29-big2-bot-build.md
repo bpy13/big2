@@ -663,7 +663,7 @@ to goes through bot-notes (Task 10).
     here; report that handicap. If Brian answers "no" to open question 1, skip the Python agent and
     record B2 as "not run".
 
-- [ ] **Task 22: B3b — the best-response probe** **[GPU: 3 × 10 h, three separate headless jobs]** (after 17) (taken: slot 1, 2026-11-17 12:00)
+- [x] **Task 22: B3b — the best-response probe** **[GPU: 3 × 10 h, three separate headless jobs]** (after 17)
   (**Code done and queued 2026-11-01** in the one job of Task 24's status: `--opponents`,
   `test_dmc_frozen_opponents`, `build_phase3.py probe`, `probe-eval`. Third candidate is
   `expert`, not the network; every probe starts from the distilled duty network; the evaluation

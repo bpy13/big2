@@ -381,6 +381,32 @@ What differs from the plan, and why:
   games. `probe-eval` therefore also plays each probe at the snapshot with the games of the
   slowest probe. A17 is read on that column too.
 
+### 6.0 Results (job `b25_tasks22_24`, finished 2026-11-03 02:33)
+
+Source: `runs\probe_eval\a_probes\table.md` (big2 checkout). Probe in one seat vs three frozen seats,
+1,000 deals each, 1 + 3, start `models/big2-distilled-duty.pt`. The ± adds the two half widths, so it
+is wider than the true interval.
+
+| Frozen seats | Games | Start | End | Gain | Gain at 50,253 games |
+|---|---:|---:|---:|---:|---:|
+| validate_greedy (`greedy`, 2 h) | 3,930,341 | +6.58 | +6.30 | -0.28 ± 0.89 | -0.39 |
+| validate_ismcts (`ismcts:iterations=1000`, 2 h) | 104,322 | -1.40 | +1.45 | +2.85 ± 1.05 | +2.75 |
+| ISMCTS-1000 | 507,083 | -1.40 | +1.65 | +3.05 ± 1.03 | +2.86 |
+| DMC-10h | 28,217,612 | -0.49 | +1.26 | +1.75 ± 1.08 | +0.05 |
+| `expert` | 50,253 | -1.82 | +0.01 | +1.82 ± 1.01 | +1.82 |
+
+Reading:
+
+- **Against `expert` the probe ends at +0.01 (from -1.82)**: it gains by learning but does not beat
+  `expert` in absolute score, so no exploit.
+- **A17 not met**: the harness reports `smallest_gain_vs_expert` False and `smallest_at_equal_games`
+  False (DMC-10h's gain at equal games, +0.05, is smaller than `expert`'s +1.82). A17 named the final
+  network; none passed A9, so `expert` stood in. Recorded as a miss.
+- **Validation not met**: the 2-hour probe gains less against 3 greedy (-0.28) than against 3
+  ISMCTS-1000 (+2.85). The distilled start already scores +6.58 against `greedy`, so there is little
+  room to gain, while it starts at -1.40 against ISMCTS-1000. The gain is start-relative, so this
+  comparison does not test what the plan meant.
+
 ### 6.1 From-scratch probe against `expert` (Task 33)
 
 Status 2026-11-14: done (job 69, 600 min, 98,176 games, 1,066,505 samples; end snapshot `runs\probe_scratch_expert\latest.pt`).
