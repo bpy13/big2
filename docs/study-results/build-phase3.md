@@ -487,6 +487,17 @@ lineups, 8 workers. The match against Charlesworth ran separately (Task 21, §5)
 was not queued; at its 0.19 s per move it would take about 3× as long, and it is worth running
 only if Brian picks PUCT.
 
+**Result (job b25_tasks22_24, source `runs/final_matches/a_expert_vs_ismcts1000/results.json`, 10,000 deals per lineup):**
+
+| Lineup | `expert` mean per game | `expert` win rate | ISMCTS-1000 mean | Paired diff (95 %) |
+|---|---:|---:|---:|---:|
+| 1+3 | +0.69 [+0.54, +0.83] | 24.9 % [24.7, 25.2] | -0.23 | +0.92 [+0.72, +1.13] |
+| ABAB | +0.51 [+0.42, +0.59] | 24.9 % [24.7, 25.2] | -0.51 | +1.01 [+0.84, +1.19] |
+
+`expert` beats ISMCTS-1000 in both lineups with intervals far from 0 (about +1 point per game paired).
+Win rate stays near 25 %: the gain comes from score margin, not from winning more often. Cost:
+0.079 s per move for `expert` vs 0.008 s for ISMCTS-1000. The Charlesworth match is the 1,000-deal
+run of §5 (A19's second half was not run at 10,000 deals; PUCT-2000 was not run either, see above).
 ## 9. Summary (Task 25)
 
 Filled in as the job ends. Numbers so far, each with its source:
@@ -500,5 +511,5 @@ Filled in as the job ends. Numbers so far, each with its source:
 | A14 | Task 19 not started | – | open |
 | A15 | 94.2 % agreement; 0.36 s at most in Node at 10 cards | `runs/p3_matches/b_endgame/results.json`, `runs/wasm_timing/endgame.json` | agreement missed by 0.8; time met |
 | A16 | +0.06 ± 0.26 (1+3), +0.04 ± 0.30 (ABAB) vs Charlesworth, his rules | `runs/b2_charlesworth/b2_charlesworth/results.json` | missed: intervals include 0 |
-| A17, A18, A19 | queued | `runs/probe_eval`, `runs/seed_crossplay`, `runs/final_matches` | pending |
+| A19 | `expert` vs ISMCTS-1000, 10,000 deals: paired +0.92 (1+3), +1.01 (ABAB); Charlesworth only at 1,000 deals (§5) | `runs/final_matches/a_expert_vs_ismcts1000/results.json` | met for ISMCTS-1000; Charlesworth at 1,000 deals |
 | Teacher rule | r3 vs ISMCTS-5000: +0.04, −0.00 | `runs/round3/vs_teacher/results.json` | teacher stays |

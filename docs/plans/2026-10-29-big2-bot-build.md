@@ -690,7 +690,7 @@ to goes through bot-notes (Task 10).
   - Done when: §7 records PUCT-2000(seed 0) vs PUCT-2000(seed 1), 1,000 deals, both lineups; A18:
     the interval covers 0. If it does not, record it as a risk (proposal §10 row 4).
 
-- [ ] **Task 24: Final 10,000-deal matches** **[long: ~9 h CPU each, headless]** (after 17, 21) (taken: slot 1, 2026-11-17 12:00)
+- [x] **Task 24: Final 10,000-deal matches** **[long: ~9 h CPU each, headless]** (after 17, 21)
   (**Queued 2026-11-01:** `expert` (ISMCTS-10,000 + exact endgame) vs ISMCTS-1000, the bot that
   ships by default, not PUCT-2000 (`build-phase3.md` §8); Charlesworth ran in Task 21 (§5).
   One job for Tasks 24, 23 and 22: `runs\b25_tasks22_24\run.ps1`, launched 2026-11-01 06:05
