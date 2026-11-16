@@ -682,7 +682,7 @@ to goes through bot-notes (Task 10).
     a Rust policy for ISMCTS; for the network candidates it plays against the exported `.pknn`
     through the pybind, so the frozen seats stay on the CPU.
 
-- [ ] **Task 23: Cross-play of two seeds** **[GPU: 2–4 h; CPU 2 h]** (after 17)
+- [x] **Task 23: Cross-play of two seeds** **[GPU: 2–4 h; CPU 2 h]** (after 17)
   (**Queued 2026-11-01** in the one job of Task 24's status: seed B from fresh weights on rounds
   1–3's labels, then PUCT-2000 r3 vs seed B, `build_phase3.py seeds-train`, `seeds-match`,
   `build-phase3.md` §7.)

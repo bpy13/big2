@@ -435,6 +435,17 @@ start. Then PUCT-2000 λ = 0.5 r3 vs seed B, 1,000 deals, both lineups (A18: the
 0). No network ships, so this measures how repeatable the teaching network is. No shipped bot
 depends on it.
 
+**Result (job `b25_tasks22_24`, finished 2026-11-03; seed B trained 75 min, best val total 2.112,
+stopped on no improvement; raw `runs\seed_crossplay\a_r3_vs_seedB\results.json`):** 1,000 deals each.
+
+| Lineup | Candidate (seed 0 = r3) mean [95 %] | Paired diff [95 %] | Win rate cand / opp |
+|---|---:|---:|---:|
+| 1+3 | +0.19 [-0.15, +0.54] | +0.25 [-0.19, +0.70] | 24.5 % / 25.2 % |
+| ABAB | -0.01 [-0.27, +0.25] | -0.02 [-0.52, +0.49] | 24.9 % / 25.1 % |
+
+**A18 met:** both intervals cover 0, so the teaching network is repeatable across seeds; no risk
+to record for proposal §10 row 4.
+
 ## 7a. Rollout best response against `expert` (Task 32)
 
 Queued as hkq job 47 (cpu lane, `runs/rollout_br/run.ps1`); numbers go here when it ends
