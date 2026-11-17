@@ -3,6 +3,7 @@
 ## Workers
 
 ## Results
+- Task 25 (slot 1, 2026-11-17): ticked. Phase 3 docs, summary table (sources beside each number), README findings, bot-notes entry (hk-games 877b6f9) all in place; no model file ships.
 - Task 24 (slot 1, 2026-11-17): ticked. `expert` vs ISMCTS-1000, 10,000 deals: paired +0.92 [+0.72, +1.13] (1+3), +1.01 [+0.84, +1.19] (ABAB); recorded in §8 (Charlesworth stays at 1,000 deals, §5).
 - Task 23 (slot 1, 2026-11-17): ticked. Seed B vs seed 0 (r3), PUCT-2000, 1,000 deals: paired +0.25 [-0.19, +0.70] (1+3), -0.02 [-0.52, +0.49] (ABAB); A18 met. Recorded in §7.
 - Task 22 (slot 1, 2026-11-17): ticked. Probes (job b25_tasks22_24, 1,000 deals) vs `expert` gain +1.82 (end score +0.01, no exploit), ISMCTS-1000 +3.05, DMC-10h +1.75; A17 and the greedy validation missed, recorded in §6.0.

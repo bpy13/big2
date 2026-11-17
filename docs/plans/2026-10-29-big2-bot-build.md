@@ -709,7 +709,7 @@ to goes through bot-notes (Task 10).
     deals each, both lineups, mean ± 95 % and win rate (A19). Check: `progress.json`. Resume: the
     script resumes from the last saved deal index in `progress.json`.
 
-- [ ] **Task 25: Phase 3 docs and bot-notes** (after 17–24) (Brian 2026-11-17: "yes"; the orchestrator added the entry to hk-games `docs/streams/bot-notes.md`, hk-games 877b6f9; every other Task 25 file was done 2026-11-17: check and tick) (taken: slot 1, 2026-11-17 12:00)
+- [x] **Task 25: Phase 3 docs and bot-notes** (after 17–24) (Brian 2026-11-17: "yes"; the orchestrator added the entry to hk-games `docs/streams/bot-notes.md`, hk-games 877b6f9; every other Task 25 file was done 2026-11-17: check and tick)
   (**Started 2026-11-01:** `docs/solver.md` §6.3–6.5, `docs/rl.md` §3.3, `docs/architecture.md`,
   and a summary table with sources (`build-phase3.md` §9) cover what is known. Left: the job's
   results in that table, the README findings table, and the bot-notes entry.)
