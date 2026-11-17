@@ -480,6 +480,9 @@ def rl_distill_gen(
         typer.Option(help="Stop once the folder holds this many decisions (earlier runs count)."),
     ] = None,
     last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
+    objective: Annotated[
+        str, typer.Option(help="Search goal: score (expected points) or win (go out first).")
+    ] = "score",
 ) -> None:
     """Generate solver-labelled training data for search distillation.
 
@@ -495,6 +498,7 @@ def rl_distill_gen(
         rules=rules,
         rollout=rollout,
         target_decisions=target_decisions,
+        objective=objective,
     )
     console.print(f"{n:,} decisions written to {out_dir}")
 
@@ -566,6 +570,10 @@ def rl_distill_train(
     ] = 6,
     lr: Annotated[float | None, typer.Option(help="v2: peak learning rate.")] = None,
     dropout: Annotated[float | None, typer.Option(help="v2: dropout while training.")] = None,
+    value_target: Annotated[
+        str,
+        typer.Option(help="v2: the value fits the tiered score (score) or going out first (win)."),
+    ] = "score",
 ) -> None:
     """Train a Q-network on solver-labelled data."""
     from big2.rl.distill import DistillConfig, DistillV2Config, train, train_v2
@@ -582,6 +590,7 @@ def rl_distill_train(
             patience=patience,
             device=device,
             rules=Rules(last_card_duty=last_card_duty).kwargs(),
+            value_target=value_target,
         )
         if lr is not None:
             cfg2.lr = lr
