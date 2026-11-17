@@ -2,6 +2,7 @@
 
 ## Workers
 - slot 2: Task 35 (causes and merits in reasons), building
+- slot 1: Task 34 (win-chance bot), code pushed, label job 184 queued
 
 ## Results
 - Task 31 (slot 1, 2026-11-17): ticked. Phase 4 summary table, crates/teach README fix, handover entry in hk-games bot-notes (387544e); Rust tests, fmt, clippy pass, Python tests not run (no extension built here).
