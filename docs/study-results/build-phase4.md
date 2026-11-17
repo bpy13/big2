@@ -230,3 +230,17 @@ Tiny run (8 deals, `hard` ISMCTS-100 and `expert` ISMCTS-300 instead of 2,000 an
 `runs/p4_ladder_tiny/`): easy vs random +3.97 ± 3.35, medium vs easy +2.56 ± 3.10, hard vs
 medium +1.41 ± 3.26, expert vs hard +0.34 ± 3.12. Mistakes fired on 25.4 % of `easy`'s
 decisions with a choice and 6.2 % of `medium`'s. Nothing is decided at 8 deals.
+
+## Summary (Task 31, 2026-11-17)
+
+| Item | Result | Bar | Source |
+|---|---|---|---|
+| Reason keys (Task 26) | 11 keys, each unit-tested firing and not firing; 50-hint audit file | A20 | §0 |
+| Grade repeatability (Task 27) | 90.2 % strict, 97.6 % compatible; phone vs 10× 87.2 % strict, 94.9 % compatible | A21 ≥ 95 %: met on compatible (decision 0003) | §1 |
+| Luck ledger | sums exact to 3.6e-15 over 200 seat-deals | ≤ 1e-9 | §1 |
+| Drills (Task 28) | 553 drills, ratings 600–1,400; 50-drill audit file; `drills/big2.json` | A22 | §2 |
+| Ladder v2 (Task 29) | strict order; gaps +6.56, +3.15, +2.72, +1.02 | A23 top gap 1.5: short, recorded | §3 |
+| Convention-gap scaffold (Task 30) | 4 tests pass; waits for real logs | – | plan |
+| Grade lines shipped | pending Brian, open question 3 (default σ lines 0.69 / 2.75 / 6.86) | – | `crates/teach/README.md` |
+
+Handover: `docs/bot-notes-phase4-entry.md` (for hk-games `docs/streams/bot-notes.md`, newest first).

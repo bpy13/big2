@@ -645,7 +645,7 @@ fn brilliant_answers(s: &State, table: &MoveTable, deals: u64, mult: u64, seed: 
     }
     let cfg = PairedConfig {
         deals: deals * mult,
-        seed: seed ^ 0x5EED_B21,
+        seed: seed ^ 0x05EE_DB21,
         ..PairedConfig::default()
     };
     let deep = evaluate_paired(s, &cfg);

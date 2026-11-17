@@ -106,13 +106,13 @@ mistake that fired, whose key a review can show):
 | `random` | `LadderBot::random()` | a random legal move |
 | `easy` | `LadderBot::easy()` | `StructuredGreedy` ε 0.1 + `ErrorModel` at 0.5 / 0.5 / 0.5 |
 | `medium` | `LadderBot::medium(net)` | the distilled Q-network (`models/big2-qnet-duty.pknn`) sampled at temperature 1.0 + `ErrorModel` at 0.15 each |
-| `hard` | `LadderBot::hard()` | ISMCTS, 2,000 simulations |
+| `hard` | `LadderBot::hard()` | ISMCTS, 500 simulations (decision 2026-11-10; 2,000 matched `expert`) |
 | `expert` | `LadderBot::expert()` | ISMCTS, 10,000 simulations + the exact information-set endgame |
 
 The error model (`big2_big2::bots::ErrorModel`) has three named mistakes, each a key:
 `mistake.hold_two_too_long` (keeps a 2 the policy would play), `mistake.break_pair_for_single`
 (beats a single with a card from a pair), `mistake.miss_safe_single` (does not play a single
-nobody can beat). The rates are first values; Task 29's 500-deal round tunes them
+nobody can beat). The rates are first values, kept after Task 29's 500-deal round
 (`build-phase4.md` §3).
 
 ## Command-line runner
