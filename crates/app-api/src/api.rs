@@ -4,7 +4,7 @@
 //! JSON strings; see `README.md` for the shapes. Errors come back as
 //! `{"api": 0, "error": {"code": "error.*", "detail": "..."}}`.
 
-use crate::reasons::{position_reasons, solver_reasons};
+use crate::reasons::{contrast_reasons, position_reasons, solver_reasons};
 use crate::shapes::{
     action_from_json, action_to_json, cards_to_json, current_play_to_json, hands_from_json, round2,
     rules_from_json, rules_to_json, variants_meta, ActionJson, ApiError, ApiResult,
@@ -460,8 +460,12 @@ impl Api {
                 .expect("the played move was legal");
             let loss = (best.mean_score - mine.mean_score).max(0.0);
             let is_best = best.action == *played;
+            let (causes, merits) = contrast_reasons(state, *played, best.action);
             let mut reasons = position_reasons(state, *played, &legal);
             reasons.extend(solver_reasons(mine, best, analysis.moves.get(1)));
+            reasons.extend(causes);
+            let mut best_reasons = position_reasons(state, best.action, &legal);
+            best_reasons.extend(merits);
             items.push(json!({
                 "turn": turn,
                 "player": seat,
@@ -470,7 +474,7 @@ impl Api {
                 "loss": round2(loss),
                 "grade": grade_for(is_best, loss, scoring),
                 "reasons": reasons,
-                "best_reasons": position_reasons(state, best.action, &legal),
+                "best_reasons": best_reasons,
                 "numbers": {
                     "played_score": round2(mine.mean_score),
                     "best_score": round2(best.mean_score),
@@ -549,6 +553,7 @@ fn move_json(
     let best = &analysis.moves[0];
     let mut reasons = position_reasons(state, m.action, legal);
     reasons.extend(solver_reasons(m, best, analysis.moves.get(1)));
+    reasons.extend(contrast_reasons(state, m.action, best.action).0);
     let hand = state.hand(analysis.player);
     json!({
         "action": action_to_json(m.action),
@@ -678,6 +683,12 @@ fn position_json(g: &GameEntry) -> PositionJson {
     }
 }
 
+/// The game state a `Position` JSON describes (start plus history replayed),
+/// for tools that explain stored positions (drills, examples) without a search.
+pub fn state_from_position(position: &str) -> ApiResult<State> {
+    entry_from_position(position).map(|g| g.state)
+}
+
 fn entry_from_position(position: &str) -> ApiResult<GameEntry> {
     let p: PositionJson = parse_json("position", position)?;
     if p.game != "big2" {
@@ -762,15 +773,19 @@ fn grade_inner(position: &str, action: &str, budget_ms: u32) -> ApiResult<Value>
         .expect("the action was validated as legal");
     let is_best = best.action == played;
     let loss = (best.mean_score - mine.mean_score).max(0.0);
+    let (causes, merits) = contrast_reasons(&g.state, played, best.action);
     let mut reasons = position_reasons(&g.state, played, &legal);
     reasons.extend(solver_reasons(mine, best, analysis.moves.get(1)));
+    reasons.extend(causes);
+    let mut best_reasons = position_reasons(&g.state, best.action, &legal);
+    best_reasons.extend(merits);
     Ok(json!({
         "seat": seat,
         "grade": grade_for(is_best, loss, scoring),
         "loss": round2(loss),
         "best": action_to_json(best.action),
         "reasons": reasons,
-        "best_reasons": position_reasons(&g.state, best.action, &legal),
+        "best_reasons": best_reasons,
         "numbers": {
             "played_score": round2(mine.mean_score),
             "best_score": round2(best.mean_score),
