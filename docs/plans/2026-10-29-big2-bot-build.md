@@ -942,6 +942,7 @@ Task 17b was moved here from Phase 3 on 2026-11-17 by the orchestrator: it waits
     bot against `expert` reports both the share of deals each wins and the points per deal, each with
     a 95 % interval; the GPU training goes through `jobq.ps1` in the gpu lane.
   - Queue (2026-11-17): the gpu lane is free. Poker job 181 (cpu lane, river data, ends about 18 Nov 17:30) is running; Brian allows this task ahead of poker. Queue the CPU labelling through `jobq.ps1` (cpu lane, at most 8 threads). If it cannot start beside job 181, send the orchestrator a QUESTION; never cancel or reorder another project's job yourself. Long jobs: end the turn with the task marked waiting on the job number.
+  - Queue order (orchestrator, 2026-11-17 14:36; Brian: "swap so big2 gets second priority", "swap so test runs get third priority"): this task's jobs were re-queued ahead of the Dou Dizhu test jobs, same script and arguments: label = job 193 (cpu, no wait), train = 194 (gpu, after 193), match = 195 (cpu, after 194). Jobs 187, 188, 190 are cancelled; read 193/194/195 wherever a line says otherwise.
   - Expected play (Brian, 2026-11-11: "It should pass greedily to optimize late game dominance"): the bot should learn to pass often and keep its strongest cards to control the end of the deal. The win-only target is meant to teach this, not a hand-written rule. Report how often each bot passes when it could play, and how many of its 2s and five-card hands it still holds when an opponent is down to 3 cards or fewer, for both bots.
 ## Self-review
 
