@@ -896,7 +896,7 @@ stream can call it from `crates/app-api` without us touching their crate.
     rating-independent disagreement and one rating-dependent one is split correctly).
   - Notes: real logs exist only after release with consent (B13); the script waits for them.
 
-- [ ] **Task 31: Phase 4 docs, handover, bot-notes** (after 26–30)
+- [ ] **Task 31: Phase 4 docs, handover, bot-notes** (after 26–30) (taken: slot 1, 2026-11-17 12:00)
   - Files: `docs/study-results/build-phase4.md` summary; `crates/teach/README.md` (keys, grades,
     thresholds, ledger, drills); `docs/architecture.md`, `README.md`, `docs/ui.md` if the web UI
     changed (it should not); hk-games bot-notes entry.
