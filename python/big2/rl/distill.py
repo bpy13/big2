@@ -102,6 +102,7 @@ def _generate_worker(
     rules: Rules,
     rollout: str,
     stop: Any = None,
+    objective: str = "score",
 ) -> int:
     rng = random.Random(1_000_003 * worker + int(time.time()))
     deadline = time.time() + 60 * minutes
@@ -147,6 +148,7 @@ def _generate_worker(
                         threads=1,
                         seed=rng.getrandbits(32),
                         rollout=rollout,
+                        objective=objective,
                     )
                     st, ac, order = encode(s)
                     pos = {c: k for k, c in enumerate(order)}
@@ -245,10 +247,13 @@ def generate(
     target_decisions: int | None = None,
     progress_dir: str | None = None,
     progress_every: float = 60.0,
+    objective: str = "score",
 ) -> int:
     """Generates solver-labelled decisions into ``out_dir`` (one .npz per shard),
     from games under ``rules`` (default: the default rules), searched by ISMCTS with
-    ``iterations`` simulations and the given ``rollout`` policy.
+    ``iterations`` simulations and the given ``rollout`` policy. ``objective`` is the
+    search's goal: ``"score"`` (expected points) or ``"win"`` (chance of going out
+    first, plan Task 34); it picks the moves played and the visit shares stored.
 
     Every searched decision (two or more legal moves) is stored with all its legal
     moves as ``plan.candidates`` orders and labels them (shard format 2, see
@@ -274,6 +279,7 @@ def generate(
         "minutes": minutes,
         "iterations": iterations,
         "rollout": rollout,
+        "objective": objective,
         "epsilon": epsilon,
         "rules": rules.kwargs(),
         "target_decisions": target_decisions,
@@ -334,6 +340,7 @@ def generate(
                 rules,
                 rollout,
                 stop,
+                objective,
             )
             for w in range(workers)
         ]
@@ -561,6 +568,10 @@ class DistillV2Config:
     #: Mean score from the distributions vs the search's mean score for every
     #: candidate it simulated (weight min(visits, cap) / cap; 0 under ``min_visits``).
     score_weight: float = 0.5
+    #: What the ``score`` loss fits: ``"score"`` (the tiered mean score, today's
+    #: networks) or ``"win"`` (the actor's probability of going out first, class 0 of
+    #: its cards-left distribution, against the search's win rate; plan Task 34).
+    value_target: str = "score"
     visit_cap: int = 200
     min_visits: int = 20
     eval_every_minutes: float = 5.0
@@ -625,6 +636,7 @@ class _DataV2:
         self.actions = np.empty((n_total, ACTION_LEN), dtype=np.uint8)
         self.visits = np.empty(n_total, dtype=np.float32)
         self.score = np.empty(n_total, dtype=np.float32)
+        self.win = np.empty(n_total, dtype=np.float32)
         d0 = n0 = 0
         for k, p in enumerate(files):
             with np.load(p) as z:
@@ -643,13 +655,24 @@ class _DataV2:
                 self.actions[n0 : n0 + n] = z["actions"]
                 self.visits[n0 : n0 + n] = z["visits"]
                 self.score[n0 : n0 + n] = z["score"]
+                self.win[n0 : n0 + n] = z["win"]
             d0, n0 = d0 + d, n0 + n
         assert (d0, n0) == (d_total, n_total)
         assert (self.count >= 1).all() and (self.chosen < self.lo + self.count).all()
 
     def to(self, device: str) -> dict[str, torch.Tensor]:
         """The arrays as tensors on ``device`` (features stay uint8 until a batch)."""
-        names = ("states", "final_cards", "lo", "count", "chosen", "actions", "visits", "score")
+        names = (
+            "states",
+            "final_cards",
+            "lo",
+            "count",
+            "chosen",
+            "actions",
+            "visits",
+            "score",
+            "win",
+        )
         t = {k: torch.from_numpy(getattr(self, k)).to(device) for k in names}
         val = torch.from_numpy(self.val)
         t["train_ids"] = torch.nonzero(~val).squeeze(1).to(device)
@@ -671,6 +694,7 @@ def _v2_batch(t: dict[str, torch.Tensor], d: torch.Tensor) -> dict[str, torch.Te
         "final_cards": t["final_cards"][d],
         "visits": t["visits"][rows],
         "score": t["score"][rows],
+        "win": t["win"][rows],
     }
 
 
@@ -693,10 +717,16 @@ def v2_losses(
     total_vis = torch.zeros(groups, device=vis.device).index_add(0, b["index"], vis)
     share = vis / total_vis.clamp(min=1.0)[b["index"]]
     prior_ce = -(share * logp).sum() / groups
-    # Auxiliary: the tiered mean score from the distributions vs the search's mean score.
+    # Value: the tiered mean score from the distributions vs the search's mean score, or
+    # (value_target "win") the probability of going out first vs the search's win rate.
     w = torch.where(vis >= cfg.min_visits, vis.clamp(max=cfg.visit_cap) / cfg.visit_cap, 0.0)
-    pred = seat_scores(dist.softmax(-1), "tiered")[:, 0]
-    score_mse = (w * ((pred - b["score"]) / SCORE_SCALE) ** 2).sum() / w.sum().clamp(min=1e-6)
+    if cfg.value_target == "win":
+        err = dist.softmax(-1)[:, 0, 0] - b["win"]
+    elif cfg.value_target == "score":
+        err = (seat_scores(dist.softmax(-1), "tiered")[:, 0] - b["score"]) / SCORE_SCALE
+    else:
+        raise ValueError(f"unknown value_target {cfg.value_target!r}; use 'score' or 'win'")
+    score_mse = (w * err**2).sum() / w.sum().clamp(min=1e-6)
     total = (
         cfg.actor_weight * actor
         + cfg.seats_weight * seats
@@ -734,7 +764,10 @@ def _validate(
             sums[k] = sums.get(k, 0.0) + float(v) * len(d)
     net.train()
     res = {f"val_{k}": v / len(ids) for k, v in sums.items()}
-    res["val_score_rms_points"] = math.sqrt(res["val_score"]) * SCORE_SCALE
+    if cfg.value_target == "win":
+        res["val_win_rms"] = math.sqrt(res["val_score"])  # in win probability
+    else:
+        res["val_score_rms_points"] = math.sqrt(res["val_score"]) * SCORE_SCALE
     return res
 
 
@@ -780,7 +813,9 @@ def train_v2(cfg: DistillV2Config, log: Any = print) -> Path:
     ``score`` loss (squared error, in units of :data:`SCORE_SCALE`, between the tiered
     mean score of each candidate's distributions and the search's mean score,
     weighted by visits): it gives the distributions of the moves not played a
-    low-noise target.
+    low-noise target. With ``value_target="win"`` that loss compares the probability of
+    going out first (class 0 of the actor's distribution) with the search's win rate
+    instead, unscaled (plan Task 34).
 
     Every ``eval_every_minutes``: validation losses on held-out shards, two short
     matches vs 3 greedy (playing by the prior, and by the expected score),
@@ -879,8 +914,14 @@ def train_v2(cfg: DistillV2Config, log: Any = print) -> Path:
         actor.load_state_dict(net.state_dict())
         actor.eval()
         for mode in ("prior", "score"):
+            # A win-target network plays its matches by its win chance (win_loss payoff).
+            scoring = "win_loss" if cfg.value_target == "win" else "tiered"
             ev = evaluate_vs_greedy(
-                V2Scorer(actor, mode), cfg.eval_deals, seed=10_000, rules=cfg.rules, device=adev
+                V2Scorer(actor, mode, scoring),
+                cfg.eval_deals,
+                seed=10_000,
+                rules=cfg.rules,
+                device=adev,
             )
             rec[f"greedy_{mode}"] = round(ev["eval_score"], 3)
             rec[f"greedy_{mode}_ci95"] = round(ev["eval_score_ci95"], 3)

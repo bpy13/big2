@@ -34,6 +34,17 @@ labels are left out); each folder holds out its own every 50th shard, so the cal
 round N's held-out shards uses decisions no round trained on. Matches as in round 1, and
 A12 plays round N against round N-1.
 
+``--objective win`` (plan Task 34): the same pipeline with one change, the goal. Every search
+(the labelling teacher, and PUCT later) maximises the chance of going out first instead of the
+expected points, and the network's value loss fits the probability of going out (class 0 of the
+actor's cards-left distribution) to the search's win rate. Folders get the suffix ``_win``
+(``runs/round<N>_win``, ``runs/net_r<N>_win``) and round N starts from ``net_r<N-1>_win``.
+Round 0 exists here too (``round 0 --objective win``): ISMCTS-1000 labels, 2,740,296 decisions,
+a network from fresh weights with round 0's loss weights (Tasks 11 and 12), so no tiered label
+reaches the win network. Orchestrator's call (2026-11-17, Brian may change it): λ = 0.5 and
+``c_puct`` 2.5 fixed, no per-round matches (``match`` and ``teacher`` refuse ``--objective win``);
+``experiments/win_chance.py`` plays the final match against ``expert``.
+
 ``--stages teacher`` (after ``match``): round N's PUCT-2000 at the chosen λ against the teacher
 itself (ISMCTS-5000), ``--deals`` deals, into ``runs/round<N>/vs_teacher/``, so Brian's rule
 can be applied to the teacher directly (the network replaces it only if the paired interval is
@@ -74,17 +85,23 @@ LEAF_WEIGHTS = [1.0, 0.5]
 C_PUCT = 2.5
 #: Loss weights of round 1's training (round 0: actor 1, seats 1, prior 1, score 0.5).
 WEIGHTS = {"actor_weight": 0.25, "seats_weight": 0.25, "prior_weight": 1.0, "score_weight": 100.0}
+#: Round 0's loss weights (Task 12), for the win pipeline's own round 0.
+WEIGHTS_R0 = {"actor_weight": 1.0, "seats_weight": 1.0, "prior_weight": 1.0, "score_weight": 0.5}
+#: Round 0's teacher and size (Task 11: ISMCTS-1000, 2,740,296 searched decisions).
+ROUND0_ITERATIONS = 1000
+ROUND0_DECISIONS = 2_740_296
 
 
 def log(msg: str) -> None:
     print(f"{time.strftime('%Y-%m-%d %H:%M:%S')} {msg}", flush=True)
 
 
-def paths(n: int, tag: str = "") -> dict[str, Path]:
-    """Folders of round ``n`` (``tag`` makes separate ones, e.g. for a test run)."""
+def paths(n: int, tag: str = "", prev_tag: str = "") -> dict[str, Path]:
+    """Folders of round ``n`` (``tag`` makes separate ones, e.g. for a test run; the
+    previous round's network is ``net_r<n-1><prev_tag>``)."""
     base = ROOT / "runs" / f"round{n}{tag}"
     net = ROOT / "runs" / f"net_r{n}{tag}"
-    prev = ROOT / "runs" / f"net_r{n - 1}"
+    prev = ROOT / "runs" / f"net_r{n - 1}{prev_tag}"
     return {
         "base": base,
         "data": base / "data",
@@ -130,6 +147,7 @@ def label(args: argparse.Namespace, p: dict[str, Path]) -> None:
         rollout="greedy",
         target_decisions=args.target_decisions,
         progress_dir=str(p["label"]),
+        objective=args.objective,
     )
     log(f"label: {made:,} decisions this run")
     stage_done(p["base"], "label")
@@ -186,8 +204,10 @@ def train(args: argparse.Namespace, p: dict[str, Path]) -> None:
             device=args.device,
             max_minutes=args.train_minutes,
             resume=str(latest) if latest.exists() else None,
-            init=str(p["prev_net"] / "best.pt"),
-            **WEIGHTS,
+            # Round 0 (win pipeline only) starts from fresh weights, as Task 12 did.
+            init=str(p["prev_net"] / "best.pt") if args.n > 0 else None,
+            value_target=args.objective,
+            **(WEIGHTS if args.n > 0 else WEIGHTS_R0),
         )
         stage_progress(p["base"], "train", f"network r{args.n}, see {net_dir.name}/progress.json")
         train_v2(cfg, log=lambda r: log(f"train: {r}"))
@@ -232,6 +252,8 @@ def puct(pknn: Path, leaf: float) -> str:
 
 
 def match(args: argparse.Namespace, p: dict[str, Path]) -> None:
+    if args.objective != "score":
+        raise SystemExit("match: not run for --objective win (see experiments/win_chance.py)")
     out = p["base"]
     if (out / "results.json").exists():
         log("match: results.json exists, skipped")
@@ -358,6 +380,8 @@ def teacher(args: argparse.Namespace, p: dict[str, Path]) -> None:
     ISMCTS-<teacher_iterations>, ``--deals`` duplicate deals, both lineups. Results in
     ``runs/round<N>/vs_teacher/`` (``results.json``, ``table.md``); the next round keeps the
     teacher unless both lineups pass :func:`beats_teacher`."""
+    if args.objective != "score":
+        raise SystemExit("teacher: not run for --objective win (see experiments/win_chance.py)")
     out = p["base"]
     folder = out / "vs_teacher"
     if (folder / "results.json").exists():
@@ -428,8 +452,24 @@ def main() -> None:
         default=["label", "train", "match"],
     )
     ap.add_argument("--workers", type=int, default=8)
-    ap.add_argument("--teacher-iterations", type=int, default=TEACHER_ITERATIONS)
-    ap.add_argument("--target-decisions", type=int, default=800_000)
+    ap.add_argument(
+        "--teacher-iterations",
+        type=int,
+        default=None,
+        help=f"default {TEACHER_ITERATIONS} ({ROUND0_ITERATIONS} in round 0)",
+    )
+    ap.add_argument(
+        "--target-decisions",
+        type=int,
+        default=None,
+        help=f"default 800,000 ({ROUND0_DECISIONS:,} in round 0)",
+    )
+    ap.add_argument(
+        "--objective",
+        choices=["score", "win"],
+        default="score",
+        help="what every search maximises and the value fits (win: plan Task 34)",
+    )
     ap.add_argument("--label-minutes", type=float, default=720.0)
     ap.add_argument("--train-minutes", type=float, default=180.0)
     ap.add_argument("--device", default="cuda")
@@ -443,14 +483,24 @@ def main() -> None:
         help="shard folders trained on beside this round's (default: rounds 1..N-1's data)",
     )
     args = ap.parse_args()
-    if args.n < 1:
+    if args.n < 1 and args.objective == "score":
         ap.error("round 0 is Tasks 11-12")
+    if args.n < 0:
+        ap.error("round numbers start at 0")
+    if args.teacher_iterations is None:
+        args.teacher_iterations = ROUND0_ITERATIONS if args.n == 0 else TEACHER_ITERATIONS
+    if args.target_decisions is None:
+        args.target_decisions = ROUND0_DECISIONS if args.n == 0 else 800_000
+    if args.objective == "win" and not args.tag.endswith("_win"):
+        args.tag += "_win"  # never mixes with the expected-points rounds
 
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     os.chdir(ROOT)
     os.environ.setdefault("OMP_NUM_THREADS", "1")
-    p = paths(args.n, args.tag)
+    # The win pipeline chains its own rounds; the points pipeline's tagged test runs start
+    # from the real previous round, as before.
+    p = paths(args.n, args.tag, args.tag if args.objective == "win" else "")
     p["base"].mkdir(parents=True, exist_ok=True)
     for stage in args.stages:
         {"label": label, "train": train, "match": match, "teacher": teacher}[stage](args, p)

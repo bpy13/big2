@@ -694,3 +694,64 @@ def test_distill_data_skips_files_renamed_while_listing(
         assert data.refresh(str(tmp_path), 10**6) == 1
     assert data.refresh(str(tmp_path), 10**6) == 1  # picked up next time
     assert data.decisions() == 4
+
+
+def test_win_objective_labels_trains_and_plays(tmp_path: Path) -> None:
+    """Task 34: the win-chance switch. ``generate(objective="win")`` labels with a search
+    that maximises going out first; ``value_target="win"`` fits the probability of going
+    out (class 0 of the actor's distribution) to the search's win rate; the exported
+    network plays inside PUCT with ``objective=win``."""
+    import json
+    import shutil
+
+    from big2.rl import distill
+    from big2.rl.export import export_pknn
+
+    data = tmp_path / "data"
+    distill.generate(str(data), workers=1, minutes=0, iterations=50, shard_games=2, objective="win")
+    assert json.loads((tmp_path / "results.json").read_text())["config"]["objective"] == "win"
+    (shard,) = data.glob("*.npz")
+    with np.load(shard) as z:
+        assert ((z["win"] >= 0) & (z["win"] <= 1)).all() and z["win"].max() > 0
+    shutil.copy(shard, data / "z_copy.npz")
+    cfg = distill.DistillV2Config(
+        data_dir=str(data),
+        run_dir=str(tmp_path / "run"),
+        max_minutes=0.03,
+        eval_every_minutes=0.02,
+        eval_deals=2,
+        batch_size=16,
+        val_every=2,
+        warmup_steps=5,
+        device="cpu",
+        value_target="win",
+        net=distill.NetConfigV2(state_hidden=32, state_out=16, action_out=16, head_hidden=32),
+    )
+    # The loss is the visit-weighted squared error of P(out) against the win rate.
+    t = distill._DataV2(str(data), 2, log=lambda m: None).to("cpu")
+    net = distill.QNetV2(cfg.net)
+    b = distill._v2_batch(t, t["train_ids"])
+    with torch.no_grad():
+        dist, _ = net(b["states"], b["actions"], b["index"])
+        vis = b["visits"]
+        w = torch.where(vis >= cfg.min_visits, vis.clamp(max=cfg.visit_cap) / cfg.visit_cap, 0.0)
+        want = (w * (dist.softmax(-1)[:, 0, 0] - b["win"]) ** 2).sum() / w.sum()
+        got = distill.v2_losses(net, b, cfg)["score"]
+        assert torch.allclose(got, want)
+        assert not torch.allclose(
+            got, distill.v2_losses(net, b, replace(cfg, value_target="score"))["score"]
+        )
+    with pytest.raises(ValueError, match="value_target"):
+        distill.v2_losses(net, b, replace(cfg, value_target="points"))
+
+    run = distill.train_v2(cfg, log=lambda r: None)
+    results = json.loads((run / "results.json").read_text())
+    assert results["status"] == "done" and results["val_loss_per_head"]["score"] > 0
+    pknn = tmp_path / "win.pknn"
+    export_pknn(run / "best.pt", pknn)
+    bot = make_agent(
+        f"puct:net={pknn.as_posix()},simulations=50,c_puct=2.5,"
+        "leaf_network_weight=0.5,objective=win"
+    )
+    end = play_game(Big2State.new_deal(3), [bot, make_agent("greedy"), bot, make_agent("greedy")])
+    assert end.is_terminal and end.winner is not None
