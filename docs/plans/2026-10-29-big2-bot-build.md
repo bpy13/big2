@@ -929,7 +929,7 @@ Task 17b was moved here from Phase 3 on 2026-11-17 by the orchestrator: it waits
   - Done when: on the 200 graded decisions that lost points, at least 80 % carry a cause that is true of the played move and not of the best move (state the share before and the share now); on the 8 examples each has one; no existing key changes meaning or shape; `cargo test` and the Python tests pass; the wasm and server modules build; the notes entry file exists.
   - Notes: no model training, CPU only, minutes per run. Keep move time inside the app's budget (`grade` 600 ms). The hk-games side is coach-voice plan Task 17, which the orchestrator releases when this task and thirteen-cards Task 6.1 are ticked.
 
-- [ ] **Task 34: Train a model that maximises the chance of going out first, and match it against the best bot** (waiting: milestone 2, Brian 2026-11-11: "Add new task for Big2, at milestone 2, train a new model that only optimizes changes of winning (instead of EV) and have it compete against our best bot") **[GPU: hours, job queue gpu lane]**
+- [ ] **Task 34: Train a model that maximises the chance of going out first, and match it against the best bot** (opus) `[parallel-ok]` (Brian 2026-11-11: "Add new task for Big2, at milestone 2, train a new model that only optimizes changes of winning (instead of EV) and have it compete against our best bot"; Brian 2026-11-17: "big2 highest-winrate bot can start now, since we've not decided what to do with mahjong and doudizhu. It can come before poker") **[GPU: hours, job queue gpu lane]** (taken: slot 1, 2026-11-17 13:33)
   - Why: every bot today maximises expected points (the cards-left penalty). Brian wants to see
     a bot whose only goal is to win the deal (go out first), and how it fares against `expert`.
   - What: the same training pipeline as today's best network, with the value target changed to
@@ -940,6 +940,7 @@ Task 17b was moved here from Phase 3 on 2026-11-17 by the orchestrator: it waits
   - Done when: a duplicate match (10,000 deals, seats rotated, same deals for both) of the win-chance
     bot against `expert` reports both the share of deals each wins and the points per deal, each with
     a 95 % interval; the GPU training goes through `jobq.ps1` in the gpu lane.
+  - Queue (2026-11-17): the gpu lane is free. Poker job 181 (cpu lane, river data, ends about 18 Nov 17:30) is running; Brian allows this task ahead of poker. Queue the CPU labelling through `jobq.ps1` (cpu lane, at most 8 threads). If it cannot start beside job 181, send the orchestrator a QUESTION; never cancel or reorder another project's job yourself. Long jobs: end the turn with the task marked waiting on the job number.
   - Expected play (Brian, 2026-11-11: "It should pass greedily to optimize late game dominance"): the bot should learn to pass often and keep its strongest cards to control the end of the deal. The win-only target is meant to teach this, not a hand-written rule. Report how often each bot passes when it could play, and how many of its 2s and five-card hands it still holds when an opponent is down to 3 cards or fewer, for both bots.
 ## Self-review
 
