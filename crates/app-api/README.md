@@ -201,8 +201,9 @@ One per decision the seat has made so far (the review may run before the deal en
                "deals": 300, "simulations": 900 } }
 ```
 
-`turn` indexes `history`. `reasons` explain the move played (position facts plus
-`reason.score_loss` when it lost points); `best_reasons` explain the best move. The review
+`turn` indexes `history`. `reasons` explain the move played (position facts, plus
+`reason.score_loss` and the causes of "Causes and merits" when it lost points);
+`best_reasons` explain the best move (position facts plus its merits). The review
 uses PIMC (up to 300 sampled deals per decision, every legal move played in each), so the
 played move gets as many simulations as the best one. A forced move (one legal action) gets
 `grade: "best"`, `loss: 0`, `reasons: [reason.forced]`, empty `numbers` and no search. The
@@ -218,7 +219,8 @@ budget is shared equally among the decisions still to review.
 ```
 
 `grade` runs the hint search (ISMCTS, 20,000 simulations within the budget) on the position
-and compares `action` with the solver's first choice. An illegal `action` is
+and compares `action` with the solver's first choice; `reasons` and `best_reasons` carry the
+causes and merits as in the review. An illegal `action` is
 `error.illegal_action`. The position is not registered as a game.
 
 ## Grade thresholds
@@ -274,6 +276,41 @@ Every reason is a fact the code checks on the position; none is guessed.
 | `reason.opponent_nearly_out` | `player`, `cards_left` | an opponent has 2 cards or fewer |
 | `reason.score_margin` | `points` | the best move's expected score lead over the runner-up |
 | `reason.score_loss` | `points` | how many points this move loses against the best |
+
+### Causes and merits
+
+Added 2026-11-17 (plan Task 35, hk-games D115): why the best move is better, beside the
+points. They compare the played move with the best move and appear only when the move is not
+the best (review, grade, and the hint's other moves). A **cause** is in the played move's
+`reasons` only when its fact is true of the played move and false of the best move; a
+**merit** is in `best_reasons` only when its fact is true of the best move and false of the
+played one. So the app never states a fact both moves share. Causes come strongest first: the
+first one can be the headline. The keys above are unchanged.
+
+*Unseen* cards are those neither played nor in the player's hand; "beaten" means some
+combination among the unseen cards beats the play (they may be split between opponents, so
+it means "could be beaten"). A *loose single* is a single of the hand's fewest-plays plan
+that an unseen single beats. Card arguments are card ids; `group` is
+`{"cards": ["Kd", "Kh"], "combo": "combo.pair"}`; seats are absolute.
+
+| Key | Kind | Args | True of the move when | English sentence |
+|---|---|---|---|---|
+| `reason.lets_opponent_out` | cause | `player`, `cards_left` | it is a beatable play of exactly `cards_left` cards and `player` holds that many (they could go out on it), or a pass while `player` could beat the table with their whole hand or gets the lead back with one card; the best move does not | "Player {player} has {cards_left} cards and could go out on this." |
+| `reason.breaks_group` | cause | `group`, `extra_plays` | it takes part of `group` from the hand's best plan and needs `extra_plays` more plays to go out than the best move | "This breaks up your {group}: {extra_plays} more play(s) to go out." |
+| `reason.more_plays_to_out` | cause | `extra_plays` | it needs more plays to go out than the best move and no single group explains it (rare) | "This leaves you {extra_plays} more play(s) to go out." |
+| `reason.can_be_beaten` | cause | `beaters` | it is a play that cards still out can beat (`beaters` combinations), while the best move cannot be beaten or goes out | "Cards still out can beat this, so you may lose the lead." |
+| `reason.misses_sure_out` | cause | `plays` | the best move starts a line of `plays` plays to go out that nobody can beat (each but the last unbeatable), and this move does not | "The best move goes out in {plays} plays nobody can stop; this one gives that up." |
+| `reason.spends_two` | cause | `cards` | it spends the 2s in `cards` and the best move spends none | "This spends your {cards}." |
+| `reason.spends_high_card` | cause | `card` | it spends the hand's highest card `card` and the best move keeps it (a top 2 is left to `spends_two`) | "This spends your highest card, {card}." |
+| `reason.leaves_loose_singles` | cause | `singles`, `best_singles` | it leaves more loose singles than the best move (`singles` against `best_singles`) | "This leaves {singles} loose singles, against {best_singles} after the best move." |
+| `reason.keeps_low_single` | cause | `card` | it leaves `card` as a loose single lower than any the best move leaves | "This leaves {card} on its own, a single that is hard to get rid of." |
+| `reason.pass_returns_lead` | cause | `player`, `cards_left` | it is a pass, the best move is a play, and `player` (holding `cards_left`) made the play on the table, so they lead again if nobody beats it | "Passing lets player {player} keep the lead with {cards_left} cards left." |
+| `reason.sure_out` | merit | `plays` | the best move goes out in `plays` plays nobody can beat, and the played move does not | "This goes out in {plays} plays nobody can stop." |
+| `reason.fewer_plays_to_out` | merit | `plays`, `played_plays` | the best move needs `plays` plays to go out, fewer than the played move's `played_plays` | "This needs {plays} plays to go out, against {played_plays}." |
+
+The sure-out line is searched only when 10 cards or fewer are left after the move; the slowest
+call on the 200 graded drill decisions took 3.9 ms (release build), well inside `grade`'s
+600 ms. Coverage on those decisions: `docs/study-results/build-phase4.md` §4 in big2.
 
 ## Error codes
 

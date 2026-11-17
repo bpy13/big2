@@ -231,6 +231,60 @@ Tiny run (8 deals, `hard` ISMCTS-100 and `expert` ISMCTS-300 instead of 2,000 an
 medium +1.41 ± 3.26, expert vs hard +0.34 ± 3.12. Mistakes fired on 25.4 % of `easy`'s
 decisions with a choice and 6.2 % of `medium`'s. Nothing is decided at 8 deals.
 
+## 4. Causes and merits in the app's reasons (Task 35, 2026-11-17)
+
+Why: in the app's ten Big2 coach examples (hk-games `docs/coach-voice-examples.md`), eight
+headlines were the points sentence alone; no key said why the best move is better (hk-games
+D115, decision 0005). `crates/app-api/src/reasons.rs` now adds `contrast_reasons`: facts
+measured the same way for the played and the best move, a **cause** on the played move only
+when it is true of it and false of the best move, a **merit** on the best move the other way
+round. Ten cause keys and two merit keys, listed with their arguments and an English
+sentence in `crates/app-api/README.md` ("Causes and merits"). No existing key changed.
+
+What separates the moves in the eight examples (positions in hk-games
+`app/src/drills/big2.json`):
+
+| Example | Played / best | Causes (first is the headline) |
+|---|---|---|
+| 2 | Kd / pass (to beat Qs) | `breaks_group` (pair Kd Kh, +1 play), `leaves_loose_singles` |
+| 3 | Kh / pass | `breaks_group`, `spends_high_card` (Kh), `leaves_loose_singles` |
+| 4 | 3d 3s / Kd Ks (leading) | `lets_opponent_out` (player 3, 2 cards), `can_be_beaten`, `misses_sure_out` (2 plays) |
+| 5 | Kd / Kd Ks | `breaks_group`, `can_be_beaten`, `misses_sure_out`, `leaves_loose_singles`, `keeps_low_single` |
+| 6 | Jd / Jd Js | `breaks_group`, `can_be_beaten`, `misses_sure_out`, `leaves_loose_singles` |
+| 7 | 8h / Jd Js | `can_be_beaten`, `misses_sure_out` |
+| 8 | 7d / 8d 8c | `can_be_beaten` |
+| 10 | Kc / pass (to beat Qc) | `breaks_group` (pair Kc Ks), `leaves_loose_singles` |
+
+Every example now has a cause. Measured on 200 graded decisions that lost points: the first
+200 `inaccuracy`/`mistake`/`blunder` answers of `drills/big2.json` in file order (each against
+the drill's `best` answer; the drills come from stored solver-graded self-play games; 573
+such answers in all):
+
+| | Decisions with a cause |
+|---|---|
+| Before (existing keys only) | 0 of 200 (0 %): every existing key is a merit or a neutral fact; one at least differed between the moves in 153 |
+| Now | **180 of 200 (90.0 %)**, bar 80 % |
+
+| Cause | Decisions carrying it | As the first (headline) |
+|---|---|---|
+| `pass_returns_lead` | 102 | 11 |
+| `can_be_beaten` | 84 | 63 |
+| `leaves_loose_singles` | 73 | 15 |
+| `breaks_group` | 43 | 43 |
+| `keeps_low_single` | 38 | 11 |
+| `misses_sure_out` | 31 | 0 |
+| `spends_two` | 29 | 14 |
+| `lets_opponent_out` | 20 | 20 |
+| `spends_high_card` | 5 | 3 |
+
+The 20 left without a cause are mostly a single led against another single (Qh against Ts,
+As against Jd) where both are beatable and the plan is the same: the difference is in the
+opponents' hands, which these facts do not read. The same test checks that no cause is true of
+both moves (each pair is also run with the moves swapped). Slowest call: 3.9 ms (release
+build); `grade` has 600 ms.
+
+Command: `cargo test -p big2-app-api --test reasons_contrast -- --nocapture`.
+
 ## Summary (Task 31, 2026-11-17)
 
 | Item | Result | Bar | Source |
@@ -241,6 +295,7 @@ decisions with a choice and 6.2 % of `medium`'s. Nothing is decided at 8 deals.
 | Drills (Task 28) | 553 drills, ratings 600–1,400; 50-drill audit file; `drills/big2.json` | A22 | §2 |
 | Ladder v2 (Task 29) | strict order; gaps +6.56, +3.15, +2.72, +1.02 | A23 top gap 1.5: short, recorded | §3 |
 | Convention-gap scaffold (Task 30) | 4 tests pass; waits for real logs | – | plan |
+| Causes and merits (Task 35) | 180 of 200 graded losses carry a cause (before 0); all 8 coach examples | ≥ 80 % | §4 |
 | Grade lines shipped | pending Brian, open question 3 (default σ lines 0.69 / 2.75 / 6.86) | – | `crates/teach/README.md` |
 
 Handover: `docs/bot-notes-phase4-entry.md` (for hk-games `docs/streams/bot-notes.md`, newest first).

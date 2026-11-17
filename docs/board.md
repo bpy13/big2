@@ -1,10 +1,10 @@
 # Board
 
 ## Workers
-- slot 2: Task 35 (causes and merits in reasons), building
 
 ## Results
 - Task 34 (slot 1, 2026-11-17): code done and pushed, **not ticked**: `--objective win` switch (labels, value loss, PUCT), `experiments/win_chance.py`, job script `experiments/win_chance_job.ps1`; queue jobs 193 (cpu, labels r0-r3, ~12 h) → 194 (gpu, networks r0-r3) → 195 (cpu, 10,000 deals vs `expert` + habits, ~16 h); results go into `docs/research/results/win-chance-bot.md`. pytest 421 passed, 4 skipped; no paid API spend.
+- Task 35 (slot 2, 2026-11-17): ticked. Causes and merits in app-api `reasons` (10 cause, 2 merit keys); 200 graded drill losses: 90.0 % carry a cause (before 0 %); all 8 coach examples covered; Rust and Python tests pass, wasm and server wheel build. Bot-notes entry `docs/bot-notes-reasons-entry.md` waits for the orchestrator to paste.
 - Task 31 (slot 1, 2026-11-17): ticked. Phase 4 summary table, crates/teach README fix, handover entry in hk-games bot-notes (387544e); Rust tests, fmt, clippy pass, Python tests not run (no extension built here).
 - Task 25 (slot 1, 2026-11-17): ticked. Phase 3 docs, summary table (sources beside each number), README findings, bot-notes entry (hk-games 877b6f9) all in place; no model file ships.
 - Task 24 (slot 1, 2026-11-17): ticked. `expert` vs ISMCTS-1000, 10,000 deals: paired +0.92 [+0.72, +1.13] (1+3), +1.01 [+0.84, +1.19] (ABAB); recorded in §8 (Charlesworth stays at 1,000 deals, §5).
