@@ -709,7 +709,7 @@ to goes through bot-notes (Task 10).
     deals each, both lineups, mean ± 95 % and win rate (A19). Check: `progress.json`. Resume: the
     script resumes from the last saved deal index in `progress.json`.
 
-- [ ] **Task 25: Phase 3 docs and bot-notes** (after 17–24) (waiting: inbox: bot-notes entry; text in docs/bot-notes-phase3-entry.md; all other Task 25 files done 2026-11-17)
+- [ ] **Task 25: Phase 3 docs and bot-notes** (after 17–24) (Brian 2026-11-17: "yes"; the orchestrator added the entry to hk-games `docs/streams/bot-notes.md`, hk-games 877b6f9; every other Task 25 file was done 2026-11-17: check and tick)
   (**Started 2026-11-01:** `docs/solver.md` §6.3–6.5, `docs/rl.md` §3.3, `docs/architecture.md`,
   and a summary table with sources (`build-phase3.md` §9) cover what is known. Left: the job's
   results in that table, the README findings table, and the bot-notes entry.)
@@ -920,6 +920,13 @@ Task 17b was moved here from Phase 3 on 2026-11-17 by the orchestrator: it waits
     opponent's hand shape (five-card hands, pairs, triples, 2s and aces held) beside the per-card guess;
     the search weights imagined deals by both; compare against the card-only network on the same test.
     The round's labelling and opponent model are still to be settled with Brian before this task starts.
+
+- [ ] **Task 35: a reason for every move the coach can only price today** (opus) `[parallel-ok]`
+  - Why: hk-games D115 and `docs/decisions/0005-reasons-and-bot-notes.md` (Brian, 2026-11-17: "yes"). In the app's 10 Big2 coach examples (hk-games `docs/coach-voice-examples.md`), 8 headlines are the points sentence alone (examples 2-8 and 10), because `reasons` gives only `cards_left`, `lowest_beating`, `saves_high_card` and the points, none of which says why the best move is better.
+  - What: for the played move and for the best move, `crates/app-api/src/reasons.rs` adds causes and merits that the search already knows or can compute cheaply, each a key with numbers the app can print. First list, for the 8 examples and for 200 graded decisions from stored games, what truly separates the best move from the played one; then cover the most common cases. Candidates to check, not a fixed list: the play gives up the lead when a control card was held; it breaks a five-card hand, a pair or a triple that was needed later; it spends a 2 or the top card of a kind too early; it leaves an opponent with few cards a free play; it keeps a single low card that cannot be shed later; passing here lets the next player go out; the best move keeps the lead to the end (exact endgame). A key only when the fact is true for this move and false for the other (played against best), so the app never states a cause both share.
+  - Files: `crates/app-api/src/reasons.rs`, its tests, `crates/app-api/README.md` (each new key: meaning, numbers, an English sentence), `crates/teach` if the facts belong there, `docs/study-results/build-phase4.md` (a short section), `docs/bot-notes-reasons-entry.md` (the entry for hk-games bot-notes: new keys, their numbers, example sentences; the orchestrator pastes it).
+  - Done when: on the 200 graded decisions that lost points, at least 80 % carry a cause that is true of the played move and not of the best move (state the share before and the share now); on the 8 examples each has one; no existing key changes meaning or shape; `cargo test` and the Python tests pass; the wasm and server modules build; the notes entry file exists.
+  - Notes: no model training, CPU only, minutes per run. Keep move time inside the app's budget (`grade` 600 ms). The hk-games side is coach-voice plan Task 17, which the orchestrator releases when this task and thirteen-cards Task 6.1 are ticked.
 
 - [ ] **Task 34: Train a model that maximises the chance of going out first, and match it against the best bot** (waiting: milestone 2, Brian 2026-11-11: "Add new task for Big2, at milestone 2, train a new model that only optimizes changes of winning (instead of EV) and have it compete against our best bot") **[GPU: hours, job queue gpu lane]**
   - Why: every bot today maximises expected points (the cards-left penalty). Brian wants to see
