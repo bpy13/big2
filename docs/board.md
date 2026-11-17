@@ -1,6 +1,7 @@
 # Board
 
 ## Workers
+- slot 2: Task 35 (causes and merits in reasons), building
 
 ## Results
 - Task 31 (slot 1, 2026-11-17): ticked. Phase 4 summary table, crates/teach README fix, handover entry in hk-games bot-notes (387544e); Rust tests, fmt, clippy pass, Python tests not run (no extension built here).
