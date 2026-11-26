@@ -3,6 +3,7 @@
 ## Workers
 
 ## Results
+- Task 36 (slot 1, 2026-11-26): built and queued, **not ticked**. Duplicate self-play PPO from r3 (`python/big2/rl/selfplay.py`, `experiments/selfplay_luck.py`): smoke 343, train 344/346/348/350/352/354 (gpu, 4 h each, 24 GPU-h max), evals 345/347/.../355 (cpu; vs start and ISMCTS-1000, 4,000 deals, seed 7); stop rule at hour 8 in eval 347. Python tests 423 passed. No paid API spend. Then: table into `docs/study-results/selfplay-luck.md`, inbox question (keep new network or old), tick.
 - Task 34 (slot 1, 2026-11-18): ticked. Win-chance bot (objective: go out first) vs `expert`, 10,000 duplicate deals: wins more deals (27.5 % vs 24.2 % in 1+3, 26.8 % vs 23.2 % in ABAB) but loses −19.2 / −18.4 points per deal paired; passes 39 % vs 21 %, holds more 2s and five-card hands late, as Brian expected. Does not ship. Results in `docs/research/results/win-chance-bot.md`; jobs 193, 209, 210 on the existing GPU/CPU lanes, no paid API spend.
 - Task 35 (slot 2, 2026-11-17): ticked. Causes and merits in app-api `reasons` (10 cause, 2 merit keys); 200 graded drill losses: 90.0 % carry a cause (before 0 %); all 8 coach examples covered; Rust and Python tests pass, wasm and server wheel build. Bot-notes entry `docs/bot-notes-reasons-entry.md` waits for the orchestrator to paste.
 - Task 31 (slot 1, 2026-11-17): ticked. Phase 4 summary table, crates/teach README fix, handover entry in hk-games bot-notes (387544e); Rust tests, fmt, clippy pass, Python tests not run (no extension built here).
