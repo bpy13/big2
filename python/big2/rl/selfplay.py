@@ -87,6 +87,10 @@ class SelfPlayConfig:
     seed: int = 0
     device: str = "auto"
     rules: dict[str, Any] = field(default_factory=dict)
+    #: False (Task 36d ablation): no rotations or copies; every game is its own fresh deal
+    #: (same games per iteration) and the baseline is the batch mean return, mixed with the
+    #: oracle critic by ``oracle_weight``.
+    duplicate: bool = True
 
 
 class OracleCritic(nn.Module):
@@ -204,15 +208,16 @@ def collect(
     games: list[dict[str, Any]] = []
     states: list[Big2State] = []
     frozen_games = 0
-    for group in range(cfg.deals_per_iter):
+    rotations, copies = (SEATS, cfg.copies) if cfg.duplicate else (1, 1)
+    for group in range(cfg.deals_per_iter * (1 if cfg.duplicate else SEATS * cfg.copies)):
         hands = deal_hands(rng, cfg.rules)
         if pool and rng.random() < cfg.frozen_share:
             f = 1 + int(rng.integers(len(pool)))
             lineup = [LEARNER, f, LEARNER, f]
         else:
             lineup = [LEARNER] * SEATS
-        for rotation in range(SEATS):
-            for _ in range(cfg.copies):
+        for rotation in range(rotations):
+            for _ in range(copies):
                 seat_hands = [hands[(s + rotation) % SEATS] for s in range(SEATS)]
                 states.append(Big2State.from_hands(seat_hands, **cfg.rules))
                 games.append({"group": group, "rotation": rotation, "lineup": lineup})
@@ -321,7 +326,8 @@ def update(
             .numpy()
         )
     w = cfg.oracle_weight
-    base = (1 - w) * ro.dup + w * oracle
+    plain = ro.dup if cfg.duplicate else np.full_like(ro.ret, ro.ret.mean())
+    base = (1 - w) * plain + w * oracle
     adv = ro.ret - base
     adv = adv / (adv.std() + 1e-8)
     stats: dict[str, float] = {

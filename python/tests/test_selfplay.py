@@ -72,3 +72,33 @@ def test_selfplay_trains_snapshots_and_resumes(tmp_path: Path) -> None:
     n = len(recs)
     selfplay.train(cfg, log=lambda r: None)
     assert len((run / "log.jsonl").read_text().splitlines()) == n
+
+
+@pytest.mark.parametrize("oracle_weight", [0.0, 1.0])
+def test_selfplay_without_duplicate_plays_one_game_per_fresh_deal(
+    tmp_path: Path, oracle_weight: float
+) -> None:
+    """Task 36d ablation: same games per iteration, no rotations, batch-mean baseline."""
+    cfg_net = NetConfigV2(state_hidden=32, state_out=16, action_out=16, head_hidden=32)
+    init = tmp_path / "init.pt"
+    torch.save(
+        {"arch": "qnet_v2", "model": QNetV2(cfg_net).state_dict(), "net_config": cfg_net.__dict__},
+        init,
+    )
+    cfg = selfplay.SelfPlayConfig(
+        run_dir=str(tmp_path / "run"),
+        init=str(init),
+        deals_per_iter=2,
+        copies=1,
+        frozen_share=0.0,
+        minibatch=256,
+        max_minutes=0.0,
+        until_minutes=0.005,
+        oracle_weight=oracle_weight,
+        duplicate=False,
+        device="cpu",
+    )
+    run = selfplay.train(cfg, log=lambda r: None)
+    recs = [json.loads(x) for x in (run / "log.jsonl").read_text().splitlines()]
+    # 2 deals x 4 rotations x 1 copy = 8 games, as with duplicate.
+    assert recs and recs[0]["games"] == 8

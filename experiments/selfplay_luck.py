@@ -349,6 +349,100 @@ def h2h_table() -> str:
     return text
 
 
+# luck-removal ablation (Task 36d) ------------------------------------------------
+
+#: Arm -> (``duplicate``, ``oracle_weight``). "dup" is Task 36's own smoke run (pull 0.02,
+#: duplicate baseline only, no critic mixed in: ``smoke`` trains with oracle_weight 0).
+ARMS = {"dup": (True, 0.0), "plain": (False, 0.0), "oracle": (False, 1.0)}
+ABL = ROOT / "runs" / "selfplay_luck_nodup"
+
+
+def arm_ckpt(arm: str) -> str:
+    if arm == "dup":
+        return "runs/selfplay_luck_smoke/pull_0.02/latest.pt"
+    return f"runs/selfplay_luck_nodup/{arm}/latest.pt"
+
+
+def nodup_train(args: argparse.Namespace) -> None:
+    """10-minute runs from r3, pull 0.02, seed 0, no duplicate: arm plain / oracle (gpu)."""
+    from big2.rl.selfplay import train
+
+    pull = json.loads((OUT / "choice.json").read_text())["pull"]
+    for arm in args.arms:
+        dup, w = ARMS[arm]
+        run = ABL / arm
+        if (run / "done.json").exists():
+            continue
+        log(f"nodup: arm {arm} (duplicate {dup}, oracle_weight {w}), {args.minutes} min")
+        cfg = train_cfg(run, pull, w, max_minutes=args.minutes, device=args.device, duplicate=dup)
+        train(cfg, log=lambda r: None)
+        write_json(run / "done.json", {"finished": time.strftime("%Y-%m-%d %H:%M:%S")})
+
+
+def nodup_eval(args: argparse.Namespace) -> None:
+    """Each arm's end network vs r3 (2,000 deals) and vs `expert` (1,000 deals), both
+    lineups, seed 7; the r3-vs-`expert` baseline is Task 36b's cached hour-0 match."""
+    rows: dict[str, Any] = {}
+    start = expert_hour(0, EXPERT_DEALS)
+    assert start is not None
+    for arm in args.arms:
+        ck = arm_ckpt(arm)
+        if not (ROOT / ck).exists():
+            log(f"nodup eval: no network for {arm}")
+            continue
+        recs = [
+            json.loads(x) for x in (ROOT / Path(ck).parent / "log.jsonl").read_text().splitlines()
+        ]
+        row: dict[str, Any] = {
+            "iters": recs[-1]["iter"],
+            "games": recs[-1]["games"],
+            "minutes": recs[-1]["minutes_total"],
+            "kl_end": recs[-1]["kl"],
+            "vs_r3": {},
+            "vs_expert": {},
+        }
+        for lu in LINEUPS:
+            tag = lu.replace("+", "p")
+            r = match(spec(ck), spec(START), lu, SMOKE_DEALS, ABL / arm / f"vs_r3_{tag}")
+            row["vs_r3"][lu] = {k: r[k] for k in ("deals", "paired_diff", "paired_ci95", "mean")}
+            r = match(spec(ck), EXPERT, lu, EXPERT_DEALS, ABL / arm / f"vs_expert_{tag}")
+            row["vs_expert"][lu] = r
+        gain = gain_over_start(row, start)
+        row["gain_over_r3_vs_expert"] = gain
+        for lu in LINEUPS:
+            row["vs_expert"][lu] = {
+                k: row["vs_expert"][lu][k] for k in ("deals", "paired_diff", "paired_ci95", "mean")
+            }
+        rows[arm] = row
+    old = {}
+    if (ABL / "results.json").exists():
+        old = json.loads((ABL / "results.json").read_text())
+    write_json(ABL / "results.json", old | rows)
+    nodup_table()
+
+
+def nodup_table() -> str:
+    res = json.loads((ABL / "results.json").read_text())
+    lines = [
+        "| Arm | Games | KL at end | vs r3 1+3 | vs r3 ABAB | vs `expert` 1+3 | vs `expert` ABAB "
+        "| Gain over r3 vs `expert` (both) |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for arm, r in res.items():
+        c = [fmt(r["vs_r3"][lu]["paired_diff"], r["vs_r3"][lu]["paired_ci95"]) for lu in LINEUPS]
+        c += [
+            fmt(r["vs_expert"][lu]["paired_diff"], r["vs_expert"][lu]["paired_ci95"])
+            for lu in LINEUPS
+        ]
+        g = r["gain_over_r3_vs_expert"]["both"]
+        c.append(fmt(g["mean"], g["ci95"]))
+        lines.append(f"| {arm} | {r['games']:,} | {r['kl_end']:.3f} | " + " | ".join(c) + " |")
+    text = "\n".join(lines) + "\n"
+    (ABL / "table.md").write_text(text, encoding="utf-8")
+    print(text, flush=True)
+    return text
+
+
 # table ----------------------------------------------------------------------------
 
 
@@ -430,12 +524,28 @@ def main() -> None:
     h = sub.add_parser("h2h")
     h.add_argument("--hour", type=int, required=True)
     h.add_argument("--deals", type=int, default=H2H_DEALS)
+    for name in ("nodup-train", "nodup-eval"):
+        n = sub.add_parser(name)
+        n.add_argument(
+            "--arms",
+            nargs="+",
+            choices=sorted(ARMS),
+            default=["dup", "plain", "oracle"] if name == "nodup-eval" else ["plain", "oracle"],
+        )
+        n.add_argument("--minutes", type=float, default=SMOKE_MINUTES)
+        n.add_argument("--device", default="cuda")
     sub.add_parser("table")
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"smoke": smoke, "train": train_stage, "eval": eval_stage, "h2h": h2h_stage, "table": lambda a: table()}[
-        args.stage
-    ](args)
+    {
+        "smoke": smoke,
+        "train": train_stage,
+        "eval": eval_stage,
+        "h2h": h2h_stage,
+        "nodup-train": nodup_train,
+        "nodup-eval": lambda a: nodup_eval(a),
+        "table": lambda a: table(),
+    }[args.stage](args)
 
 
 if __name__ == "__main__":
