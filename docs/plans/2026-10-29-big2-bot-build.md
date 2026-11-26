@@ -971,6 +971,12 @@ Task 17b was moved here from Phase 3 on 2026-11-17 by the orchestrator: it waits
   - Built 2026-11-27 (slot 1): `experiments/selfplay_luck.py eval` now plays only `expert` = `ismcts:iterations=10000` (the app's settings, no wall-clock cap); `-Threads` and `-Final` in `selfplay_luck_job.ps1`. Measured cost: 25 / 16 CPU-s a deal (1+3 / ABAB), so ±0.5 in 3 CPU-h cannot be met; orchestrator's call: 1,000 deals per lineup (about 11 CPU-h, about ±0.66 per lineup, about ±0.3 on the gain over r3), the last checkpoint again at 2,000. Jobs: 356 (r3 and hour 8, stop rule, 16 threads), 357 (hour 4), then the Task 36 chain 358-366 above. The strongest-bot check and the with-search line are in `docs/study-results/selfplay-luck.md` (`expert` is the strongest measured; it ties ISMCTS-2,000; network PUCT costs 2× a move, not measured).
   - Then (a later run, once 357 has ended): copy `runs/selfplay_luck/table_expert.md` (r3, h4, h8) into `docs/study-results/selfplay-luck.md` and tick; the later hours arrive with Task 36.
 
+- [ ] **Task 36c: each self-play checkpoint against its older self** (sonnet) `[parallel-ok]`
+  - Why: Brian, 2026-11-27, after hour 8 beat `expert` by +3.29: "perfect, keep training and observe the progress. It probably should match against older version of itself?".
+  - What: now that the network is above `expert`, progress shows best head to head: each checkpoint (hour 12, 16, 20, 24) plays the previous 4-hour checkpoint and hour 8 (the first one above `expert`), networks only, no search, same fixed deals and both lineups (1+3, ABAB) as the expert matches, 1,000 deals (more if cheap: these need no ISMCTS). Also hour 8 vs hour 4 now. Queue them as cpu jobs after each training job, beside the expert matches (do not change jobs 357-366 or the training).
+  - Done when: the queue holds the jobs (ids here); each result goes into the table in `docs/study-results/selfplay-luck.md` (new columns: vs previous, vs hour 8, with 95 % ranges) as the jobs end; the final inbox question uses both the expert and the head-to-head figures. Pushed.
+  - Notes: CPUs 4-19 only; do not rebuild `_core` in the big2-workers worktree while a Task 36 job runs; no sound; local only.
+
 ## Self-review
 
 - Every acceptance criterion A1–A24 maps to a task (table above). Every task has a "Done when"
