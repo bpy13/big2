@@ -1,6 +1,6 @@
 # Self-play pilot with the luck taken out (plan Task 36)
 
-Status 2026-11-27: training to hour 8 done; from 2026-11-27 every checkpoint is measured against
+Status 2026-11-27: training to hour 8 done, both measured against `expert` (below); from 2026-11-27 every checkpoint is measured against
 the app's `expert` only (Task 36b; jobs in the plan's Tasks 36 and 36b).
 Brian, 2026-11-26: "try the self-play luck removal approach with big2 to utilize the currently
 idle GPU".
@@ -78,7 +78,25 @@ policy, and `ppo.py` has neither duplicate deals nor a start network to pull tow
 
 ## Results against `expert`
 
-(pending: `runs/selfplay_luck/table_expert.md`, jobs in the plan's Task 36b)
+Jobs 356 (r3 and hour 8, stop rule) and 357 (hour 4), 2026-11-27. The prior's top move, no
+search, against three `expert` seats (1+3) or two (ABAB), 1,000 deals per lineup, seed 7;
+paired diff per deal (the checkpoint's seat minus `expert`'s on the same cards) with 95 %
+bootstrap range; the gain over r3 is paired deal by deal, mean of both lineups.
+
+| Hour | Deals | vs `expert` 1+3 | vs `expert` ABAB | Gain over r3 vs `expert` (both lineups, paired) |
+|---:|---:|---:|---:|---:|
+| 0 | 1,000 | -1.93 [-2.53, -1.34] | -1.99 [-2.67, -1.32] | (start r3) |
+| 4 | 1,000 | +3.21 [+2.61, +3.84] | +2.59 [+1.85, +3.37] | +3.07 [+2.68, +3.49] |
+| 8 | 1,000 | +3.47 [+2.86, +4.09] | +3.05 [+2.29, +3.87] | +3.29 [+2.87, +3.72] |
+
+- Ranges got: about ±0.6 a deal (1+3) and ±0.7-0.8 (ABAB) per lineup, ±0.4 on the gain over r3.
+- r3 alone loses to `expert` by about 2 points a deal; after 4 GPU-hours of self-play the
+  network alone (no search) beats `expert` by about 3, and hour 8 a little more (+0.2 over
+  hour 4, inside the range). Stop rule passed at hour 8 (gain +3.29 [+2.87, +3.72]), so
+  training goes on (job 358).
+- This agrees with the superseded check below (gain +3.05 against ISMCTS-1000 at hour 4).
+- Later hours: evals 359, 361, 363, 365 (hours 12-24) and 366 (last checkpoint and r3 at
+  2,000 deals) append to `runs/selfplay_luck/table_expert.md`; Task 36 copies them here.
 
 ## Head to head against older selves (Task 36c)
 
