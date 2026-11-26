@@ -80,6 +80,10 @@ policy, and `ppo.py` has neither duplicate deals nor a start network to pull tow
 
 (pending: `runs/selfplay_luck/table_expert.md`, jobs in the plan's Task 36b)
 
+## Head to head against older selves (Task 36c)
+
+(pending: `runs/selfplay_luck/table_h2h.md`, jobs 367-371: hour 8 vs 4, then each later hour vs the previous 4-hour checkpoint and vs hour 8; networks only, 2,000 deals per lineup)
+
 ## First measure (superseded): against r3 and ISMCTS-1000
 
 4,000 deals per lineup, seed 7, job 345. The prior's top move with no search, paired diff per

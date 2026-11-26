@@ -6,13 +6,15 @@
 #   -Stage eval -Hours <N> (cpu lane): hour N (and r3) vs the app's `expert` (ISMCTS-10,000),
 #                1,000 deals per lineup, seed 7; at hour 8 writes stop.json; refreshes
 #                table_expert.md. -Final: the last trained checkpoint up to hour N, 2,000 deals.
+#   -Stage h2h -Hours <N> (cpu lane): hour N against hour N-4 and hour 8, networks only,
+#                2,000 deals per lineup, seed 7 (Task 36c); refreshes table_h2h.md.
 #   -Threads <T>: worker processes (default HKQ_THREADS); 16 only while no gpu job runs.
 # Add with: powershell -NoProfile -File C:\Users\brian\OneDrive\Documents\workspace\repo\.claude\job-queue\jobq.ps1 add -Lane <lane> -Script <this file> -ScriptArgs "-Stage <stage> -Hours <N>" [-After '<ids>']
 # Every stage resumes when added again (training from latest.pt, match blocks are cached).
 # It imports big2 from THIS worktree (PYTHONPATH). Do not rebuild python\big2\_core.pyd here
 # while a stage runs.
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('smoke', 'train', 'eval')][string]$Stage,
+    [Parameter(Mandatory = $true)][ValidateSet('smoke', 'train', 'eval', 'h2h')][string]$Stage,
     [int]$Hours = 0,
     [switch]$Final,
     [int]$Threads = 0
@@ -27,6 +29,7 @@ $script = "$repo\experiments\selfplay_luck.py"
 switch ($Stage) {
     'smoke' { & $py $script smoke }
     'train' { & $py $script train --until-hours $Hours }
+    'h2h' { & $py $script h2h --hour $Hours }
     'eval' {
         if ($Final) { & $py $script eval --hour $Hours --final }
         else { & $py $script eval --hour $Hours }

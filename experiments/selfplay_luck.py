@@ -7,6 +7,7 @@ Usage (each stage is one queue job, see ``experiments/selfplay_luck_job.ps1``)::
     python experiments/selfplay_luck.py smoke                 # gpu: picks the pull, ~35 min
     python experiments/selfplay_luck.py train --until-hours 4 # gpu: trains up to hour 4
     python experiments/selfplay_luck.py eval --hour 4         # cpu: hour 4 (and 0) vs expert
+    python experiments/selfplay_luck.py h2h --hour 12         # cpu: hour 12 vs hour 8 (Task 36c)
     python experiments/selfplay_luck.py table                 # table_expert.md from every eval
 
 * **Start network**: round 3 (``runs/net_r3/best.pt``, copied read-only from the standalone
@@ -294,6 +295,60 @@ def eval_stage(args: argparse.Namespace) -> None:
     table()
 
 
+# head to head (Task 36c) ----------------------------------------------------------
+
+H2H_DEALS = 2000
+FIRST_ABOVE_EXPERT = 8
+
+
+def h2h_pairs(hour: int) -> list[tuple[str, int]]:
+    """The older selves hour ``hour`` plays: the previous 4-hour checkpoint and hour 8."""
+    pairs = [("prev", hour - 4)]
+    if hour > FIRST_ABOVE_EXPERT + 4:
+        pairs.append(("h8", FIRST_ABOVE_EXPERT))
+    return pairs
+
+
+def h2h_stage(args: argparse.Namespace) -> None:
+    """Hour N against its older selves, networks only (prior top move, no search)."""
+    hour = args.hour
+    for name, older in h2h_pairs(hour):
+        folder = OUT / "h2h" / f"h{hour:02d}_vs_h{older:02d}"
+        path = folder / f"results_{args.deals}.json"
+        if path.exists():
+            continue
+        if not (ROOT / hour_ckpt(hour)).exists() or not (ROOT / hour_ckpt(older)).exists():
+            log(f"h2h: missing checkpoint for hour {hour} or {older}; skipped")
+            continue
+        res: dict[str, Any] = {"hour": hour, "older": older, "kind": name, "deals": args.deals}
+        for lu in LINEUPS:
+            log(f"h2h: hour {hour} vs hour {older}, {lu}, {args.deals} deals")
+            r = match(
+                spec(hour_ckpt(hour)),
+                spec(hour_ckpt(older)),
+                lu,
+                args.deals,
+                folder / lu.replace("+", "p"),
+            )
+            res[lu] = {k: r[k] for k in ("deals", "paired_diff", "paired_ci95", "mean")}
+        write_json(path, res)
+    h2h_table()
+
+
+def h2h_table() -> str:
+    """``runs/selfplay_luck/table_h2h.md``: every head-to-head result so far."""
+    lines = ["| Hour | Against | Deals | 1+3 | ABAB |", "|---:|---|---:|---:|---:|"]
+    for f in sorted((OUT / "h2h").glob("h*/results_*.json")):
+        r = json.loads(f.read_text())
+        cells = [fmt(r[lu]["paired_diff"], r[lu]["paired_ci95"]) for lu in LINEUPS]
+        what = f"hour {r['older']} ({'previous' if r['kind'] == 'prev' else 'first above expert'})"
+        lines.append(f"| {r['hour']} | {what} | {r['deals']:,} | " + " | ".join(cells) + " |")
+    text = "\n".join(lines) + "\n"
+    (OUT / "table_h2h.md").write_text(text, encoding="utf-8")
+    print(text, flush=True)
+    return text
+
+
 # table ----------------------------------------------------------------------------
 
 
@@ -372,10 +427,13 @@ def main() -> None:
         action="store_true",
         help=f"the last trained checkpoint up to --hour (and r3), {FINAL_DEALS:,} deals",
     )
+    h = sub.add_parser("h2h")
+    h.add_argument("--hour", type=int, required=True)
+    h.add_argument("--deals", type=int, default=H2H_DEALS)
     sub.add_parser("table")
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
-    {"smoke": smoke, "train": train_stage, "eval": eval_stage, "table": lambda a: table()}[
+    {"smoke": smoke, "train": train_stage, "eval": eval_stage, "h2h": h2h_stage, "table": lambda a: table()}[
         args.stage
     ](args)
 
