@@ -6,8 +6,8 @@ Usage (each stage is one queue job, see ``experiments/selfplay_luck_job.ps1``)::
 
     python experiments/selfplay_luck.py smoke                 # gpu: picks the pull, ~35 min
     python experiments/selfplay_luck.py train --until-hours 4 # gpu: trains up to hour 4
-    python experiments/selfplay_luck.py eval --hour 4         # cpu: measures hour 4 (and 0)
-    python experiments/selfplay_luck.py table                 # table.md from every eval
+    python experiments/selfplay_luck.py eval --hour 4         # cpu: hour 4 (and 0) vs expert
+    python experiments/selfplay_luck.py table                 # table_expert.md from every eval
 
 * **Start network**: round 3 (``runs/net_r3/best.pt``, copied read-only from the standalone
   checkout). `expert` is ISMCTS-10,000 with no network inside; r3 is the best network there
@@ -21,12 +21,13 @@ Usage (each stage is one queue job, see ``experiments/selfplay_luck_job.ps1``)::
   three runs' logs. Both go to ``runs/selfplay_luck/choice.json``.
 * **train**: resumes ``runs/selfplay_luck`` until ``--until-hours`` of training in all; one
   ``hour_XX.pt`` per hour. Does nothing once ``stop.json`` says stop or at 24 hours.
-* **eval**: the hour's network (playing its prior's top move, no search) against the start
-  network and against ISMCTS-1000, the outside opponent self-play never trains against; the
-  same 4,000 deals (seed 7) each time, both lineups, 95 % bootstrap ranges over deals. The
-  gain against ISMCTS-1000 is paired deal by deal with the start's own match. At hour 8 the
-  stop rule: unless that gain (both lineups' mean per deal) has its whole 95 % range above 0,
-  ``stop.json`` stops the run.
+* **eval** (Task 36b): the hour's network (playing its prior's top move, no search) against
+  the app's `expert` (ISMCTS-10,000), the only benchmark since 2026-11-27; the same 1,000
+  deals (seed 7) each time, both lineups, 95 % bootstrap ranges over deals. The start r3 plays
+  the same deals; the gain over r3 is paired deal by deal. At hour 8 the stop rule: unless
+  that gain (both lineups' mean per deal) has its whole 95 % range above 0, ``stop.json``
+  stops the run. ``--final``: the last trained checkpoint and r3 again at 2,000 deals.
+  (Hours 0 and 4 were first measured against r3 and ISMCTS-1000, 4,000 deals: ``table.md``.)
 """
 
 from __future__ import annotations
@@ -44,11 +45,15 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "runs" / "selfplay_luck"
 SMOKE = ROOT / "runs" / "selfplay_luck_smoke"
 START = "runs/net_r3/best.pt"
-OUTSIDE = "ismcts:iterations=1000"
+#: `expert` as the app plays it (crates/app-api solver.rs: ISMCTS-10,000, exploration 0.25,
+#: greedy rollout epsilon 0.1, score objective, one thread, no exact endgame, no network).
+#: The only benchmark opponent since 2026-11-27 (plan Task 36b, Brian).
+EXPERT = "ismcts:iterations=10000"
+EXPERT_DEALS = 1000
+FINAL_DEALS = 2000
 PULLS = (0.02, 0.1, 0.5)
 SMOKE_MINUTES = 10.0
 SMOKE_DEALS = 2000
-EVAL_DEALS = 4000
 EVAL_SEED = 7
 LINEUPS = ("1+3", "ABAB")
 HOURS = (0, 4, 8, 12, 16, 20, 24)
@@ -215,9 +220,14 @@ def train_stage(args: argparse.Namespace) -> None:
 # eval -----------------------------------------------------------------------------
 
 
-def eval_hour(hour: int) -> dict[str, Any] | None:
-    """Plays the hour's matches (cached); returns its results, or None without a network."""
-    path = OUT / f"eval_h{hour:02d}" / "results.json"
+def expert_hour(hour: int, deals: int) -> dict[str, Any] | None:
+    """The hour's network against `expert` (cached); None without a network.
+
+    Results go to ``expert/hXX/results_<deals>.json``. A larger deal count reuses the
+    smaller one's 500-deal blocks (same seed, same cache folder).
+    """
+    folder = OUT / "expert" / f"h{hour:02d}"
+    path = folder / f"results_{deals}.json"
     if path.exists():
         res: dict[str, Any] = json.loads(path.read_text())
         return res
@@ -225,30 +235,23 @@ def eval_hour(hour: int) -> dict[str, Any] | None:
     if not (ROOT / ckpt).exists():
         log(f"eval: no network for hour {hour} ({ckpt})")
         return None
-    res = {"hour": hour, "checkpoint": ckpt, "vs_start": {}, "vs_outside": {}}
-    folder = OUT / f"eval_h{hour:02d}"
+    res = {"hour": hour, "checkpoint": ckpt, "deals": deals, "opponent": EXPERT, "vs_expert": {}}
     for lu in LINEUPS:
-        tag = lu.replace("+", "p")
-        if hour:
-            log(f"eval hour {hour}: vs start, {lu}")
-            r = match(spec(ckpt), spec(START), lu, EVAL_DEALS, folder / f"vs_start_{tag}")
-            r.pop("deal_scores")
-            res["vs_start"][lu] = r
-        log(f"eval hour {hour}: vs {OUTSIDE}, {lu}")
-        res["vs_outside"][lu] = match(
-            spec(ckpt), OUTSIDE, lu, EVAL_DEALS, folder / f"vs_outside_{tag}"
+        log(f"eval hour {hour}: vs expert ({EXPERT}), {lu}, {deals} deals")
+        res["vs_expert"][lu] = match(
+            spec(ckpt), EXPERT, lu, deals, folder / f"vs_expert_{lu.replace('+', 'p')}"
         )
     write_json(path, res)
     return res
 
 
 def gain_over_start(res: dict[str, Any], start: dict[str, Any]) -> dict[str, Any]:
-    """The hour's score against the outside opponent minus the start's, paired by deal."""
+    """The hour's score against `expert` minus the start's, paired by deal."""
     out: dict[str, Any] = {}
     both = []
     for lu in LINEUPS:
-        d = np.array(res["vs_outside"][lu]["deal_scores"]) - np.array(
-            start["vs_outside"][lu]["deal_scores"]
+        d = np.array(res["vs_expert"][lu]["deal_scores"]) - np.array(
+            start["vs_expert"][lu]["deal_scores"]
         )
         both.append(d)
         out[lu] = {"mean": float(d.mean()), "ci95": bootstrap(d)}
@@ -257,15 +260,22 @@ def gain_over_start(res: dict[str, Any], start: dict[str, Any]) -> dict[str, Any
     return out
 
 
+def last_trained(until: int) -> int:
+    """The latest 4-hour checkpoint at or before ``until`` that exists (0: the start)."""
+    return max(h for h in HOURS if h <= until and (ROOT / hour_ckpt(h)).exists())
+
+
 def eval_stage(args: argparse.Namespace) -> None:
-    start = eval_hour(0)
+    hour = last_trained(args.hour) if args.final else args.hour
+    deals = FINAL_DEALS if args.final else args.deals
+    start = expert_hour(0, deals)
     assert start is not None
-    res = eval_hour(args.hour) if args.hour else start
+    res = expert_hour(hour, deals) if hour else start
     if res is None:
-        log(f"eval: hour {args.hour} was not trained (stopped run?); nothing to measure")
+        log(f"eval: hour {hour} was not trained (stopped run?); nothing to measure")
         table()
         return
-    if args.hour == STOP_HOUR and not (OUT / "stop.json").exists():
+    if hour == STOP_HOUR and not args.final and not (OUT / "stop.json").exists():
         g = gain_over_start(res, start)["both"]
         stop = not g["ci95"][0] > 0
         write_json(
@@ -273,9 +283,10 @@ def eval_stage(args: argparse.Namespace) -> None:
             {
                 "stop": stop,
                 "hour": STOP_HOUR,
-                "gain_vs_outside": g,
-                "rule": "stop unless hour 8's gain over the start against "
-                f"{OUTSIDE} has its whole 95 % range above 0",
+                "deals": deals,
+                "gain_vs_expert": g,
+                "rule": "stop unless hour 8's gain over the start (r3), both measured against "
+                f"`expert` ({EXPERT}) and paired by deal, has its whole 95 % range above 0",
                 "decided": time.strftime("%Y-%m-%d %H:%M:%S"),
             },
         )
@@ -291,51 +302,51 @@ def fmt(m: float, ci: list[float]) -> str:
 
 
 def table() -> str:
-    """``runs/selfplay_luck/table.md`` and ``results.json`` from every finished eval."""
-    start = eval_hour_cached(0)
+    """``runs/selfplay_luck/table_expert.md`` and ``results_expert.json`` from every eval.
+
+    (``table.md`` keeps the first, superseded measure: hours 0 and 4 against r3 and
+    ISMCTS-1000, 4,000 deals.)
+    """
     lines = [
-        "| Hour | vs start 1+3 | vs start ABAB | vs ISMCTS-1000 1+3 | vs ISMCTS-1000 ABAB "
-        "| Gain vs ISMCTS-1000 over start (both lineups) |",
-        "|---:|---:|---:|---:|---:|---:|",
+        "| Hour | Deals | vs `expert` 1+3 | vs `expert` ABAB "
+        "| Gain over r3 vs `expert` (both lineups, paired) |",
+        "|---:|---:|---:|---:|---:|",
     ]
     rows = []
-    for hour in HOURS:
-        res = eval_hour_cached(hour)
-        if res is None or start is None:
-            continue
-        vs = res["vs_start"]
-        cells = [
-            fmt(vs[lu]["paired_diff"], vs[lu]["paired_ci95"]) if hour else "(start)"
-            for lu in LINEUPS
-        ]
-        outside = res["vs_outside"]
-        cells += [fmt(outside[lu]["paired_diff"], outside[lu]["paired_ci95"]) for lu in LINEUPS]
-        g = gain_over_start(res, start) if hour else None
-        cells.append(fmt(g["both"]["mean"], g["both"]["ci95"]) if g else "(start)")
-        lines.append(f"| {hour} | " + " | ".join(cells) + " |")
-        rows.append(
-            {
-                "hour": hour,
-                "vs_start": {
-                    lu: {k: vs[lu][k] for k in ("paired_diff", "paired_ci95")} for lu in vs
-                },
-                "vs_outside": {
-                    lu: {k: outside[lu][k] for k in ("paired_diff", "paired_ci95", "mean")}
-                    for lu in outside
-                },
-                "gain_over_start": g,
-            }
-        )
+    for deals in (EXPERT_DEALS, FINAL_DEALS):
+        start = expert_hour_cached(0, deals)
+        for hour in HOURS:
+            res = expert_hour_cached(hour, deals)
+            if res is None or start is None:
+                continue
+            vs = res["vs_expert"]
+            cells = [fmt(vs[lu]["paired_diff"], vs[lu]["paired_ci95"]) for lu in LINEUPS]
+            g = gain_over_start(res, start) if hour else None
+            cells.append(fmt(g["both"]["mean"], g["both"]["ci95"]) if g else "(start r3)")
+            lines.append(f"| {hour} | {deals:,} | " + " | ".join(cells) + " |")
+            rows.append(
+                {
+                    "hour": hour,
+                    "deals": deals,
+                    "vs_expert": {
+                        lu: {k: vs[lu][k] for k in ("paired_diff", "paired_ci95", "mean")}
+                        for lu in vs
+                    },
+                    "gain_over_start": g,
+                }
+            )
     text = "\n".join(lines) + "\n"
     if rows:
-        (OUT / "table.md").write_text(text, encoding="utf-8")
-        write_json(OUT / "results.json", {"rows": rows, "deals": EVAL_DEALS, "seed": EVAL_SEED})
+        (OUT / "table_expert.md").write_text(text, encoding="utf-8")
+        write_json(
+            OUT / "results_expert.json", {"rows": rows, "seed": EVAL_SEED, "opponent": EXPERT}
+        )
     print(text, flush=True)
     return text
 
 
-def eval_hour_cached(hour: int) -> dict[str, Any] | None:
-    path = OUT / f"eval_h{hour:02d}" / "results.json"
+def expert_hour_cached(hour: int, deals: int) -> dict[str, Any] | None:
+    path = OUT / "expert" / f"h{hour:02d}" / f"results_{deals}.json"
     if not path.exists():
         return None
     res: dict[str, Any] = json.loads(path.read_text())
@@ -355,6 +366,12 @@ def main() -> None:
     t.add_argument("--device", default="cuda")
     e = sub.add_parser("eval")
     e.add_argument("--hour", type=int, required=True)
+    e.add_argument("--deals", type=int, default=EXPERT_DEALS)
+    e.add_argument(
+        "--final",
+        action="store_true",
+        help=f"the last trained checkpoint up to --hour (and r3), {FINAL_DEALS:,} deals",
+    )
     sub.add_parser("table")
     args = p.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
