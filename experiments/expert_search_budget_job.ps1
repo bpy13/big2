@@ -15,7 +15,7 @@
 # jobs run); the scripts, network and outputs live in this worktree.
 param(
     [Parameter(Mandatory = $true)][ValidateSet('screen', 'timing-native', 'finalists', 'confirm', 'timing-node', 'report')][string]$Stage,
-    [string]$Settings = 'all',
+    [string[]]$Settings = @('all'),
     [int]$Threads = 0
 )
 $repo = 'C:\Users\brian\OneDrive\Documents\workspace\repo\.worktrees\big2-workers'
@@ -28,8 +28,8 @@ $env:Path = "C:\Users\brian\miniconda3\envs\big2;C:\Users\brian\miniconda3\envs\
 $py = 'C:\Users\brian\miniconda3\envs\big2\python.exe'
 $script = "$repo\experiments\expert_search_budget.py"
 switch ($Stage) {
-    'screen' { & $py $script screen --settings $Settings }
-    'timing-native' { & $py $script timing --where native --settings $Settings }
+    'screen' { & $py $script screen --settings ($Settings -join ',') }
+    'timing-native' { & $py $script timing --where native --settings ($Settings -join ',') }
     'finalists' { & $py $script finalists }
     'confirm' { & $py $script finalists; if ($LASTEXITCODE -eq 0) { & $py $script confirm } }
     'timing-node' { & $py $script timing --where node --settings finalists }

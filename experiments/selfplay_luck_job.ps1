@@ -23,7 +23,7 @@ param(
 )
 $repo = 'C:\Users\brian\OneDrive\Documents\workspace\repo\.worktrees\big2-workers'
 Set-Location $repo
-$env:PYTHONPATH = "$repo\python"
+$env:PYTHONPATH = 'C:\Users\brian\OneDrive\Documents\workspace\repo\.worktrees\big2-p6budget\python'  # has net_search in _core.pyd; this worktree's was not rebuilt after Task 38
 if (-not $env:HKQ_THREADS) { $env:HKQ_THREADS = '8' }
 if ($Threads -gt 0) { $env:HKQ_THREADS = "$Threads" }
 $py = 'C:\Users\brian\miniconda3\envs\big2\python.exe'
