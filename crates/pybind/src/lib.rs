@@ -20,9 +20,9 @@ use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
 use big2_games::{Game, Policy};
 use big2_search::{
-    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, DealPrior, InfosetConfig,
-    IsmctsConfig, Leaf, NetSampler, Objective, OracleSampler, PimcConfig, PolicyModel, PuctConfig,
-    RulesMask, Sampler, UniformSampler,
+    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, DealPrior, Depth,
+    InfosetConfig, IsmctsConfig, Leaf, NetSampler, NetSearch, Objective, OracleSampler, PimcConfig,
+    PolicyModel, PuctConfig, RulesMask, Sampler, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -845,6 +845,118 @@ fn analyze<'py>(
     Ok(d)
 }
 
+/// Network play-out search (`big2_search::netsearch`) for the player to act:
+/// the network's top `k` moves by prior (plus every move in `extra`, card masks
+/// that must be legal) played out on `n` paired deals of the hidden cards, each
+/// followed by `depth` plies of every seat playing the network's top move (`None`
+/// = to the end of the deal, real score), then scored with
+/// `value_mix · value head + (1 − value_mix) · real score of playing on`.
+/// `belief` is `"rules"` (default: only deals the rules allow) or `None`.
+/// Returns a dict:
+///
+/// ```text
+/// {"player": int, "deals": int, "net_calls": int, "seconds": float,
+///  "candidates": [{"cards": int, "prior": float, "mean": float, "se": float,
+///                  "win_rate": float, "loss": float, "loss_se": float}, ...],
+///  "moves": [...]}   # best first; "moves" in analyze()'s shape
+/// ```
+///
+/// `loss` is the paired difference to the best candidate over the same deals.
+/// The GIL is released while searching.
+#[pyfunction]
+#[pyo3(signature = (state, *, net, k=3, n=64, depth=None, value_mix=1.0, threads=1, seed=0, time_limit=None, belief=Some("rules"), extra=Vec::new()))]
+#[allow(clippy::too_many_arguments)]
+fn net_search<'py>(
+    py: Python<'py>,
+    state: &PyState,
+    net: &str,
+    k: usize,
+    n: u64,
+    depth: Option<u32>,
+    value_mix: f64,
+    threads: usize,
+    seed: u64,
+    time_limit: Option<f64>,
+    belief: Option<&str>,
+    extra: Vec<u64>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let s = state.inner.clone();
+    let player = s
+        .current_player()
+        .ok_or_else(|| value_error("the deal is over"))?;
+    if k == 0 {
+        return Err(value_error("k must be at least 1"));
+    }
+    if !(0.0..=1.0).contains(&value_mix) {
+        return Err(value_error("value_mix must be between 0 and 1"));
+    }
+    let extra = extra
+        .iter()
+        .map(|&c| s.action_for_cards(c).map_err(value_error))
+        .collect::<PyResult<Vec<Action>>>()?;
+    let rules_mask = match belief {
+        Some("rules") => Some(RulesMask::default()),
+        None | Some("none") => None,
+        Some(other) => {
+            return Err(value_error(format!(
+                "unknown belief {other:?} for net_search (use \"rules\" or None)"
+            )))
+        }
+    };
+    let net = load_pvnet(net)?;
+    let cfg = NetSearch {
+        k,
+        n,
+        depth: depth.map_or(Depth::Full, Depth::Plies),
+        value_mix,
+        threads,
+        seed,
+        time_limit: time_limit.map(Duration::from_secs_f64),
+    };
+    let r = py.detach(|| match &rules_mask {
+        Some(m) => big2_search::net_search(&s, player, &cfg, &*net, m, &extra),
+        None => big2_search::net_search(&s, player, &cfg, &*net, &UniformSampler, &extra),
+    });
+    let d = PyDict::new(py);
+    d.set_item("player", r.player)?;
+    d.set_item("deals", r.deals)?;
+    d.set_item("net_calls", r.net_calls)?;
+    d.set_item("seconds", r.elapsed.as_secs_f64())?;
+    let cands = r
+        .candidates
+        .iter()
+        .map(|c| {
+            let cd = PyDict::new(py);
+            cd.set_item("cards", c.action.cards())?;
+            cd.set_item("prior", c.prior)?;
+            cd.set_item("mean", c.mean)?;
+            cd.set_item("se", c.se)?;
+            cd.set_item("win_rate", c.win_rate)?;
+            cd.set_item("loss", c.loss)?;
+            cd.set_item("loss_se", c.loss_se)?;
+            Ok(cd)
+        })
+        .collect::<PyResult<Vec<_>>>()?;
+    d.set_item("candidates", cands)?;
+    let moves = r
+        .to_analysis()
+        .moves
+        .iter()
+        .map(|m| {
+            let md = PyDict::new(py);
+            md.set_item("cards", m.action.cards())?;
+            md.set_item("visits", m.visits)?;
+            md.set_item("mean_score", m.mean_score)?;
+            md.set_item("score_ci95", m.score_ci95)?;
+            md.set_item("win_rate", m.win_rate)?;
+            md.set_item("win_ci95", m.win_ci95)?;
+            Ok(md)
+        })
+        .collect::<PyResult<Vec<_>>>()?;
+    d.set_item("moves", moves)?;
+    Ok(d)
+}
+
 /// Hidden-card samples as the search would draw them: `n` deals (each a list of
 /// four hand masks) for the player to act, uniform (`belief=None`), uniform among
 /// the deals the rules allow (`belief="rules"`) or weighted by the opponent model
@@ -928,6 +1040,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(decompositions, m)?)?;
     m.add_function(wrap_pyfunction!(candidates, m)?)?;
     m.add_function(wrap_pyfunction!(analyze, m)?)?;
+    m.add_function(wrap_pyfunction!(net_search, m)?)?;
     m.add_function(wrap_pyfunction!(value_estimate, m)?)?;
     m.add_function(wrap_pyfunction!(belief_log_probs, m)?)?;
     m.add_function(wrap_pyfunction!(sample_deals, m)?)?;

@@ -130,6 +130,69 @@ def analyze(
     console.print(_moves_table(result, top, title))
 
 
+@app.command()
+def search(
+    net: Annotated[str, typer.Option(help="Policy-value network (.pknn, big2 rl export).")],
+    seat: Annotated[int, typer.Option(help="Your seat (0-3).")],
+    hand: Annotated[str, typer.Option(help='Your current hand, e.g. "3d 4c 5h".')],
+    history: Annotated[str, typer.Option(help='Actions so far: "0:3d; 1:pass; 2:5c 5h".')] = "",
+    k: Annotated[int, typer.Option(help="Candidates: the network's top k moves.")] = 3,
+    n: Annotated[int, typer.Option(help="Paired deals of the hidden cards.")] = 64,
+    depth: Annotated[
+        str, typer.Option(help="Plies of network play after each candidate, or 'full'.")
+    ] = "full",
+    value_mix: Annotated[
+        float, typer.Option(help="Weight of the value head at the cutoff (rest: play on).")
+    ] = 1.0,
+    threads: Annotated[int, typer.Option(help="Parallel workers.")] = 4,
+    seed: int = 0,
+    straights: Straights = "with_low_twos",
+    flush_order: FlushOrder = "rank_first",
+    pass_rule: PassRule = "may_reenter",
+    scoring: Scoring = "tiered",
+    last_card_duty: LastCardDuty = DEFAULT_RULES.last_card_duty,
+) -> None:
+    """Network play-out search for one position: each of the network's top k moves
+    played out on the same n deals; mean, standard error and paired loss to the best."""
+    from big2._core import net_search
+    from big2.agents import parse_depth
+
+    rules = _rules(straights, flush_order, pass_rule, scoring, last_card_duty)
+    try:
+        state = state_from_observation(seat, cards(hand), _parse_history(history), rules, seed=seed)
+        plies = parse_depth(depth)
+    except ValueError as e:
+        raise typer.BadParameter(str(e)) from e
+    if state.current_player != seat:
+        raise typer.BadParameter(f"it is player {state.current_player}'s turn, not seat {seat}'s")
+    result = net_search(
+        state,
+        net=net,
+        k=k,
+        n=n,
+        depth=plies,
+        value_mix=value_mix,
+        threads=threads,
+        seed=seed,
+    )
+    t = Table(
+        title=f"Network search · k {k}, {result['deals']:,} deals, depth {depth} · "
+        f"{result['seconds']:.2f}s"
+    )
+    for col in ("#", "Move", "Prior", "Exp. score", "Loss vs best", "Win rate"):
+        t.add_column(col, justify="left" if col == "Move" else "right")
+    for i, c in enumerate(result["candidates"], 1):
+        t.add_row(
+            str(i),
+            pretty(c["cards"]),
+            f"{c['prior']:.1%}",
+            f"{c['mean']:+.2f} ± {c['se']:.2f}",
+            f"{c['loss']:.2f} ± {c['loss_se']:.2f}",
+            f"{c['win_rate']:.1%}",
+        )
+    console.print(t)
+
+
 # play ------------------------------------------------------------------------
 
 

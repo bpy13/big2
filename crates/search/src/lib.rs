@@ -30,6 +30,7 @@ pub mod belief;
 pub mod endgame;
 pub mod infoset_endgame;
 pub mod ismcts;
+pub mod netsearch;
 pub mod pimc;
 pub mod puct;
 
@@ -40,6 +41,7 @@ pub use belief::{
 };
 pub use infoset_endgame::{infoset_endgame, Forced, InfosetConfig, InfosetResult};
 pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
+pub use netsearch::{net_search, Depth, NetCandidate, NetSearch, NetSearchResult};
 pub use pimc::{pimc, PimcConfig};
 pub use puct::{
     puct, puct_with, puct_with_rollout, NoRollout, PuctAnalysis, PuctConfig, PuctPolicy,

@@ -158,6 +158,37 @@ def analyze(
     infoset_max_cards: int = 10,  # ... and at most this many cards in all hands
     infoset_max_nodes: int = 1_000_000,
 ) -> AnalysisResult: ...
+class NetCandidate(TypedDict):
+    cards: int
+    prior: float  # the network's prior at the root
+    mean: float  # mean score over the paired deals
+    se: float
+    win_rate: float
+    loss: float  # paired mean(best - this), 0 for the best
+    loss_se: float
+
+class NetSearchResult(TypedDict):
+    player: int
+    deals: int
+    net_calls: int
+    seconds: float
+    candidates: list[NetCandidate]  # best first
+    moves: list[MoveStats]  # the same, in analyze()'s shape
+
+def net_search(
+    state: Big2State,
+    *,
+    net: str,  # a .pknn policy-value network (big2 rl export)
+    k: int = 3,  # the network's top k moves by prior
+    n: int = 64,  # paired deals of the hidden cards
+    depth: int | None = None,  # plies of network play after the candidate; None = to the end
+    value_mix: float = 1.0,  # at the cutoff: value_mix*value head + (1-value_mix)*real score
+    threads: int = 1,
+    seed: int = 0,
+    time_limit: float | None = None,
+    belief: str | None = "rules",  # "rules" (last-card duty mask) | None (uniform)
+    extra: list[int] = ...,  # moves (card masks) searched besides the top k
+) -> NetSearchResult: ...
 def sample_deals(
     state: Big2State,
     n: int,
