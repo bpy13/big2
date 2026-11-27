@@ -13,3 +13,12 @@ is worked out in Task 43 (with Tasks 41 and 42).
 (Brian, 2026-11-28: "spread is small as you've suggested, I want it to be something like chess,
 spanning 0 to 3000+ for superhuman level (our expert)"; then: "again, I've mentioned that elo
 should be luck removal. The change in elo should be based on decision, not point won")
+
+Amended 2026-11-28: the rating is NOT the decision loss against the expert (that caps every player
+at the expert, even one who plays better). It is points won with the luck subtracted (AIVAT-style:
+the expert's network estimates the part of each deal's result that came from the cards and other
+chance, and that part is removed), so a player who plays better than the expert can rate above it.
+Grading single moves against the expert stays as before (D102/Task 43's grade lines).
+(Brian, 2026-11-28: "but if luck removal, the luck is determined by expert, and that means the
+players will never have higher elo than the expert, even though they might actually play better";
+asked to choose a) a deeper offline referee, b) points won minus luck, or both: "should be b")
