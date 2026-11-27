@@ -98,6 +98,27 @@ bootstrap range; the gain over r3 is paired deal by deal, mean of both lineups.
 - Later hours: evals 359, 361, 363, 365 (hours 12-24) and 366 (last checkpoint and r3 at
   2,000 deals) append to `runs/selfplay_luck/table_expert.md`; Task 36 copies them here.
 
+## Without luck removal (Task 36d)
+
+Same 10-minute smoke setting from r3 (pull 0.02, seed 0, same frozen-opponent mix). Arms: `dup` =
+Task 36's smoke network (duplicate rotations, leave-one-out baseline, no oracle critic); `plain` =
+no duplicate, no oracle critic (advantage = score minus batch mean, divided by its sd); `oracle` =
+no duplicate, oracle critic only. Measured vs r3 at 2,000 deals per lineup and vs `expert` at
+1,000 deals (jobs 372, 373); paired, 95 % ranges. Games differ because the arms ran the same
+10 minutes.
+
+| Arm | Games | KL at end | vs r3 1+3 | vs r3 ABAB | vs `expert` 1+3 | vs `expert` ABAB | Gain over r3 vs `expert` (both) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| dup | 659,456 | 0.280 | +3.64 [+3.24, +4.07] | +3.04 [+2.50, +3.62] | +2.01 [+1.41, +2.60] | +1.26 [+0.50, +2.02] | +2.29 [+1.91, +2.69] |
+| plain | 466,944 | 0.280 | +2.79 [+2.40, +3.17] | +1.55 [+1.02, +2.12] | +1.20 [+0.63, +1.81] | +0.41 [-0.35, +1.17] | +1.78 [+1.40, +2.17] |
+| oracle | 468,992 | 0.285 | +3.65 [+3.25, +4.11] | +2.93 [+2.37, +3.50] | +2.04 [+1.47, +2.65] | +1.24 [+0.51, +1.95] | +2.30 [+1.91, +2.72] |
+
+- Verdict 1: luck removal accounts for part of the gain, not most: with none of it the network
+  still gains +1.78 [+1.40, +2.17] over r3 against `expert`, versus +2.29 [+1.91, +2.69] with
+  the duplicate, so about three quarters of the gain remains (the ranges overlap a little).
+- Verdict 2: the oracle critic alone (no duplicate) matches the duplicate arm (+2.30 vs +2.29),
+  so the variance reduction is what helps, and the duplicate adds nothing on top of the critic.
+
 ## Head to head against older selves (Task 36c)
 
 (pending: `runs/selfplay_luck/table_h2h.md`, jobs 367-371: hour 8 vs 4, then each later hour vs the previous 4-hour checkpoint and vs hour 8; networks only, 2,000 deals per lineup)
