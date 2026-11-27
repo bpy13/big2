@@ -1,6 +1,7 @@
 # Board
 
 ## Workers
+- slot 1: Task 39 (depth and budget study), building the driver and timing harness; started 2026-11-27 19:30
 
 ## Results
 - Task 37 (slot 2, 2026-11-27): ticked. Self-play hour-24 network exported to `.pknn` (no exporter change); Rust vs PyTorch on 1,000 positions: prior top move agrees 99.8 %, value RMS 0.0081; one forward pass native 0.059 ms median (p95 0.126), Node WebAssembly 0.246 ms (p95 0.553). In `docs/study-results/expert-search-budget.md` §0. No paid API spend.
