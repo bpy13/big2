@@ -1,9 +1,9 @@
 # Board
 
 ## Workers
-- slot 1: Task 39 (depth and budget study), building the driver and timing harness; started 2026-11-27 19:30
 
 ## Results
+- Task 39 (slot 1, 2026-11-27): built and queued, **not ticked**. Depth and budget study driver `experiments/expert_search_budget.py` (18 settings vs the raw network, finalists by efficient frontier, confirm vs raw and `expert`, native/Node timing, knee rule, curve); jobs 391-397 (quiet + cpu lanes, about 125 CPU-h, decision 0006). Then: report into the study doc §2-§4, inbox question on the knee, tick. No paid API spend.
 - Task 37 (slot 2, 2026-11-27): ticked. Self-play hour-24 network exported to `.pknn` (no exporter change); Rust vs PyTorch on 1,000 positions: prior top move agrees 99.8 %, value RMS 0.0081; one forward pass native 0.059 ms median (p95 0.126), Node WebAssembly 0.246 ms (p95 0.553). In `docs/study-results/expert-search-budget.md` §0. No paid API spend.
 - Task 38 (slot 1, 2026-11-27): ticked. Network play-out search `netsearch.rs` (`NetSearch { k, n, depth, value_mix, threads, seed, time_limit }`, paired means, standard errors and loss to the best), `big2._core.net_search`, agent `netsearch:net=…,k,n,depth`, `big2 search`. Rust 8 netsearch tests and Python 426 pass. Brian's flush position was not given as JSON, so it is not a test yet. No paid API spend.
 - Task 36d (slot 1, 2026-11-27): ticked. From r3, 10 min, gain over r3 vs `expert`: luck-removed +2.29, no luck removal at all +1.78, oracle critic only +2.30. Luck removal accounts for part (about a quarter) of the gain; the critic alone matches it. Table in `docs/study-results/selfplay-luck.md`. No paid API spend.
