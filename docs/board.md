@@ -1,9 +1,9 @@
 # Board
 
 ## Workers
-- slot 1: Task 38 (network play-out search in Rust), building
 
 ## Results
+- Task 38 (slot 1, 2026-11-27): ticked. Network play-out search `netsearch.rs` (`NetSearch { k, n, depth, value_mix, threads, seed, time_limit }`, paired means, standard errors and loss to the best), `big2._core.net_search`, agent `netsearch:net=…,k,n,depth`, `big2 search`. Rust 8 netsearch tests and Python 426 pass. Brian's flush position was not given as JSON, so it is not a test yet. No paid API spend.
 - Task 36d (slot 1, 2026-11-27): ticked. From r3, 10 min, gain over r3 vs `expert`: luck-removed +2.29, no luck removal at all +1.78, oracle critic only +2.30. Luck removal accounts for part (about a quarter) of the gain; the critic alone matches it. Table in `docs/study-results/selfplay-luck.md`. No paid API spend.
 - Task 36c (slot 1, 2026-11-27): built and queued, **not ticked**. `selfplay_luck.py h2h` plays each checkpoint against the previous one and hour 8 (networks only, 2,000 deals per lineup); cpu jobs 367 (hour 8 vs 4), 368-371 (hours 12-24, after each training job). Table into the study doc as they end. No paid API spend.
 - Task 36b (slot 1, 2026-11-27): ticked. Network alone (no search) vs the app's `expert`, 1,000 deals per lineup: r3 -1.93 / -1.99, hour 4 +3.21 / +2.59, hour 8 +3.47 / +3.05 (1+3 / ABAB, ±0.6-0.8); gain over r3 +3.29 [+2.87, +3.72], stop rule passed, training continues (358). Later hours: jobs 359-366. No paid API spend.

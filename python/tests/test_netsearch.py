@@ -10,13 +10,12 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from typer.testing import CliRunner  # noqa: E402
-
 from big2._core import Big2State, net_search  # noqa: E402
 from big2.agents import NetSearchAgent, make_agent, parse_depth  # noqa: E402
 from big2.cli.main import app  # noqa: E402
 from big2.rl.export import export_pknn  # noqa: E402
 from big2.rl.model import NetConfigV2, QNetV2  # noqa: E402
+from typer.testing import CliRunner  # noqa: E402
 
 
 @pytest.fixture(scope="module")
