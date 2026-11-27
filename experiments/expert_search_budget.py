@@ -8,9 +8,9 @@ Usage (each stage is one queue job, see ``experiments/expert_search_budget_job.p
 
     python experiments/expert_search_budget.py screen  [--deals 300] [--settings a,b]   # cpu
     python experiments/expert_search_budget.py timing  --where native|node [--settings …] # quiet
-    python experiments/expert_search_budget.py finalists                                 # (cheap)
+    python experiments/expert_search_budget.py finalists                      # cheap
     python experiments/expert_search_budget.py confirm [--deals 2000] [--expert-deals 1000]
-    python experiments/expert_search_budget.py report                                    # table, curve, knee
+    python experiments/expert_search_budget.py report                         # table, curve, knee
 
 * **Settings**: play-outs ``k`` (candidates) in {2, 3, 5, 8}, ``n`` (deals) in {16, 32, 64,
   128, 256}, ``depth`` in {0, 4, 8, 16, full} plies, one knob at a time from ``k 3, n 64, depth
@@ -106,8 +106,16 @@ def playout(k: int, n: int, depth: int | str, value_mix: float = 1.0) -> dict[st
     if value_mix != 1.0:
         spec += f",value_mix={value_mix}"
     step = f"netsearch {k} {n} {depth} {value_mix:g}"
-    return {"name": name, "family": "play-outs", "spec": spec, "step": step,
-            "k": k, "n": n, "depth": depth, "value_mix": value_mix}
+    return {
+        "name": name,
+        "family": "play-outs",
+        "spec": spec,
+        "step": step,
+        "k": k,
+        "n": n,
+        "depth": depth,
+        "value_mix": value_mix,
+    }
 
 
 def puct(simulations: int) -> dict[str, Any]:
@@ -179,8 +187,13 @@ def versus(setting: dict[str, Any], opp: str, deals: int, folder: Path) -> dict[
     path = folder / f"results_{deals}.json"
     if path.exists():
         return read_json(path)
-    res: dict[str, Any] = {"setting": setting["name"], "spec": setting["spec"],
-                           "opponent": opp, "deals": deals, "lineups": {}}
+    res: dict[str, Any] = {
+        "setting": setting["name"],
+        "spec": setting["spec"],
+        "opponent": opp,
+        "deals": deals,
+        "lineups": {},
+    }
     for lu in LINEUPS:
         log(f"{setting['name']} vs {opp}, {lu}, {deals} deals")
         res["lineups"][lu] = match(setting["spec"], opp, lu, deals, folder / lu.replace("+", "p"))
@@ -220,8 +233,14 @@ def raw_vs_expert(deals: int) -> dict[str, Any] | None:
     t36 = ROOT / "runs" / "selfplay_luck" / "expert" / "h24" / f"results_{deals}.json"
     if t36.exists():
         src = read_json(t36)
-        res = {"setting": "raw", "spec": src["checkpoint"], "opponent": EXPERT, "deals": deals,
-               "source": str(t36.relative_to(ROOT)), "lineups": {}}
+        res = {
+            "setting": "raw",
+            "spec": src["checkpoint"],
+            "opponent": EXPERT,
+            "deals": deals,
+            "source": str(t36.relative_to(ROOT)),
+            "lineups": {},
+        }
         for lu in LINEUPS:
             r = src["vs_expert"][lu]
             res["lineups"][lu] = {k: r[k] for k in ("paired_diff", "paired_ci95", "mean", "deals")}
@@ -260,14 +279,24 @@ def timing_stage(args: argparse.Namespace) -> None:
         if args.where == "native":
             cmd = [str(native_exe()), NET, str(steps_file)]
         else:
-            cmd = ["node", str(ROOT / "experiments" / "search_budget_timing.mjs"),
-                   str(OUT / "pkg"), NET, str(steps_file)]
+            cmd = [
+                "node",
+                str(ROOT / "experiments" / "search_budget_timing.mjs"),
+                str(OUT / "pkg"),
+                NET,
+                str(steps_file),
+            ]
         text = subprocess.run(cmd, check=True, capture_output=True, text=True, cwd=ROOT).stdout
         rows = json.loads(text.strip().splitlines()[-1])
         ms = [r["ms"] for r in rows[TIMING_WARMUP:]]
-        done[s["name"]] = {**quantiles(ms), "step": step,
-                           "legal_mean": float(np.mean([r["legal"] for r in rows])),
-                           "net_calls_mean": float(np.mean([r.get("net_calls", r.get("simulations", 0)) for r in rows]))}
+        done[s["name"]] = {
+            **quantiles(ms),
+            "step": step,
+            "legal_mean": float(np.mean([r["legal"] for r in rows])),
+            "net_calls_mean": float(
+                np.mean([r.get("net_calls", r.get("simulations", 0)) for r in rows])
+            ),
+        }
         write_json(out, done)
     report_stage(args)
 
@@ -295,7 +324,7 @@ def frontier(rows: list[tuple[str, float, float]]) -> list[str]:
     """Names on the efficient frontier of (ms, gain): no cheaper row gains at least as much."""
     best = -math.inf
     out = []
-    for name, ms, gain in sorted(rows, key=lambda r: (r[1], -r[2])):
+    for name, _ms, gain in sorted(rows, key=lambda r: (r[1], -r[2])):
         if gain > best:
             out.append(name)
             best = gain
@@ -312,13 +341,19 @@ def finalists_stage(args: argparse.Namespace) -> list[str]:
     front = frontier(rows)
     by_gain = sorted(front, key=lambda n: -res[n]["gain"]["mean"])[:FINALISTS]
     if len(by_gain) < FINALISTS:
-        rest = sorted((n for n, _, _ in rows if n not in by_gain),
-                      key=lambda n: -res[n]["gain"]["mean"])
+        rest = sorted(
+            (n for n, _, _ in rows if n not in by_gain), key=lambda n: -res[n]["gain"]["mean"]
+        )
         by_gain += rest[: FINALISTS - len(by_gain)]
-    fin = {"finalists": by_gain, "frontier": front, "rule": "efficient frontier of (native "
-           "median ms, gain over the raw network), the five with the highest gain",
-           "screen_deals": {n: res[n]["deals"] for n in res}, "missing": missing,
-           "decided": time.strftime("%Y-%m-%d %H:%M:%S")}
+    fin = {
+        "finalists": by_gain,
+        "frontier": front,
+        "rule": "efficient frontier of (native "
+        "median ms, gain over the raw network), the five with the highest gain",
+        "screen_deals": {n: res[n]["deals"] for n in res},
+        "missing": missing,
+        "decided": time.strftime("%Y-%m-%d %H:%M:%S"),
+    }
     write_json(OUT / "finalists.json", fin)
     log(f"finalists: {by_gain} (frontier {front})")
     return by_gain
@@ -337,17 +372,24 @@ def phone_estimates() -> dict[str, dict[str, float]]:
     out = {}
     for n, t in nat.items():
         if n in node:
-            out[n] = {"median": PHONE_PER_NODE * node[n]["median"],
-                      "p95": PHONE_PER_NODE * node[n]["p95"], "from": "node"}
+            out[n] = {
+                "median": PHONE_PER_NODE * node[n]["median"],
+                "p95": PHONE_PER_NODE * node[n]["p95"],
+                "from": "node",
+            }
         else:
-            out[n] = {"median": PHONE_PER_NODE * f * t["median"],
-                      "p95": PHONE_PER_NODE * f * t["p95"], "from": f"native x {f:.2f}"}
+            out[n] = {
+                "median": PHONE_PER_NODE * f * t["median"],
+                "p95": PHONE_PER_NODE * f * t["p95"],
+                "from": f"native x {f:.2f}",
+            }
     out["_node_per_native"] = {"factor": f, "finalists_timed": len(factors)}
     return out
 
 
-def knee(res: dict[str, Any], nat: dict[str, Any], phone: dict[str, Any],
-         budget_ms: float) -> dict[str, Any]:
+def knee(
+    res: dict[str, Any], nat: dict[str, Any], phone: dict[str, Any], budget_ms: float
+) -> dict[str, Any]:
     names = [n for n in res if n in nat]
     if not names:
         return {"setting": None}
@@ -361,11 +403,17 @@ def knee(res: dict[str, Any], nat: dict[str, Any], phone: dict[str, Any],
         if within and in_budget:
             ok.append(n)
     pick = min(ok, key=lambda n: nat[n]["median"]) if ok else None
-    return {"setting": pick, "best": best, "best_gain": bg, "best_ci95": bci,
-            "budget_ms": budget_ms, "candidates": ok,
-            "gain": res[pick]["gain"] if pick else None,
-            "native_median_ms": nat[pick]["median"] if pick else None,
-            "phone_p95_ms": phone[pick]["p95"] if pick else None}
+    return {
+        "setting": pick,
+        "best": best,
+        "best_gain": bg,
+        "best_ci95": bci,
+        "budget_ms": budget_ms,
+        "candidates": ok,
+        "gain": res[pick]["gain"] if pick else None,
+        "native_median_ms": nat[pick]["median"] if pick else None,
+        "phone_p95_ms": phone[pick]["p95"] if pick else None,
+    }
 
 
 def gain_per_doubling(res: dict[str, Any], nat: dict[str, Any]) -> dict[str, Any]:
@@ -399,8 +447,8 @@ def report_stage(args: argparse.Namespace | None = None) -> str:
         if files:
             expert[n] = read_json(files[-1])
     lines = [
-        "| Setting | Deals | Gain over raw network (both lineups) | 1+3 | ABAB | native ms median / p95 "
-        "| Node ms median / p95 | phone ms median / p95 (est.) | vs `expert` 1+3 | vs `expert` ABAB |",
+        "| Setting | Deals | Gain over raw network (both lineups) | 1+3 | ABAB | native ms median / p95 "  # noqa: E501
+        "| Node ms median / p95 | phone ms median / p95 (est.) | vs `expert` 1+3 | vs `expert` ABAB |",  # noqa: E501
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     order = sorted(res, key=lambda n: nat[n]["median"] if n in nat else math.inf)
@@ -419,16 +467,24 @@ def report_stage(args: argparse.Namespace | None = None) -> str:
         ]
         if n in expert:
             e = expert[n]["lineups"]
-            cells += [fmt(e["1+3"]["paired_diff"], e["1+3"]["paired_ci95"]),
-                      fmt(e["ABAB"]["paired_diff"], e["ABAB"]["paired_ci95"])]
+            cells += [
+                fmt(e["1+3"]["paired_diff"], e["1+3"]["paired_ci95"]),
+                fmt(e["ABAB"]["paired_diff"], e["ABAB"]["paired_ci95"]),
+            ]
         else:
             cells += ["", ""]
         lines.append("| " + " | ".join(cells) + " |")
     if "raw" in expert:
         e = expert["raw"]["lineups"]
-        lines.append("| raw network | " + f"{expert['raw']['deals']:,}" + " | (0) | | | 0.15 / 0.3 | | | "
-                     + fmt(e["1+3"]["paired_diff"], e["1+3"]["paired_ci95"]) + " | "
-                     + fmt(e["ABAB"]["paired_diff"], e["ABAB"]["paired_ci95"]) + " |")
+        lines.append(
+            "| raw network | "
+            + f"{expert['raw']['deals']:,}"
+            + " | (0) | | | 0.15 / 0.3 | | | "
+            + fmt(e["1+3"]["paired_diff"], e["1+3"]["paired_ci95"])
+            + " | "
+            + fmt(e["ABAB"]["paired_diff"], e["ABAB"]["paired_ci95"])
+            + " |"
+        )
     k_move = knee(res, nat, phone, MOVE_BUDGET_MS)
     k_grade = knee(res, nat, phone, GRADE_BUDGET_MS)
     slope = gain_per_doubling(res, nat)
@@ -436,12 +492,19 @@ def report_stage(args: argparse.Namespace | None = None) -> str:
     text += f"Knee (bot move, phone p95 <= {MOVE_BUDGET_MS:.0f} ms): {json.dumps(k_move)}\n\n"
     text += f"Knee (grade, phone p95 <= {GRADE_BUDGET_MS:.0f} ms): {json.dumps(k_grade)}\n\n"
     text += f"Gain per doubling of time: {json.dumps(slope)}\n\n"
-    text += f"Phone factor: {json.dumps(phone.get('_node_per_native'))}, phone = {PHONE_PER_NODE:g} x Node (assumed)\n"
+    text += f"Phone factor: {json.dumps(phone.get('_node_per_native'))}, phone = {PHONE_PER_NODE:g} x Node (assumed)\n"  # noqa: E501
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "report.md").write_text(text, encoding="utf-8")
-    write_json(OUT / "report.json", {"knee_move": k_move, "knee_grade": k_grade,
-                                     "gain_per_doubling": slope, "phone": phone,
-                                     "finalists": fin})
+    write_json(
+        OUT / "report.json",
+        {
+            "knee_move": k_move,
+            "knee_grade": k_grade,
+            "gain_per_doubling": slope,
+            "phone": phone,
+            "finalists": fin,
+        },
+    )
     curve(res, nat, phone, fin, k_move)
     print(text, flush=True)
     return text
@@ -450,12 +513,20 @@ def report_stage(args: argparse.Namespace | None = None) -> str:
 # the curve --------------------------------------------------------------------------
 
 
-def curve(res: dict[str, Any], nat: dict[str, Any], phone: dict[str, Any], fin: list[str],
-          k_move: dict[str, Any]) -> None:
+def curve(
+    res: dict[str, Any],
+    nat: dict[str, Any],
+    phone: dict[str, Any],
+    fin: list[str],
+    k_move: dict[str, Any],
+) -> None:
     """Gain against native ms a move (log scale), one mark per setting, ranges as bars;
     SVG always, PNG through Playwright's Chromium when it is installed."""
-    pts = [(n, nat[n]["median"], res[n]["gain"]["mean"], res[n]["gain"]["ci95"])
-           for n in res if n in nat]
+    pts = [
+        (n, nat[n]["median"], res[n]["gain"]["mean"], res[n]["gain"]["ci95"])
+        for n in res
+        if n in nat
+    ]
     if not pts:
         return
     W, H, L, R, T, B = 900, 560, 70, 30, 30, 70
@@ -472,41 +543,64 @@ def curve(res: dict[str, Any], nat: dict[str, Any], phone: dict[str, Any], fin: 
         for m in (1, 2, 5):
             v = m * 10**e
             if x0 <= math.log10(v) <= x1:
-                el.append(f'<line x1="{sx(v):.1f}" y1="{T}" x2="{sx(v):.1f}" y2="{H-B}" stroke="#eee"/>')
-                el.append(f'<text x="{sx(v):.1f}" y="{H-B+18}" font-size="12" text-anchor="middle">{v:g}</text>')
+                el.append(
+                    f'<line x1="{sx(v):.1f}" y1="{T}" x2="{sx(v):.1f}" y2="{H - B}" stroke="#eee"/>'
+                )
+                el.append(
+                    f'<text x="{sx(v):.1f}" y="{H - B + 18}" font-size="12" text-anchor="middle">{v:g}</text>'  # noqa: E501
+                )
     step = 0.5 if y1 - y0 < 5 else 1.0
     g = math.ceil(y0 / step) * step
     while g <= y1:
-        el.append(f'<line x1="{L}" y1="{sy(g):.1f}" x2="{W-R}" y2="{sy(g):.1f}" stroke="#eee"/>')
-        el.append(f'<text x="{L-6}" y="{sy(g)+4:.1f}" font-size="12" text-anchor="end">{g:+.1f}</text>')
+        el.append(f'<line x1="{L}" y1="{sy(g):.1f}" x2="{W - R}" y2="{sy(g):.1f}" stroke="#eee"/>')
+        el.append(
+            f'<text x="{L - 6}" y="{sy(g) + 4:.1f}" font-size="12" text-anchor="end">{g:+.1f}</text>'  # noqa: E501
+        )
         g += step
-    el.append(f'<line x1="{L}" y1="{sy(0):.1f}" x2="{W-R}" y2="{sy(0):.1f}" stroke="#999"/>')
-    el.append(f'<text x="{(L+W-R)/2}" y="{H-B+42}" font-size="13" text-anchor="middle">'
-              'native ms per move, one thread (median, log scale)</text>')
-    el.append(f'<text transform="translate(16,{(T+H-B)/2}) rotate(-90)" font-size="13" text-anchor="middle">'
-              'points a deal over the raw network</text>')
-    # phone budget line: native ms whose phone p95 is 500 ms (phone/native factor from the estimates)
-    for n in pts:
-        pass
+    el.append(f'<line x1="{L}" y1="{sy(0):.1f}" x2="{W - R}" y2="{sy(0):.1f}" stroke="#999"/>')
+    el.append(
+        f'<text x="{(L + W - R) / 2}" y="{H - B + 42}" font-size="13" text-anchor="middle">'
+        "native ms per move, one thread (median, log scale)</text>"
+    )
+    el.append(
+        f'<text transform="translate(16,{(T + H - B) / 2}) rotate(-90)" font-size="13" text-anchor="middle">'  # noqa: E501
+        "points a deal over the raw network</text>"
+    )
     # points
     for n, ms, gain, ci in pts:
         fam = BY_NAME[n]["family"]
         c = colours[fam]
         x, y = sx(ms), sy(gain)
-        el.append(f'<line x1="{x:.1f}" y1="{sy(ci[0]):.1f}" x2="{x:.1f}" y2="{sy(ci[1]):.1f}" stroke="{c}" stroke-width="1.5"/>')
+        el.append(
+            f'<line x1="{x:.1f}" y1="{sy(ci[0]):.1f}" x2="{x:.1f}" y2="{sy(ci[1]):.1f}" stroke="{c}" stroke-width="1.5"/>'  # noqa: E501
+        )
         r = 6 if n in fin else 4
-        el.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{c if n in fin else "white"}" stroke="{c}" stroke-width="2"/>')
+        el.append(
+            f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r}" fill="{c if n in fin else "white"}" stroke="{c}" stroke-width="2"/>'  # noqa: E501
+        )
         label = n + (" ◆" if n == k_move.get("setting") else "")
-        el.append(f'<text x="{x+8:.1f}" y="{y-6:.1f}" font-size="11" fill="{c}">{label}</text>')
+        el.append(f'<text x="{x + 8:.1f}" y="{y - 6:.1f}" font-size="11" fill="{c}">{label}</text>')
     # frontier line (play-outs and PUCT together)
     front = frontier([(n, ms, gain) for n, ms, gain, _ in pts])
-    path = " ".join(f"{'M' if i == 0 else 'L'}{sx(nat[n]['median']):.1f},{sy(res[n]['gain']['mean']):.1f}"
-                    for i, n in enumerate(front))
+    path = " ".join(
+        f"{'M' if i == 0 else 'L'}{sx(nat[n]['median']):.1f},{sy(res[n]['gain']['mean']):.1f}"
+        for i, n in enumerate(front)
+    )
     el.append(f'<path d="{path}" fill="none" stroke="#555" stroke-dasharray="4 3"/>')
-    el.append(f'<text x="{W-R}" y="{T+12}" font-size="12" text-anchor="end" fill="#1f77b4">● play-outs (k, n, depth)</text>')
-    el.append(f'<text x="{W-R}" y="{T+28}" font-size="12" text-anchor="end" fill="#d62728">● PUCT with the network</text>')
-    el.append(f'<text x="{W-R}" y="{T+44}" font-size="12" text-anchor="end" fill="#555">filled = finalist, ◆ = knee, dashed = frontier</text>')
-    svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" font-family="sans-serif">' + "".join(el) + "</svg>"
+    el.append(
+        f'<text x="{W - R}" y="{T + 12}" font-size="12" text-anchor="end" fill="#1f77b4">● play-outs (k, n, depth)</text>'  # noqa: E501
+    )
+    el.append(
+        f'<text x="{W - R}" y="{T + 28}" font-size="12" text-anchor="end" fill="#d62728">● PUCT with the network</text>'  # noqa: E501
+    )
+    el.append(
+        f'<text x="{W - R}" y="{T + 44}" font-size="12" text-anchor="end" fill="#555">filled = finalist, ◆ = knee, dashed = frontier</text>'  # noqa: E501
+    )
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" font-family="sans-serif">'  # noqa: E501
+        + "".join(el)
+        + "</svg>"
+    )
     (OUT / "curve.svg").write_text(svg, encoding="utf-8")
     svg_to_png(OUT / "curve.svg", OUT / "curve.png")
 
@@ -523,7 +617,7 @@ const {{ chromium }} = require({json.dumps(str(pw))});
 (async () => {{
   const b = await chromium.launch();
   const p = await b.newPage({{ viewport: {{ width: 900, height: 560 }}, deviceScaleFactor: 2 }});
-  await p.goto('file:///' + {json.dumps(str(svg).replace(os.sep, '/'))});
+  await p.goto('file:///' + {json.dumps(str(svg).replace(os.sep, "/"))});
   await p.screenshot({{ path: {json.dumps(str(png))} }});
   await b.close();
 }})().catch(e => {{ console.error(e); process.exit(1); }});
@@ -539,7 +633,9 @@ const {{ chromium }} = require({json.dumps(str(pw))});
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("screen")
     p.add_argument("--deals", type=int, default=SCREEN_DEALS)
