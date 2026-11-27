@@ -4,7 +4,8 @@ Brian, 2026-11-27: "re-adjust our options for other bots and lower difficulties 
 reasonable distribution in the elo-space".
 
 Status (2026-11-27): the method, the fit and the driver are built and tested; the full run is
-queue job 398 (cpu lane, `jobq.ps1 log 398`; output `runs/p6_ladder/ladder.json` and
+queue job 408 (cpu lane, `jobq.ps1 log 408`; a re-queue of job 398, cancelled by Task 47 at 400 of the 500
+random-vs-expert deals while Brian picked the expert network, which decision 0007 kept at hour 24; output `runs/p6_ladder/ladder.json` and
 `ladder.md` in the big2-3 worktree). §3 and §4 get the numbers when it ends. A 1/25-size
 pilot ran end to end (§5).
 
@@ -70,11 +71,11 @@ total 13-15 thread-hours, 2-3 hours wall on 8 workers.
 
 ## 3. Span and rungs
 
-Pending job 398.
+Pending job 408.
 
 ## 4. The ladder
 
-Pending job 398. The tables (`ladder.md`) land here: rungs with Elo and ranges, adjacent
+Pending job 408. The tables (`ladder.md`) land here: rungs with Elo and ranges, adjacent
 gaps with ranges and deals, old levels on the new scale, thread-hours.
 
 ## 5. Pilot (1/25 size, cheap searches)
