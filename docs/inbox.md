@@ -7,6 +7,13 @@ Example, Why it matters, Options with the Default marked. The orchestrator turns
 
 ## Answered
 
+**Keep the hour-24 self-play network for `expert`, or keep the old one?** (Task 36)
+- What it is: Task 36's self-play from r3 ran 24 GPU-hours. The network alone (no search) beats the app's `expert` (ISMCTS-10,000) by +3.62 / +3.25 a deal (1+3 / ABAB) at hour 24, +3.39 [+2.96, +3.84] over r3. Hours 8-24 are level head to head (all ranges cover 0). Details in `docs/study-results/selfplay-luck.md`.
+- Example: hour 24 vs hour 20 +0.07 / +0.40, vs hour 8 +0.25 / +0.38 (2,000 deals per lineup).
+- Why it matters: the network inside the new expert (Tasks 38-41, 45) and every grade built on it.
+- Options: (a) hour 24 for the expert; (b) keep the old ISMCTS-10,000 `expert`. Default: (a).
+- Brian (2026-11-27): "agree, use hour 24 as the expert" (decision 0007). Recorded by Task 36, which the question closes.
+
 **May a big2 worker add the phase 3 entry to hk-games `docs/streams/bot-notes.md`?** (Task 25)
 - What it is: Task 25's last step is an entry in the hk-games checkout. The permission system refused my edit there (outside the big2 worktree). The finished text is `docs/bot-notes-phase3-entry.md` in big2.
 - Example: the entry says no model file ships, lists `RulesMask`, `NetSampler`, `infoset_endgame`, what `quality` carries, and the B2/B3 results in three lines.
