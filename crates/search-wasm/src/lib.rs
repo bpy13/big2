@@ -18,14 +18,19 @@
 //!   positions of `anytime`'s kind; `ms` is that pass alone.
 //! * `endgame <threshold> <max_cards> <max_nodes> <position>`: the information-set exact
 //!   endgame on one position (a line of `parse_position`).
+//! * `netsearch <k> <n> <depth|full> <value_mix> <count> <seed>`: the network play-out
+//!   search (`big2_search::netsearch`, rules mask on) on `count` positions from games the
+//!   network plays against itself (plan Task 39; `network_positions`).
+//! * `netpuct <simulations> <lambda> <count> <seed>`: PUCT with the network (`c_puct` 2.5,
+//!   rules mask on) on the same positions as `netsearch`.
 
 use big2_big2::bots::Greedy;
 use big2_big2::pvnet::PvNet;
 use big2_big2::{RuleSet, State};
-use big2_games::{Game, Policy};
+use big2_games::{Game, Policy, PriorValue};
 use big2_search::{
-    infoset_endgame, ismcts, puct_with_rollout, InfosetConfig, IsmctsConfig, Objective, PuctConfig,
-    UniformSampler,
+    infoset_endgame, ismcts, net_search, puct_with_rollout, Depth, InfosetConfig, IsmctsConfig,
+    NetSearch, Objective, PuctConfig, RulesMask, Sampler, UniformSampler,
 };
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -59,6 +64,40 @@ pub fn midgame_positions(count: usize, seed: u64) -> Vec<State> {
                 choices.push(s.clone());
             }
             let a = bot.choose(&s, &legal, &mut rng);
+            s.apply(a);
+        }
+        if !choices.is_empty() {
+            let i = rng.gen_range(0..choices.len() as u32) as usize;
+            out.push(choices.swap_remove(i));
+        }
+    }
+    out
+}
+
+/// One random decision with a choice from each of `count` games in which every seat
+/// plays the network's top move (the raw network of plan Task 39): the positions the
+/// network's own games produce. Forced moves are left out.
+pub fn network_positions(count: usize, seed: u64, net: &PvNet) -> Vec<State> {
+    let mut rng = ChaCha8Rng::seed_from_u64(seed);
+    let mut out = Vec::with_capacity(count);
+    while out.len() < count {
+        let mut s = State::new_deal(RuleSet::default(), &mut rng);
+        let mut choices = Vec::new();
+        while s.current_player().is_some() {
+            let legal = s.legal_actions_vec();
+            let a = if legal.len() == 1 {
+                legal[0]
+            } else {
+                choices.push(s.clone());
+                let (prior, _) = net.prior_value(&s, &legal);
+                let mut best = 0;
+                for (i, p) in prior.iter().enumerate() {
+                    if *p > prior[best] {
+                        best = i;
+                    }
+                }
+                legal[best]
+            };
             s.apply(a);
         }
         if !choices.is_empty() {
@@ -119,7 +158,7 @@ impl Harness {
                 opening_positions(count, seed)
                     .iter()
                     .enumerate()
-                    .map(|(i, s)| self.puct_row(s, sims, lambda, None, i as u64))
+                    .map(|(i, s)| self.puct_row(s, sims, lambda, None, i as u64, &UniformSampler))
                     .collect()
             }
             ["opening", "ismcts", ..] => {
@@ -147,7 +186,9 @@ impl Harness {
                 midgame_positions(count, seed)
                     .iter()
                     .enumerate()
-                    .map(|(i, s)| self.puct_row(s, sims, lambda, Some(first_ms), i as u64))
+                    .map(|(i, s)| {
+                        self.puct_row(s, sims, lambda, Some(first_ms), i as u64, &UniformSampler)
+                    })
                     .collect()
             }
             ["forward", ..] => {
@@ -155,6 +196,37 @@ impl Harness {
                 midgame_positions(count, seed)
                     .iter()
                     .map(|s| self.forward_row(s))
+                    .collect()
+            }
+            ["netsearch", ..] => {
+                let (k, n) = (number(&words, 1)?, number(&words, 2)?);
+                let depth = match words.get(3) {
+                    Some(&"full") => Depth::Full,
+                    _ => Depth::Plies(number(&words, 3)?),
+                };
+                let value_mix = number(&words, 4)?;
+                let (count, seed) = (number(&words, 5)?, number(&words, 6)?);
+                let cfg = NetSearch {
+                    k,
+                    n,
+                    depth,
+                    value_mix,
+                    ..NetSearch::default()
+                };
+                network_positions(count, seed, &self.net)
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| self.netsearch_row(s, &cfg, i as u64))
+                    .collect()
+            }
+            ["netpuct", ..] => {
+                let (sims, lambda) = (number(&words, 1)?, number(&words, 2)?);
+                let (count, seed) = (number(&words, 3)?, number(&words, 4)?);
+                let mask = RulesMask::default();
+                network_positions(count, seed, &self.net)
+                    .iter()
+                    .enumerate()
+                    .map(|(i, s)| self.puct_row(s, sims, lambda, None, i as u64, &mask))
                     .collect()
             }
             ["endgame", ..] if words.len() >= 8 => {
@@ -183,13 +255,34 @@ impl Harness {
         )
     }
 
-    fn puct_row(
+    /// The network play-out search on `state` (rules mask on), one thread.
+    fn netsearch_row(&self, state: &State, cfg: &NetSearch, seed: u64) -> String {
+        let seat = state.current_player().expect("a decision");
+        let cfg = NetSearch {
+            seed,
+            ..cfg.clone()
+        };
+        let mask = RulesMask::default();
+        let start = Instant::now();
+        let r = net_search(state, seat, &cfg, &self.net, &mask, &[]);
+        let ms = start.elapsed().as_secs_f64() * 1e3;
+        format!(
+            r#"{{"ms":{ms:.3},"legal":{},"candidates":{},"deals":{},"net_calls":{}}}"#,
+            state.legal_actions_vec().len(),
+            r.candidates.len(),
+            r.deals,
+            r.net_calls
+        )
+    }
+
+    fn puct_row<S: Sampler<State>>(
         &self,
         state: &State,
         simulations: u64,
         lambda: f64,
         first_ms: Option<u64>,
         seed: u64,
+        sampler: &S,
     ) -> String {
         let seat = state.current_player().expect("a decision");
         let cfg = PuctConfig {
@@ -204,7 +297,7 @@ impl Harness {
             epsilon: ROLLOUT_EPSILON,
         };
         let start = Instant::now();
-        let r = puct_with_rollout(state, seat, &cfg, &self.net, &UniformSampler, &rollout);
+        let r = puct_with_rollout(state, seat, &cfg, &self.net, sampler, &rollout);
         let ms = start.elapsed().as_secs_f64() * 1e3;
         let best = r.analysis.best();
         // No first answer: the whole search ended before `first_ms`, so nothing can change.
