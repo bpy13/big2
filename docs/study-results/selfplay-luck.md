@@ -95,8 +95,18 @@ bootstrap range; the gain over r3 is paired deal by deal, mean of both lineups.
   hour 4, inside the range). Stop rule passed at hour 8 (gain +3.29 [+2.87, +3.72]), so
   training goes on (job 358).
 - This agrees with the superseded check below (gain +3.05 against ISMCTS-1000 at hour 4).
-- Later hours: evals 359, 361, 363, 365 (hours 12-24) and 366 (last checkpoint and r3 at
-  2,000 deals) append to `runs/selfplay_luck/table_expert.md`; Task 36 copies them here.
+- Hours 12-24 (job 399, 2026-11-27; the first try, job 365, failed on a stale `_core`):
+
+| Hour | Deals | vs `expert` 1+3 | vs `expert` ABAB | Gain over r3 vs `expert` (both lineups, paired) |
+|---:|---:|---:|---:|---:|
+| 12 | 1,000 | +3.33 [+2.70, +3.98] | +2.85 [+2.04, +3.69] | +3.18 [+2.76, +3.65] |
+| 16 | 1,000 | +3.85 [+3.22, +4.55] | +3.19 [+2.33, +4.01] | +3.47 [+2.99, +3.94] |
+| 20 | 1,000 | +3.69 [+3.07, +4.38] | +2.90 [+2.14, +3.72] | +3.33 [+2.88, +3.80] |
+| 24 | 1,000 | +3.62 [+3.02, +4.24] | +3.25 [+2.47, +4.06] | +3.39 [+2.96, +3.84] |
+
+- The gain over r3 levels off from hour 4 on: +3.07, +3.29, +3.18, +3.47, +3.33, +3.39, all
+  inside each other's ranges. The 2,000-deal final line (job 366/400) was dropped on Brian's
+  word (2026-11-27).
 
 ## Without luck removal (Task 36d)
 
@@ -121,7 +131,22 @@ no duplicate, oracle critic only. Measured vs r3 at 2,000 deals per lineup and v
 
 ## Head to head against older selves (Task 36c)
 
-(pending: `runs/selfplay_luck/table_h2h.md`, jobs 367-371: hour 8 vs 4, then each later hour vs the previous 4-hour checkpoint and vs hour 8; networks only, 2,000 deals per lineup)
+Networks only (prior's top move, no search), 2,000 deals per lineup, jobs 367-371 and 401
+(hour 24, rerun after the stale-`_core` failure); paired diff per deal, 95 % range.
+
+| Hour | Against | Deals | 1+3 | ABAB |
+|---:|---|---:|---:|---:|
+| 8 | hour 4 (previous) | 2,000 | +0.10 [-0.24, +0.46] | +0.43 [-0.09, +0.93] |
+| 12 | hour 8 (previous) | 2,000 | -0.07 [-0.42, +0.28] | -0.10 [-0.62, +0.38] |
+| 16 | hour 8 (first above expert) | 2,000 | +0.13 [-0.23, +0.49] | +0.11 [-0.38, +0.63] |
+| 16 | hour 12 (previous) | 2,000 | -0.10 [-0.45, +0.26] | -0.05 [-0.52, +0.44] |
+| 20 | hour 8 (first above expert) | 2,000 | -0.10 [-0.46, +0.26] | -0.24 [-0.74, +0.27] |
+| 20 | hour 16 (previous) | 2,000 | -0.10 [-0.46, +0.25] | -0.00 [-0.49, +0.48] |
+| 24 | hour 8 (first above expert) | 2,000 | +0.25 [-0.09, +0.59] | +0.38 [-0.13, +0.89] |
+| 24 | hour 20 (previous) | 2,000 | +0.07 [-0.26, +0.42] | +0.40 [-0.09, +0.89] |
+
+Every range covers 0: no later checkpoint is measurably better than hour 8 or than the one
+before it. Hour 24 vs hour 16 was not run (job 401 ran hour 20 and hour 8).
 
 ## First measure (superseded): against r3 and ISMCTS-1000
 
