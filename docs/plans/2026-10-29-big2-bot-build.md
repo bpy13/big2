@@ -1082,7 +1082,7 @@ Rules for this phase:
 EV(played), points), `loss_se`, `forced` (one legal move), `flat` (every evaluated move within the
 noise band), `reference` (settings string), `seed`.
 
-- [ ] **Task 37: the self-play network in Rust** (sonnet) `[parallel-ok]` (beside earlier phases) (taken: slot 2, 2026-11-27 20:20)
+- [x] **Task 37: the self-play network in Rust** (sonnet) `[parallel-ok]` (beside earlier phases)
   - Why: Brian, 2026-11-27: "find out the optimal search depth that should be done for the expert solver" (the search runs in Rust and WebAssembly, so the network must too).
   - What: export `runs/selfplay_luck/hour_24.pt` with `big2 rl export` to `.pknn` v2 (prior and cards-left heads). If the self-play trainer's checkpoint keys differ from r3's, add the mapping in the exporter, not a copy of it.
   - Files: `python/big2/rl/export.py` (only if needed), `python/tests/test_export.py` (a case for a self-play checkpoint), `runs/p6_net/selfplay-h24.pknn` (gitignored), `docs/study-results/expert-search-budget.md` §0 (agreement and speed lines).

@@ -8,6 +8,7 @@ then scores the same features. No change to the Python extension is needed.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import struct
 import subprocess
@@ -218,7 +219,12 @@ def compare_v2(net: QNetV2, rows: list) -> dict[str, float]:
         l1.append(np.abs(dist[lo:hi] - rd).sum(axis=-1).ravel())
         lo = hi
     d = np.concatenate(l1)
+    # The value outputs: each seat's expected cards left (mean of its 14-way distribution).
+    cards = np.arange(14, dtype=np.float64)
+    ev_t = (dist.astype(np.float64) * cards).sum(-1).ravel()
+    ev_r = np.concatenate([(r[3].astype(np.float64) * cards).sum(-1).ravel() for r in rows])
     return {
+        "value_rms": float(np.sqrt(np.mean((ev_t - ev_r) ** 2))),
         "prior_agreement": agree / len(rows),
         "dist_l1_mean": float(d.mean()),
         "dist_l1_p99": float(np.quantile(d, 0.99)),
@@ -307,3 +313,34 @@ def test_puct_leaf_network_weight_through_analyze(tmp_path: Path) -> None:
     assert masked["belief_rejection_share"] is not None
     agent = make_agent(f"puct:net={pknn},simulations=50,belief=rules")
     assert agent.act(state) in legal
+
+
+SELFPLAY_MODEL = Path(
+    os.environ.get("BIG2_SELFPLAY_CKPT", str(ROOT / "runs" / "selfplay_luck" / "hour_24.pt"))
+)
+
+
+def test_selfplay_checkpoint_layout_exports(pvnet_dump: Path, tmp_path: Path) -> None:
+    """Plan Task 37: the self-play trainer saves ``arch``/``model``/``net_config`` plus
+    ``train_config`` and ``info``; the same exporter takes it (no key mapping needed)."""
+    ckpt = small_v2_checkpoint(tmp_path / "sp.pt")
+    blob = torch.load(ckpt, weights_only=False)
+    blob.update({"train_config": {"lr": 1e-4}, "info": {"hours": 24}})
+    torch.save(blob, ckpt)
+    out = export_pknn(ckpt, tmp_path / "sp.pknn", precision="f32")
+    net, _ = load_pvnet(ckpt)
+    m = compare_v2(net, rust_pvnet(pvnet_dump, out, tmp_path / "sp.bin", 100, 3))
+    assert m["prior_agreement"] == 1.0 and m["value_rms"] < 1e-3, m
+
+
+def test_selfplay_h24_network_in_rust_matches_pytorch(pvnet_dump: Path, tmp_path: Path) -> None:
+    """Plan Task 37: prior argmax agrees on >= 99 % and the value outputs are within
+    0.01 RMS on 1,000 positions from fixed seeds (``runs/p6_net/selfplay-h24.pknn``)."""
+    if not SELFPLAY_MODEL.exists():
+        pytest.skip(f"{SELFPLAY_MODEL} not present (Task 36's training run)")
+    out = export_pknn(SELFPLAY_MODEL, tmp_path / "h24.pknn")
+    net, _ = load_pvnet(SELFPLAY_MODEL)
+    m = compare_v2(net, rust_pvnet(pvnet_dump, out, tmp_path / "h24.bin", 1000, 0))
+    print(f"Rust vs PyTorch, self-play hour 24, 1,000 positions: {m}")
+    assert m["prior_agreement"] >= 0.99, m
+    assert m["value_rms"] <= 0.01, m

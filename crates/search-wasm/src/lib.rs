@@ -14,6 +14,8 @@
 //! * `midgame ismcts <iterations> <count> <seed>`: ISMCTS on `anytime`'s positions.
 //! * `anytime <simulations> <lambda> <first_ms> <count> <seed>`: PUCT on `count` positions
 //!   from greedy self-play, recording whether the move changes after `first_ms`.
+//! * `forward <count> <seed>`: one network forward pass (all legal moves) on `count`
+//!   positions of `anytime`'s kind; `ms` is that pass alone.
 //! * `endgame <threshold> <max_cards> <max_nodes> <position>`: the information-set exact
 //!   endgame on one position (a line of `parse_position`).
 
@@ -148,6 +150,13 @@ impl Harness {
                     .map(|(i, s)| self.puct_row(s, sims, lambda, Some(first_ms), i as u64))
                     .collect()
             }
+            ["forward", ..] => {
+                let (count, seed) = (number(&words, 1)?, number(&words, 2)?);
+                midgame_positions(count, seed)
+                    .iter()
+                    .map(|s| self.forward_row(s))
+                    .collect()
+            }
             ["endgame", ..] if words.len() >= 8 => {
                 let cfg = InfosetConfig {
                     threshold: number(&words, 1)?,
@@ -159,6 +168,19 @@ impl Harness {
             _ => return Err(format!("unknown step {step:?}")),
         };
         Ok(format!("[{}]", rows.join(",")))
+    }
+
+    /// One network forward pass over all legal moves of `state` (prior and distributions).
+    fn forward_row(&self, state: &State) -> String {
+        let legal = state.legal_actions_vec();
+        let start = Instant::now();
+        let out = self.net.evaluate(state, &legal);
+        let ms = start.elapsed().as_secs_f64() * 1e3;
+        format!(
+            r#"{{"ms":{ms:.4},"legal":{},"prior":{}}}"#,
+            legal.len(),
+            out.prior.len()
+        )
     }
 
     fn puct_row(

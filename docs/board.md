@@ -2,9 +2,9 @@
 
 ## Workers
 - slot 1: Task 38 (network play-out search in Rust), building
-- slot 2: Task 37 (self-play network in Rust), building
 
 ## Results
+- Task 37 (slot 2, 2026-11-27): ticked. Self-play hour-24 network exported to `.pknn` (no exporter change); Rust vs PyTorch on 1,000 positions: prior top move agrees 99.8 %, value RMS 0.0081; one forward pass native 0.059 ms median (p95 0.126), Node WebAssembly 0.246 ms (p95 0.553). In `docs/study-results/expert-search-budget.md` §0. No paid API spend.
 - Task 36d (slot 1, 2026-11-27): ticked. From r3, 10 min, gain over r3 vs `expert`: luck-removed +2.29, no luck removal at all +1.78, oracle critic only +2.30. Luck removal accounts for part (about a quarter) of the gain; the critic alone matches it. Table in `docs/study-results/selfplay-luck.md`. No paid API spend.
 - Task 36c (slot 1, 2026-11-27): built and queued, **not ticked**. `selfplay_luck.py h2h` plays each checkpoint against the previous one and hour 8 (networks only, 2,000 deals per lineup); cpu jobs 367 (hour 8 vs 4), 368-371 (hours 12-24, after each training job). Table into the study doc as they end. No paid API spend.
 - Task 36b (slot 1, 2026-11-27): ticked. Network alone (no search) vs the app's `expert`, 1,000 deals per lineup: r3 -1.93 / -1.99, hour 4 +3.21 / +2.59, hour 8 +3.47 / +3.05 (1+3 / ABAB, ±0.6-0.8); gain over r3 +3.29 [+2.87, +3.72], stop rule passed, training continues (358). Later hours: jobs 359-366. No paid API spend.
