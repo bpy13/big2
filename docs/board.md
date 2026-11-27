@@ -1,6 +1,7 @@
 # Board
 
 ## Workers
+- slot 2: Task 37 (self-play network in Rust), building
 
 ## Results
 - Task 38 (slot 1, 2026-11-27): ticked. Network play-out search `netsearch.rs` (`NetSearch { k, n, depth, value_mix, threads, seed, time_limit }`, paired means, standard errors and loss to the best), `big2._core.net_search`, agent `netsearch:net=…,k,n,depth`, `big2 search`. Rust 8 netsearch tests and Python 426 pass. Brian's flush position was not given as JSON, so it is not a test yet. No paid API spend.
