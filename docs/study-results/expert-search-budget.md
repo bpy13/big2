@@ -30,7 +30,8 @@ WebAssembly is about 4x slower than native. Sources: `runs/p6_net/forward_native
 ## 1. The depth and budget study: method (Task 39)
 
 Status 2026-11-27 (slot 1): code built and queued; the table, curve and knee arrive when queue
-jobs 391-397 end (`runs/p6_budget/report.md`, `curve.svg`, `curve.png`). Decision
+jobs 409-415 end (the first jobs 391-397 and 402-407 were cancelled before any ran, while Brian
+picked the expert network; decision 0007 picked hour 24, the network this study already used) (`runs/p6_budget/report.md`, `curve.svg`, `curve.png`). Decision
 [0006](../decisions/0006-task-39-budget-study-method.md) records the orchestrator's call to run
 the study as planned (about 125 CPU-h) with the assumptions below.
 
@@ -54,17 +55,17 @@ Driver `experiments/expert_search_budget.py` (stages `screen`, `timing`, `finali
   deals), lineups `1+3` and `ABAB`, duplicate seats, tiered scoring, last-card duty on, no
   four-card plays. **Gain** = the setting's score minus the raw network's, paired by deal,
   averaged over the two lineups; 95 % bootstrap range over deals. Screen 300 deals per lineup
-  (jobs 392, 393; the one-at-a-time grid halves). **Finalists** (job 394): the efficient
+  (jobs 410, 411; the one-at-a-time grid halves). **Finalists** (job 412): the efficient
   frontier of (native median ms, gain) — no cheaper setting gains at least as much — taking the
   five with the highest gain (filled from the next-best gains if the frontier is short).
-  **Confirm** (job 395): finalists at 2,000 deals against the raw network (the screen's 300 are
+  **Confirm** (job 413): finalists at 2,000 deals against the raw network (the screen's 300 are
   reused) and 1,000 deals against the app's `expert` (`ismcts:iterations=10000`, as Task 36b);
   the raw network's own `expert` result is Task 36b's hour-24 row (job 365, same deals, the same
   network in PyTorch) when it exists.
 - **Time**: one thread, 300 positions (after 30 warm-up) drawn one per game from games the
   network plays against itself (`network_positions`, seed 7): native (`puct_timing` example,
-  job 391, quiet lane) for every setting; Node 20 WebAssembly (`runs/p6_budget/pkg`,
-  `experiments/search_budget_timing.mjs`, job 396, quiet lane) for the finalists. **Phone** =
+  job 409, quiet lane) for every setting; Node 20 WebAssembly (`runs/p6_budget/pkg`,
+  `experiments/search_budget_timing.mjs`, job 414, quiet lane) for the finalists. **Phone** =
   3 x Node, assumed: hk-games has no phone timing (`docs/bot-speed.md`: a real phone comes with
   Task P2; its browser worker read 123 ms median for the ISMCTS-10,000 `expert` where Node read
   113 ms, so browser and Node are alike). Non-finalists get a phone estimate from native x the
