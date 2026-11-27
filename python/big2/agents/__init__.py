@@ -21,6 +21,7 @@ tournament runner create them::
     make_agent("puct:simulations=2000,net=models/big2-pvnet-r0.pknn")
     make_agent("netsearch:net=runs/p6_net/selfplay-h24.pknn,k=3,n=64,depth=full")
     make_agent("qnet:temperature=1.0")  # models/big2-qnet-duty.pknn unless path=…
+    make_agent("netprior:net=runs/p6_net/selfplay-h24.pknn,temperature=0.5")
     make_agent("dmc:checkpoint=runs/dmc/v1/best.pt")
     make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
 
@@ -209,6 +210,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     weights them by a learned belief network, see :mod:`big2.rl.belief`),
     ``netsearch:net=….pknn[,k=3,n=64,depth=full|<plies>,value_mix=1,…]`` (paired network
     play-outs of the network's top k moves, see :class:`NetSearchAgent`),
+    ``netprior:net=….pknn[,temperature=1.0]`` (the network's prior over the legal moves
+    sampled at a temperature, 0 = its top move; see :mod:`big2.agents.netprior`),
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
     ``charlesworth[:temperature=…]`` (his released network, play it with
@@ -257,6 +260,18 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
             options=opts,
             name=spec,
         )
+    if kind == "netprior":
+        # The network's prior sampled at a temperature, no search (big2.agents.netprior).
+        if "net" not in opts:
+            raise ValueError(f"netprior needs net=<path to .pknn> in {spec!r}")
+        from big2.agents.netprior import NetPriorAgent
+
+        return NetPriorAgent(
+            net=str(opts.pop("net")),
+            temperature=float(opts.pop("temperature", 1.0)),
+            seed=seed,
+            name=spec,
+        )
     if kind in ("patwa-greedy", "patwa-smart"):
         # Approximations of Patwa (2026)'s rule-based opponents (big2.agents.patwa).
         if kind == "patwa-greedy":
@@ -298,8 +313,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(
         f"unknown agent kind {kind!r} in {spec!r} "
-        "(random, greedy, ismcts, pimc, puct, netsearch, patwa-greedy, patwa-smart, qnet, pvnet, "
-        "dmc, dmcsearch)"
+        "(random, greedy, ismcts, pimc, puct, netsearch, netprior, patwa-greedy, patwa-smart, "
+        "qnet, pvnet, dmc, dmcsearch)"
     )
 
 
