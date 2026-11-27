@@ -1,0 +1,9052 @@
+[
+ {
+  "id": "big2-mnet-t4.34-5508800070-30",
+  "game": "big2",
+  "skill": "skill.b2_break_five",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800070,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "3c",
+      "7s",
+      "8d",
+      "9s",
+      "Th",
+      "Jc",
+      "Jh",
+      "Qd",
+      "Qs"
+     ],
+     [
+      "3h",
+      "4h",
+      "5h",
+      "6d",
+      "7h"
+     ],
+     [
+      "3s",
+      "4d",
+      "5d",
+      "5s",
+      "6c",
+      "6s",
+      "7c",
+      "8h",
+      "9c",
+      "9h",
+      "Qc"
+     ],
+     [
+      "4s",
+      "6h",
+      "7d",
+      "8c",
+      "8s",
+      "9d",
+      "Tc",
+      "Ts",
+      "Jd",
+      "Js",
+      "Ac"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4h",
+      "5h",
+      "6d",
+      "7h"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 82.8047,
+    "loss_se": 0.5627
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 83.0742,
+    "loss_se": 0.5767
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 83.0898,
+    "loss_se": 0.5711
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 83.1602,
+    "loss_se": 0.5741
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 83.793,
+    "loss_se": 0.5896
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "4h",
+  "bot_loss": 83.0742,
+  "bot_loss_se": 0.5767,
+  "theme": "skill.b2_break_five",
+  "turn": 30
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800077-14",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800077,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "9s"
+     ],
+     [
+      "3c",
+      "4h",
+      "5d",
+      "5s",
+      "6c",
+      "8h",
+      "Jc",
+      "Jh",
+      "Qd",
+      "Kd",
+      "Ks",
+      "2d"
+     ],
+     [
+      "3h",
+      "3s",
+      "4d",
+      "5c",
+      "5h",
+      "7c",
+      "8c",
+      "9c",
+      "Td",
+      "Jd",
+      "Ac",
+      "Ah"
+     ],
+     [
+      "4c",
+      "4s",
+      "6s",
+      "8s",
+      "9h",
+      "Qc",
+      "Kh"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 60.3672,
+    "loss_se": 0.8461
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "pass",
+  "bot_loss": 60.3672,
+  "bot_loss_se": 0.8461,
+  "theme": "skill.b2_stop_runner",
+  "turn": 14
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800005-00",
+  "game": "big2",
+  "skill": "skill.b2_break_five",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800005,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "4d",
+      "5s",
+      "6h",
+      "8h",
+      "9c",
+      "9h",
+      "Ts",
+      "Jc",
+      "Jh",
+      "Qc",
+      "Qh",
+      "Ac",
+      "2h"
+     ],
+     [
+      "3d",
+      "3h",
+      "5d",
+      "7d",
+      "7h",
+      "7s",
+      "9d",
+      "Tc",
+      "Jd",
+      "Kd",
+      "Ad",
+      "2c",
+      "2s"
+     ],
+     [
+      "3s",
+      "4c",
+      "4s",
+      "5h",
+      "6d",
+      "6c",
+      "6s",
+      "Td",
+      "Th",
+      "Qs",
+      "Kc",
+      "Kh",
+      "As"
+     ],
+     [
+      "3c",
+      "4h",
+      "5c",
+      "7c",
+      "8d",
+      "8c",
+      "8s",
+      "9s",
+      "Js",
+      "Qd",
+      "Ks",
+      "Ah",
+      "2d"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h",
+      "7d",
+      "7h",
+      "7s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "5d",
+      "9d",
+      "Jd",
+      "Ad"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 35.6289,
+    "loss_se": 1.9779
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "5d",
+      "9d",
+      "Jd",
+      "Kd"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 35.6914,
+    "loss_se": 2.1782
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 38.7812,
+    "loss_se": 2.2512
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "5d",
+      "9d",
+      "Kd",
+      "Ad"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.2656,
+    "loss_se": 2.0098
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "9d",
+      "Jd",
+      "Kd",
+      "Ad"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 42.4531,
+    "loss_se": 2.0203
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "5d",
+      "Jd",
+      "Kd",
+      "Ad"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 42.8359,
+    "loss_se": 2.065
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "5d",
+      "7d",
+      "9d",
+      "Jd"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 49.9805,
+    "loss_se": 2.3601
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "5d",
+      "7d",
+      "9d",
+      "Ad"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 53.8789,
+    "loss_se": 2.3446
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "3d 5d 7d 9d Ad",
+  "bot_loss": 53.8789,
+  "bot_loss_se": 2.3446,
+  "theme": "skill.b2_break_five",
+  "turn": 0
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800094-30",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800094,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "5s",
+      "6c",
+      "6s",
+      "7s",
+      "Qh",
+      "Qs",
+      "Ad",
+      "As"
+     ],
+     [
+      "3h",
+      "4s",
+      "6h",
+      "9d",
+      "9h",
+      "Jh",
+      "Js",
+      "Kh",
+      "2s"
+     ],
+     [
+      "Td",
+      "Tc",
+      "Th",
+      "Qd"
+     ],
+     [
+      "3s",
+      "4d",
+      "5c",
+      "5h",
+      "6d",
+      "8d",
+      "8c",
+      "9c",
+      "Jc",
+      "Ks"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td",
+      "Tc",
+      "Th"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Th"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 47.7695,
+    "loss_se": 0.9066
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 47.8203,
+    "loss_se": 0.9258
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 48.0117,
+    "loss_se": 0.9192
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 48.0312,
+    "loss_se": 0.9463
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc",
+      "Th"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 49.9805,
+    "loss_se": 0.8928
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td",
+      "Tc"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 50.0859,
+    "loss_se": 0.8946
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td",
+      "Th"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 50.1992,
+    "loss_se": 0.8974
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "Tc",
+  "bot_loss": 48.0117,
+  "bot_loss_se": 0.9192,
+  "theme": "skill.b2_mixed",
+  "turn": 30
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800090-06",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800090,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "7c",
+      "7s",
+      "9d",
+      "9h",
+      "9s",
+      "Td",
+      "Qh",
+      "Qs"
+     ],
+     [
+      "3s",
+      "4s",
+      "5h",
+      "6s",
+      "8s",
+      "Ts",
+      "Ac",
+      "2s"
+     ],
+     [
+      "3h",
+      "4d",
+      "5c",
+      "7d",
+      "7h",
+      "8d",
+      "8h",
+      "Tc",
+      "Th",
+      "Jh",
+      "Kd",
+      "Ks",
+      "Ad"
+     ],
+     [
+      "6d",
+      "8c",
+      "9c",
+      "Qd",
+      "Qc",
+      "Kc",
+      "Kh",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ac"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 23.6641,
+    "loss_se": 1.3865
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "4s",
+      "6s",
+      "8s",
+      "Ts"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 33.0664,
+    "loss_se": 0.8032
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "4s",
+      "6s",
+      "8s",
+      "2s"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.7734,
+    "loss_se": 0.921
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.7852,
+    "loss_se": 0.7553
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "4s",
+      "6s",
+      "Ts",
+      "2s"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 42.6875,
+    "loss_se": 0.9258
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4s",
+      "6s",
+      "8s",
+      "Ts",
+      "2s"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.5078,
+    "loss_se": 0.9108
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "4s",
+      "8s",
+      "Ts",
+      "2s"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.8555,
+    "loss_se": 0.8759
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "6s",
+      "8s",
+      "Ts",
+      "2s"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.9062,
+    "loss_se": 0.8868
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "2s",
+  "bot_loss": 40.7852,
+  "bot_loss_se": 0.7553,
+  "theme": "skill.b2_singles_order",
+  "turn": 6
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800034-16",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800034,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "5d",
+      "6c",
+      "6s",
+      "9d",
+      "Jd",
+      "Jc",
+      "Jh",
+      "Kc",
+      "2h"
+     ],
+     [
+      "3h",
+      "4d",
+      "4s",
+      "5s",
+      "6h",
+      "7d",
+      "7s",
+      "Qd",
+      "Kd",
+      "Ac",
+      "2d"
+     ],
+     [
+      "3c",
+      "4c",
+      "5h",
+      "8d",
+      "8c",
+      "8s",
+      "9c",
+      "9h",
+      "9s",
+      "Tc",
+      "Qc"
+     ],
+     [
+      "3s",
+      "5c",
+      "6d",
+      "7c",
+      "8h",
+      "Td",
+      "Ts",
+      "Qh",
+      "Qs",
+      "Kh",
+      "Ks"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c",
+      "6s",
+      "Jd",
+      "Jc",
+      "Jh"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 2.957,
+    "loss_se": 1.3441
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 5.0547,
+    "loss_se": 1.3927
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 16.9531,
+    "loss_se": 1.5726
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd",
+      "Jc",
+      "Jh"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 30.3281,
+    "loss_se": 1.5971
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 31.4453,
+    "loss_se": 1.6354
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c",
+      "6s"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 32.9023,
+    "loss_se": 1.7377
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 37.6367,
+    "loss_se": 1.6374
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd",
+      "Jc"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 38.2617,
+    "loss_se": 1.6744
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "Jd Jc",
+  "bot_loss": 38.2617,
+  "bot_loss_se": 1.6744,
+  "theme": "skill.b2_singles_order",
+  "turn": 16
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800092-50",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800092,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "Jd"
+     ],
+     [
+      "4c",
+      "4h",
+      "7s",
+      "8h",
+      "Td",
+      "Tc"
+     ],
+     [
+      "7h"
+     ],
+     [
+      "3c",
+      "3s",
+      "4d",
+      "5c",
+      "6c",
+      "8c",
+      "8s",
+      "Kd"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 36.8711,
+    "loss_se": 0.1674
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "pass",
+  "bot_loss": 36.8711,
+  "bot_loss_se": 0.1674,
+  "theme": "skill.b2_stop_runner",
+  "turn": 50
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800048-17",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800048,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "7c",
+      "Tc",
+      "Ts",
+      "Jh",
+      "Qh",
+      "Kd",
+      "2s"
+     ],
+     [
+      "3s",
+      "4d",
+      "8h",
+      "8s",
+      "Jd",
+      "Qc",
+      "Kh",
+      "Ks",
+      "As"
+     ],
+     [
+      "7h",
+      "Qs",
+      "Ac",
+      "Ah",
+      "2h"
+     ],
+     [
+      "3h",
+      "4s",
+      "5h",
+      "6h",
+      "7s",
+      "8d",
+      "8c",
+      "9d",
+      "9c",
+      "Jc",
+      "Js",
+      "2c"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "9h",
+      "9s"
+     ],
+     "combo": "combo.pair"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Js"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 34.0859,
+    "loss_se": 1.8619
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "pass",
+  "bot_loss": 34.0859,
+  "bot_loss_se": 1.8619,
+  "theme": "skill.b2_mixed",
+  "turn": 17
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800046-43",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800046,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "4c",
+      "Qd",
+      "Kh"
+     ],
+     [
+      "4s",
+      "5d",
+      "6d",
+      "6h",
+      "7h",
+      "9h",
+      "Jd",
+      "Js",
+      "Kd"
+     ],
+     [
+      "3c",
+      "7d",
+      "Tc"
+     ],
+     [
+      "7c",
+      "Jc"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "8d",
+      "8c"
+     ],
+     "combo": "combo.pair"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd",
+      "Js"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 32.2383,
+    "loss_se": 0.9649
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "pass",
+  "bot_loss": 32.2383,
+  "bot_loss_se": 0.9649,
+  "theme": "skill.b2_stop_runner",
+  "turn": 43
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800017-02",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800017,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "3h",
+      "4s",
+      "5h",
+      "6c",
+      "9c",
+      "9h",
+      "9s",
+      "Tc",
+      "Th",
+      "Jc",
+      "2d",
+      "2h",
+      "2s"
+     ],
+     [
+      "3c",
+      "6d",
+      "6h",
+      "6s",
+      "7d",
+      "7h",
+      "8h",
+      "8s",
+      "9d",
+      "Td",
+      "Qh",
+      "Qs",
+      "2c"
+     ],
+     [
+      "4c",
+      "4h",
+      "5c",
+      "7c",
+      "7s",
+      "Ts",
+      "Js",
+      "As"
+     ],
+     [
+      "3s",
+      "4d",
+      "5s",
+      "8c",
+      "Jh",
+      "Qd",
+      "Qc",
+      "Ad"
+     ]
+    ],
+    "current_play": {
+     "player": 3,
+     "cards": [
+      "Kc",
+      "Kh",
+      "Ks",
+      "Ac",
+      "Ah"
+     ],
+     "combo": "combo.full_house"
+    }
+   }
+  },
+  "seat": 0,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc",
+      "Th",
+      "2d",
+      "2h",
+      "2s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.9688,
+    "loss_se": 1.2146
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9c",
+      "9s",
+      "2d",
+      "2h",
+      "2s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 29.9727,
+    "loss_se": 1.1544
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9h",
+      "9s",
+      "2d",
+      "2h",
+      "2s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 30.0039,
+    "loss_se": 1.1692
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9c",
+      "9h",
+      "2d",
+      "2h",
+      "2s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 30.1406,
+    "loss_se": 1.1355
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "9c 9h 2d 2h 2s",
+  "bot_loss": 30.1406,
+  "bot_loss_se": 1.1355,
+  "theme": "skill.saving_twos",
+  "turn": 2
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800088-01",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800088,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3s",
+      "4h",
+      "6d",
+      "8c",
+      "8h",
+      "9c",
+      "9h",
+      "Th",
+      "Jd",
+      "Js",
+      "Qc",
+      "Kh",
+      "2h"
+     ],
+     [
+      "4d",
+      "4c",
+      "5s",
+      "7d",
+      "7c",
+      "7h",
+      "7s",
+      "Td",
+      "Jc",
+      "Qs",
+      "Ks",
+      "Ac"
+     ],
+     [
+      "3c",
+      "5c",
+      "5h",
+      "6s",
+      "8s",
+      "9s",
+      "Tc",
+      "Ts",
+      "Ad",
+      "Ah",
+      "As",
+      "2d",
+      "2s"
+     ],
+     [
+      "3h",
+      "4s",
+      "5d",
+      "6c",
+      "6h",
+      "8d",
+      "9d",
+      "Jh",
+      "Qd",
+      "Qh",
+      "Kd",
+      "Kc",
+      "2c"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "3d"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.6875,
+    "loss_se": 1.5605
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 19.3828,
+    "loss_se": 1.6736
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 19.6094,
+    "loss_se": 1.6354
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 20.043,
+    "loss_se": 1.4611
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 23.5391,
+    "loss_se": 1.6367
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.5312,
+    "loss_se": 1.619
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 25.9414,
+    "loss_se": 1.6871
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ts"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 29.9297,
+    "loss_se": 1.6269
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "Ts",
+  "bot_loss": 29.9297,
+  "bot_loss_se": 1.6269,
+  "theme": "skill.b2_mixed",
+  "turn": 1
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800074-17",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800074,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "3h",
+      "4d",
+      "4s",
+      "7d",
+      "7h",
+      "8d",
+      "8c",
+      "Jd",
+      "Jh",
+      "Qc",
+      "2d",
+      "2c"
+     ],
+     [
+      "5s",
+      "9d",
+      "Ts",
+      "Js",
+      "Qd",
+      "Qh",
+      "Kc"
+     ],
+     [
+      "3c",
+      "6h",
+      "7s",
+      "9h",
+      "9s",
+      "Td",
+      "Th",
+      "Qs",
+      "Kh",
+      "Ks",
+      "2h"
+     ],
+     [
+      "8h",
+      "8s"
+     ]
+    ],
+    "current_play": {
+     "player": 3,
+     "cards": [
+      "7c",
+      "9c",
+      "Tc",
+      "Jc",
+      "Ac"
+     ],
+     "combo": "combo.flush"
+    }
+   }
+  },
+  "seat": 0,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d",
+      "7d",
+      "8d",
+      "Jd",
+      "2d"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 29.5703,
+    "loss_se": 2.5278
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "pass",
+  "bot_loss": 29.5703,
+  "bot_loss_se": 2.5278,
+  "theme": "skill.b2_stop_runner",
+  "turn": 17
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800082-24",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800082,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "4d",
+      "4c",
+      "8c",
+      "Jd",
+      "Jc",
+      "Js",
+      "Qh",
+      "Kh",
+      "Ah",
+      "As"
+     ],
+     [
+      "5c",
+      "6c",
+      "6h",
+      "7d",
+      "7c",
+      "9c",
+      "9h",
+      "Td",
+      "Jh",
+      "Qd",
+      "Qc",
+      "2h"
+     ],
+     [
+      "3s",
+      "5h",
+      "6d",
+      "8d",
+      "9d",
+      "Tc",
+      "Th",
+      "Kc"
+     ],
+     [
+      "3c",
+      "3h",
+      "4h",
+      "4s",
+      "5d",
+      "5s",
+      "6s",
+      "7h",
+      "7s",
+      "8h",
+      "Qs"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "8s"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 0,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 12.2852,
+    "loss_se": 1.2759
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 12.6328,
+    "loss_se": 1.255
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 13.5,
+    "loss_se": 1.2886
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 13.6016,
+    "loss_se": 1.1726
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.5117,
+    "loss_se": 1.3881
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.8125,
+    "loss_se": 1.3285
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.9922,
+    "loss_se": 1.3129
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "Jc",
+  "bot_loss": 27.9922,
+  "bot_loss_se": 1.3129,
+  "theme": "skill.b2_mixed",
+  "turn": 24
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800067-23",
+  "game": "big2",
+  "skill": "skill.b2_break_five",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800067,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "4c",
+      "5c",
+      "5h",
+      "6s",
+      "7h",
+      "7s",
+      "8c",
+      "9h",
+      "Th",
+      "Kc",
+      "Kh"
+     ],
+     [
+      "4s",
+      "8h",
+      "Jd",
+      "Jh",
+      "Qd",
+      "Qc",
+      "Ac"
+     ],
+     [
+      "4d",
+      "5d",
+      "5s",
+      "7c",
+      "Ks",
+      "Ad",
+      "As",
+      "2d"
+     ],
+     [
+      "3c",
+      "4h",
+      "6d",
+      "6c",
+      "6h",
+      "7d",
+      "Tc",
+      "Jc",
+      "Js",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4c",
+      "5c",
+      "6s",
+      "7s",
+      "8c"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5h",
+      "7h",
+      "9h",
+      "Th",
+      "Kh"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 6.9102,
+    "loss_se": 0.7477
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6s",
+      "7h",
+      "8c",
+      "9h",
+      "Th"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 22.9766,
+    "loss_se": 1.4238
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6s",
+      "7s",
+      "8c",
+      "9h",
+      "Th"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 23.0586,
+    "loss_se": 1.42
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5c",
+      "6s",
+      "7s",
+      "8c",
+      "9h"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 25.1055,
+    "loss_se": 1.423
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5c",
+      "6s",
+      "7h",
+      "8c",
+      "9h"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 25.3164,
+    "loss_se": 1.4329
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4c",
+      "5h",
+      "6s",
+      "7s",
+      "8c"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 25.3203,
+    "loss_se": 1.4257
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4c",
+      "5h",
+      "6s",
+      "7h",
+      "8c"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 25.3711,
+    "loss_se": 1.4429
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4c",
+      "5c",
+      "6s",
+      "7h",
+      "8c"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 25.4336,
+    "loss_se": 1.4365
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "5c 6s 7s 8c 9h",
+  "bot_loss": 25.1055,
+  "bot_loss_se": 1.423,
+  "theme": "skill.b2_break_five",
+  "turn": 23
+ },
+ {
+  "id": "big2-mnet-t4.34-5508800029-07",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5508800029,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4d",
+      "5c",
+      "7h",
+      "7s",
+      "Ts",
+      "Ks",
+      "Ah",
+      "2d"
+     ],
+     [
+      "4c",
+      "5d",
+      "8c",
+      "Qd",
+      "Kd",
+      "As"
+     ],
+     [
+      "3c",
+      "4h",
+      "5h",
+      "6h",
+      "7d",
+      "7c",
+      "9d",
+      "Th",
+      "Js",
+      "Qh",
+      "Qs",
+      "Kc",
+      "Ad"
+     ],
+     [
+      "3h",
+      "4s",
+      "5s",
+      "6c",
+      "8h",
+      "Qc",
+      "Kh",
+      "Ac"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "Td",
+      "Tc"
+     ],
+     "combo": "combo.pair"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1096,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh",
+      "Qs"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.6719,
+    "loss_se": 2.4264
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t4.34",
+  "rung_elo": 1095.6,
+  "bot_move": "pass",
+  "bot_loss": 24.6719,
+  "bot_loss_se": 2.4264,
+  "theme": "skill.b2_mixed",
+  "turn": 7
+ },
+ {
+  "id": "big2-measy-506500003-08",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500003,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "4d",
+      "5h",
+      "6d",
+      "6h",
+      "7c",
+      "9s",
+      "Tc",
+      "Ts",
+      "Qd",
+      "Qs",
+      "Ks",
+      "Ac",
+      "As"
+     ],
+     [
+      "3c",
+      "3s",
+      "4h",
+      "5c",
+      "6c",
+      "7h",
+      "7s",
+      "8c",
+      "8s",
+      "9h",
+      "Qc",
+      "Ad",
+      "2c"
+     ],
+     [
+      "4c",
+      "4s",
+      "5s",
+      "6s",
+      "7d",
+      "8d",
+      "8h",
+      "9d",
+      "9c",
+      "Jd",
+      "Kc",
+      "Kh",
+      "2s"
+     ],
+     [
+      "Jc",
+      "Jh",
+      "Js"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Jh",
+      "Js"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Js"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 131.543,
+    "loss_se": 1.8327
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Jh"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 131.957,
+    "loss_se": 1.7824
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 131.957,
+    "loss_se": 1.579
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 132.1016,
+    "loss_se": 1.5453
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 132.1133,
+    "loss_se": 1.4849
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jh",
+      "Js"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 132.3008,
+    "loss_se": 1.7114
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "Jh Js",
+  "bot_loss": 132.3008,
+  "bot_loss_se": 1.7114,
+  "theme": "skill.b2_mixed",
+  "turn": 8
+ },
+ {
+  "id": "big2-measy-506500003-04",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500003,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "4d",
+      "5h",
+      "6d",
+      "6h",
+      "7c",
+      "9s",
+      "Tc",
+      "Ts",
+      "Qd",
+      "Qs",
+      "Ks",
+      "Ac",
+      "As"
+     ],
+     [
+      "3c",
+      "3s",
+      "4h",
+      "5c",
+      "6c",
+      "7h",
+      "7s",
+      "8c",
+      "8s",
+      "9h",
+      "Qc",
+      "Ad",
+      "2c"
+     ],
+     [
+      "4c",
+      "4s",
+      "5s",
+      "6s",
+      "7d",
+      "8d",
+      "8h",
+      "9d",
+      "9c",
+      "Jd",
+      "Kc",
+      "Kh",
+      "2s"
+     ],
+     [
+      "3h",
+      "Th",
+      "Jc",
+      "Jh",
+      "Js",
+      "Qh",
+      "Ah",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Jh",
+      "Js"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "Th",
+      "Jh",
+      "Qh",
+      "Ah"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 92.7422,
+    "loss_se": 3.7154
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Js"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 92.7773,
+    "loss_se": 3.9198
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "Th",
+      "Qh",
+      "Ah",
+      "2h"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 94.0195,
+    "loss_se": 4.0116
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 94.7695,
+    "loss_se": 3.5532
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 94.8828,
+    "loss_se": 3.6405
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 95.3125,
+    "loss_se": 3.6343
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 96.8945,
+    "loss_se": 3.5549
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "3h Th Qh Ah 2h",
+  "bot_loss": 94.0195,
+  "bot_loss_se": 4.0116,
+  "theme": "skill.b2_mixed",
+  "turn": 4
+ },
+ {
+  "id": "big2-measy-506500072-19",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500072,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4c",
+      "4s",
+      "5d",
+      "5h",
+      "6d",
+      "6s",
+      "Tc",
+      "Kc",
+      "Kh",
+      "As"
+     ],
+     [
+      "6h",
+      "9d",
+      "9s",
+      "Jh",
+      "Qd",
+      "Ac",
+      "2s"
+     ],
+     [
+      "3s",
+      "4d",
+      "5s",
+      "6c",
+      "7s",
+      "Qc",
+      "Qh",
+      "Qs"
+     ],
+     [
+      "4h",
+      "5c",
+      "7d",
+      "7c",
+      "8c",
+      "8h",
+      "8s",
+      "9c",
+      "9h",
+      "Th",
+      "Js"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qc",
+      "Qh",
+      "Qs"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "4d",
+      "5s",
+      "6c",
+      "7s"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 49.9492,
+    "loss_se": 1.1429
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 55.8359,
+    "loss_se": 1.1282
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 56.7344,
+    "loss_se": 1.1184
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 57.1016,
+    "loss_se": 1.0566
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh",
+      "Qs"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 60.1602,
+    "loss_se": 1.2253
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qc",
+      "Qs"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 60.2891,
+    "loss_se": 1.219
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qc",
+      "Qh"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 60.3242,
+    "loss_se": 1.1886
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "3s 4d 5s 6c 7s",
+  "bot_loss": 49.9492,
+  "bot_loss_se": 1.1429,
+  "theme": "skill.b2_mixed",
+  "turn": 19
+ },
+ {
+  "id": "big2-measy-506500075-16",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500075,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "5c",
+      "6c",
+      "7c",
+      "9c",
+      "2d",
+      "2c"
+     ],
+     [
+      "3c",
+      "4s",
+      "6d",
+      "7h",
+      "8h",
+      "9h",
+      "Td",
+      "Tc",
+      "Js",
+      "Qc",
+      "Ac",
+      "As"
+     ],
+     [
+      "4d",
+      "4c",
+      "5s",
+      "6h",
+      "6s",
+      "9d",
+      "Jc",
+      "Jh",
+      "Qh",
+      "Qs",
+      "Kd",
+      "Kc",
+      "Ad"
+     ],
+     [
+      "9s",
+      "Th",
+      "Ts",
+      "Jd",
+      "Qd",
+      "Kh",
+      "Ah"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5c",
+      "6c",
+      "7c",
+      "9c",
+      "2c"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 49.5508,
+    "loss_se": 1.5858
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 75.8125,
+    "loss_se": 1.1583
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 76.2305,
+    "loss_se": 1.1542
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 76.707,
+    "loss_se": 1.1589
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 79.4414,
+    "loss_se": 1.0657
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 89.8789,
+    "loss_se": 0.7185
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d",
+      "2c"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 90.2188,
+    "loss_se": 0.7281
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "5c 6c 7c 9c 2c",
+  "bot_loss": 49.5508,
+  "bot_loss_se": 1.5858,
+  "theme": "skill.b2_singles_order",
+  "turn": 16
+ },
+ {
+  "id": "big2-measy-506500065-14",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500065,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "6d",
+      "7d",
+      "8c",
+      "8h",
+      "9s",
+      "Kc",
+      "2d"
+     ],
+     [
+      "7s",
+      "8s",
+      "9d",
+      "Th",
+      "Js",
+      "Kh",
+      "As",
+      "2s"
+     ],
+     [
+      "3s",
+      "5d",
+      "6s",
+      "9h",
+      "Jd",
+      "Jc",
+      "Kd",
+      "Ks",
+      "Ac",
+      "Ah"
+     ],
+     [
+      "4s",
+      "5c",
+      "6c",
+      "6h",
+      "7c",
+      "7h",
+      "8d",
+      "9c",
+      "Jh",
+      "Qs",
+      "Ad"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "3c"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 13.2773,
+    "loss_se": 1.306
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 14.6719,
+    "loss_se": 0.6231
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 29.1914,
+    "loss_se": 1.0541
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.0664,
+    "loss_se": 0.6348
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Th"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.3828,
+    "loss_se": 0.6223
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 44.3867,
+    "loss_se": 0.6103
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 45.7031,
+    "loss_se": 0.5638
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "9d",
+  "bot_loss": 43.0664,
+  "bot_loss_se": 0.6348,
+  "theme": "skill.b2_mixed",
+  "turn": 14
+ },
+ {
+  "id": "big2-measy-506500082-01",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500082,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "3c",
+      "3s",
+      "4c",
+      "5h",
+      "6h",
+      "7d",
+      "7c",
+      "8h",
+      "9s",
+      "Tc",
+      "Qd",
+      "As",
+      "2h"
+     ],
+     [
+      "3h",
+      "4d",
+      "4h",
+      "4s",
+      "7h",
+      "9c",
+      "Jc",
+      "Qh",
+      "Ks",
+      "Ad",
+      "Ac",
+      "Ah",
+      "2c"
+     ],
+     [
+      "6d",
+      "6c",
+      "6s",
+      "7s",
+      "8c",
+      "8s",
+      "9d",
+      "9h",
+      "Ts",
+      "Js",
+      "Qc",
+      "2d"
+     ],
+     [
+      "5d",
+      "5c",
+      "5s",
+      "8d",
+      "Td",
+      "Th",
+      "Jd",
+      "Jh",
+      "Qs",
+      "Kd",
+      "Kc",
+      "Kh",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "3d"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 5.043,
+    "loss_se": 1.5589
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 15.3633,
+    "loss_se": 1.7066
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 39.957,
+    "loss_se": 2.4093
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Th"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.3867,
+    "loss_se": 2.3826
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.9219,
+    "loss_se": 2.4846
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.1133,
+    "loss_se": 2.4109
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 42.1484,
+    "loss_se": 2.4659
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "Th",
+  "bot_loss": 40.3867,
+  "bot_loss_se": 2.3826,
+  "theme": "skill.b2_mixed",
+  "turn": 1
+ },
+ {
+  "id": "big2-measy-506500015-08",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500015,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3s",
+      "4c",
+      "4h",
+      "5d",
+      "6c",
+      "8c",
+      "9c",
+      "Jd",
+      "Qs",
+      "Kh",
+      "As"
+     ],
+     [
+      "3h",
+      "4d",
+      "5c",
+      "5h",
+      "7c",
+      "7s",
+      "8s",
+      "9s",
+      "Ts",
+      "Qc",
+      "Kc",
+      "Ad",
+      "2s"
+     ],
+     [
+      "6d",
+      "7h",
+      "8d",
+      "9h",
+      "Tc",
+      "Jc",
+      "Jh",
+      "2c",
+      "2h"
+     ],
+     [
+      "4s",
+      "5s",
+      "7d",
+      "8h",
+      "9d",
+      "Td",
+      "Th",
+      "Js",
+      "Kd",
+      "Ks",
+      "2d"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc",
+      "Jh"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6d",
+      "7h",
+      "8d",
+      "9h",
+      "Tc"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 39.4453,
+    "loss_se": 2.8923
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 39.9609,
+    "loss_se": 3.0299
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.3203,
+    "loss_se": 3.0062
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.6484,
+    "loss_se": 3.0051
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.0664,
+    "loss_se": 2.9807
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.1406,
+    "loss_se": 2.9353
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7h",
+      "8d",
+      "9h",
+      "Tc",
+      "Jc"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 45.6875,
+    "loss_se": 2.9582
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "6d 7h 8d 9h Tc",
+  "bot_loss": 39.4453,
+  "bot_loss_se": 2.8923,
+  "theme": "skill.b2_singles_order",
+  "turn": 8
+ },
+ {
+  "id": "big2-measy-506500042-06",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500042,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "5s",
+      "6c",
+      "Jh",
+      "Qd",
+      "Qh",
+      "Kh",
+      "Ah",
+      "2h"
+     ],
+     [
+      "7c",
+      "Jd",
+      "Js"
+     ],
+     [
+      "3h",
+      "4d",
+      "4h",
+      "4s",
+      "5h",
+      "6h",
+      "8h",
+      "Tc",
+      "Th",
+      "Qc",
+      "Qs",
+      "As",
+      "2s"
+     ],
+     [
+      "3s",
+      "5c",
+      "6d",
+      "7h",
+      "7s",
+      "8d",
+      "8s",
+      "9d",
+      "Jc",
+      "Ad",
+      "Ac",
+      "2d",
+      "2c"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "4c",
+      "5d",
+      "6s",
+      "7d",
+      "8c"
+     ],
+     "combo": "combo.straight"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "5h",
+      "6h",
+      "8h",
+      "Th"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d",
+      "4h",
+      "4s",
+      "Qc",
+      "Qs"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 4.0078,
+    "loss_se": 0.5724
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4h",
+      "5h",
+      "6h",
+      "8h"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 14.8359,
+    "loss_se": 0.9582
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4h",
+      "6h",
+      "8h",
+      "Th"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.3555,
+    "loss_se": 0.8787
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4h",
+      "5h",
+      "6h",
+      "8h",
+      "Th"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.4375,
+    "loss_se": 0.8676
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4h",
+      "5h",
+      "6h",
+      "Th"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.4922,
+    "loss_se": 0.871
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4h",
+      "5h",
+      "8h",
+      "Th"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.5938,
+    "loss_se": 0.8849
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d",
+      "4h",
+      "4s",
+      "Tc",
+      "Th"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 21.4531,
+    "loss_se": 0.9252
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4h",
+      "5h",
+      "As",
+      "2s"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 31.9648,
+    "loss_se": 1.0296
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "3h 4h 5h As 2s",
+  "bot_loss": 31.9648,
+  "bot_loss_se": 1.0296,
+  "theme": "skill.b2_stop_runner",
+  "turn": 6
+ },
+ {
+  "id": "big2-measy-506500088-32",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500088,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "8d",
+      "9s",
+      "Jd",
+      "As"
+     ],
+     [
+      "3h",
+      "4c",
+      "5h",
+      "8h",
+      "8s",
+      "9h",
+      "Jh",
+      "Kd",
+      "Kc"
+     ],
+     [
+      "2c"
+     ],
+     [
+      "4d",
+      "4s",
+      "5d",
+      "6d",
+      "6c",
+      "7c",
+      "7s",
+      "Td",
+      "Qs",
+      "Kh"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "9d",
+      "9c"
+     ],
+     "combo": "combo.pair"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd",
+      "Kc"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 30.3828,
+    "loss_se": 0.9066
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "pass",
+  "bot_loss": 30.3828,
+  "bot_loss_se": 0.9066,
+  "theme": "skill.b2_stop_runner",
+  "turn": 32
+ },
+ {
+  "id": "big2-measy-506500093-03",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500093,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3s",
+      "4h",
+      "5s",
+      "6s",
+      "Ts",
+      "Qh",
+      "Kh",
+      "2c"
+     ],
+     [
+      "5h",
+      "6d",
+      "7s",
+      "Th",
+      "Jh",
+      "Js",
+      "Ks",
+      "2h"
+     ],
+     [
+      "3c",
+      "3h",
+      "4d",
+      "5d",
+      "6h",
+      "7d",
+      "7c",
+      "8c",
+      "Kc",
+      "Ad",
+      "Ac",
+      "2d",
+      "2s"
+     ],
+     [
+      "4s",
+      "8s",
+      "9d",
+      "9s",
+      "Qc",
+      "Kd",
+      "Ah",
+      "As"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "8d",
+      "9h",
+      "Tc",
+      "Jc",
+      "Qs"
+     ],
+     "combo": "combo.straight"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "7c",
+      "8c",
+      "Kc",
+      "Ac"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4d",
+      "5d",
+      "6h",
+      "2d"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 3.0586,
+    "loss_se": 0.7484
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d",
+      "5d",
+      "7d",
+      "Ad",
+      "2d"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.5703,
+    "loss_se": 0.8753
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4d",
+      "5d",
+      "Ad",
+      "2d"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.1445,
+    "loss_se": 0.8336
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4d",
+      "5d",
+      "6h",
+      "2s"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 17.3672,
+    "loss_se": 0.8334
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4d",
+      "5d",
+      "6h",
+      "2d"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.8203,
+    "loss_se": 0.7916
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4d",
+      "5d",
+      "Ad",
+      "2s"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 22.3125,
+    "loss_se": 0.9244
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4d",
+      "5d",
+      "Ad",
+      "2d"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.8633,
+    "loss_se": 0.8773
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "4d",
+      "5d",
+      "Ac",
+      "2d"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.0547,
+    "loss_se": 0.8634
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "3c 4d 5d Ad 2d",
+  "bot_loss": 26.8633,
+  "bot_loss_se": 0.8773,
+  "theme": "skill.saving_twos",
+  "turn": 3
+ },
+ {
+  "id": "big2-measy-506500037-42",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500037,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "5s",
+      "6s",
+      "7c",
+      "9h",
+      "Th",
+      "Jd",
+      "Qd",
+      "Kd"
+     ],
+     [
+      "4h",
+      "Ac"
+     ],
+     [
+      "9c",
+      "Kc"
+     ],
+     [
+      "5h",
+      "6c",
+      "7h",
+      "8h",
+      "9d"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5h",
+      "6c",
+      "7h",
+      "8h",
+      "9d"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.4922,
+    "loss_se": 0.1709
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.5625,
+    "loss_se": 0.1682
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.5703,
+    "loss_se": 0.1696
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "5h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.6055,
+    "loss_se": 0.1617
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.6133,
+    "loss_se": 0.168
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "6c",
+  "bot_loss": 26.6133,
+  "bot_loss_se": 0.168,
+  "theme": "skill.b2_stop_runner",
+  "turn": 42
+ },
+ {
+  "id": "big2-measy-506500026-06",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500026,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "8c",
+      "9d",
+      "Tc",
+      "Ts",
+      "Jd",
+      "Qd",
+      "Ks",
+      "2s"
+     ],
+     [
+      "3h",
+      "4c",
+      "5d",
+      "7c",
+      "8d",
+      "8s",
+      "9h",
+      "Jc",
+      "Jh",
+      "Qc",
+      "Qh",
+      "As",
+      "2d"
+     ],
+     [
+      "4d",
+      "7d",
+      "7s",
+      "8h",
+      "Td",
+      "Qs",
+      "Kh",
+      "2h"
+     ],
+     [
+      "4h",
+      "4s",
+      "5h",
+      "6c",
+      "6s",
+      "7h",
+      "9c",
+      "9s",
+      "Th",
+      "Js",
+      "Kd",
+      "Kc",
+      "2c"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ts"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 4.2344,
+    "loss_se": 1.2742
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8c",
+      "9d",
+      "Ts",
+      "Jd",
+      "Qd"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.625,
+    "loss_se": 1.9517
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.6641,
+    "loss_se": 2.018
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8c",
+      "9d",
+      "Tc",
+      "Jd",
+      "Qd"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.7227,
+    "loss_se": 1.9581
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "8c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.2188,
+    "loss_se": 2.022
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d",
+      "Tc",
+      "Jd",
+      "Qd",
+      "Ks"
+     ],
+     "combo": "combo.straight"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 33.0391,
+    "loss_se": 2.018
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 40.1719,
+    "loss_se": 2.1197
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "8c 9d Tc Jd Qd",
+  "bot_loss": 24.7227,
+  "bot_loss_se": 1.9581,
+  "theme": "skill.b2_singles_order",
+  "turn": 6
+ },
+ {
+  "id": "big2-measy-506500088-29",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500088,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "8d",
+      "9s",
+      "Jd",
+      "As"
+     ],
+     [
+      "3h",
+      "4c",
+      "5h",
+      "8h",
+      "8s",
+      "9h",
+      "Jh",
+      "Kd",
+      "Kc"
+     ],
+     [
+      "9d",
+      "9c",
+      "2c"
+     ],
+     [
+      "4d",
+      "4s",
+      "5d",
+      "6d",
+      "6c",
+      "7c",
+      "7s",
+      "Td",
+      "Qs",
+      "Kh"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 13.668,
+    "loss_se": 0.0963
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 13.7383,
+    "loss_se": 0.0955
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "9d",
+      "9c"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.3711,
+    "loss_se": 0.8546
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "9d 9c",
+  "bot_loss": 24.3711,
+  "bot_loss_se": 0.8546,
+  "theme": "skill.b2_singles_order",
+  "turn": 29
+ },
+ {
+  "id": "big2-measy-506500043-24",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500043,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "3h",
+      "4d",
+      "7d",
+      "7h",
+      "8s",
+      "9c",
+      "Th",
+      "Qd",
+      "Qc",
+      "Kh",
+      "Ah"
+     ],
+     [
+      "6d",
+      "6c",
+      "7c",
+      "8d",
+      "8h",
+      "9s",
+      "Td",
+      "Tc",
+      "Jd",
+      "Ks"
+     ],
+     [
+      "6h",
+      "6s",
+      "8c",
+      "9d"
+     ],
+     [
+      "4s",
+      "7s",
+      "Ts",
+      "Js",
+      "Qh",
+      "Qs",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4s",
+      "7s",
+      "Ts",
+      "Js",
+      "Qs"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.3672,
+    "loss_se": 1.382
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.2109,
+    "loss_se": 1.4817
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ts"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.8242,
+    "loss_se": 0.8732
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.9844,
+    "loss_se": 0.8732
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Js"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.4531,
+    "loss_se": 0.8424
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 43.5664,
+    "loss_se": 0.8105
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh",
+      "Qs"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 48.4727,
+    "loss_se": 0.8149
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "4s 7s Ts Js Qs",
+  "bot_loss": 24.3672,
+  "bot_loss_se": 1.382,
+  "theme": "skill.b2_singles_order",
+  "turn": 24
+ },
+ {
+  "id": "big2-measy-506500021-00",
+  "game": "big2",
+  "skill": "skill.b2_break_five",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 506500021,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "3d",
+      "3c",
+      "4d",
+      "5s",
+      "6d",
+      "6h",
+      "8s",
+      "9s",
+      "Td",
+      "Js",
+      "Qd",
+      "Kc",
+      "Ac"
+     ],
+     [
+      "7d",
+      "7c",
+      "7h",
+      "8d",
+      "8h",
+      "9c",
+      "Tc",
+      "Ts",
+      "Jd",
+      "Kd",
+      "Ks",
+      "Ad",
+      "2c"
+     ],
+     [
+      "4s",
+      "6c",
+      "6s",
+      "7s",
+      "9d",
+      "9h",
+      "Th",
+      "Qs",
+      "Kh",
+      "Ah",
+      "As",
+      "2d",
+      "2s"
+     ],
+     [
+      "3h",
+      "3s",
+      "4c",
+      "4h",
+      "5d",
+      "5c",
+      "5h",
+      "8c",
+      "Jc",
+      "Jh",
+      "Qc",
+      "Qh",
+      "2h"
+     ]
+    ]
+   }
+  },
+  "seat": 0,
+  "rating": 1161,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "4d",
+      "6d",
+      "Td",
+      "Qd"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3c"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.1914,
+    "loss_se": 1.7945
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 28.9648,
+    "loss_se": 1.7505
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "easy",
+  "rung_elo": 1160.6,
+  "bot_move": "3d 3c",
+  "bot_loss": 24.1914,
+  "bot_loss_se": 1.7945,
+  "theme": "skill.b2_break_five",
+  "turn": 0
+ },
+ {
+  "id": "big2-mnet-t1-5574300091-14",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300091,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "3h",
+      "5c",
+      "6d",
+      "7d",
+      "7s",
+      "8h",
+      "9d",
+      "Tc",
+      "Th",
+      "Kc",
+      "Kh",
+      "2d"
+     ],
+     [
+      "6h",
+      "8c",
+      "8s",
+      "9c",
+      "Jh",
+      "Qs",
+      "Ah"
+     ],
+     [
+      "3c",
+      "5h",
+      "7c",
+      "8d",
+      "9h",
+      "Td",
+      "Ts",
+      "Jc",
+      "Qd",
+      "Qh",
+      "Kd",
+      "2c"
+     ],
+     [
+      "3s",
+      "5s",
+      "6c",
+      "6s",
+      "9s",
+      "Jd",
+      "Js",
+      "Ks",
+      "Ad",
+      "Ac",
+      "2s"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd",
+      "Js"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c",
+      "6s"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.6328,
+    "loss_se": 0.8983
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "5s",
+      "6s",
+      "9s",
+      "Ks"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 20.3906,
+    "loss_se": 1.3402
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "5s",
+      "9s",
+      "Js",
+      "Ks"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 20.9141,
+    "loss_se": 1.3948
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ad",
+      "Ac"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.5352,
+    "loss_se": 1.5297
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.5898,
+    "loss_se": 1.5323
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "6c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.0117,
+    "loss_se": 1.5549
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3s",
+      "5s",
+      "9s",
+      "Ks",
+      "2s"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.7344,
+    "loss_se": 1.781
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "6c",
+  "bot_loss": 26.0117,
+  "bot_loss_se": 1.5549,
+  "theme": "skill.b2_singles_order",
+  "turn": 14
+ },
+ {
+  "id": "big2-mnet-t1-5574300040-41",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300040,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "3c",
+      "4c",
+      "5c",
+      "6d",
+      "7d",
+      "9s",
+      "Tc",
+      "Jc",
+      "Qh"
+     ],
+     [
+      "3h",
+      "4h",
+      "5s",
+      "6c",
+      "Js",
+      "Qd"
+     ],
+     [
+      "8c",
+      "8h",
+      "8s"
+     ],
+     [
+      "4s",
+      "As"
+     ]
+    ],
+    "current_play": {
+     "player": 3,
+     "cards": [
+      "Ts"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 0,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 8.5391,
+    "loss_se": 0.6918
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.9648,
+    "loss_se": 1.0875
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "Qh",
+  "bot_loss": 18.9648,
+  "bot_loss_se": 1.0875,
+  "theme": "skill.b2_stop_runner",
+  "turn": 41
+ },
+ {
+  "id": "big2-mnet-t1-5574300046-34",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300046,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "6h",
+      "6s"
+     ],
+     [
+      "3h",
+      "3s",
+      "4d",
+      "5d",
+      "5c",
+      "6c",
+      "7s",
+      "Jh",
+      "Js",
+      "Ac"
+     ],
+     [
+      "4c",
+      "8s",
+      "Kc",
+      "Kh",
+      "2s"
+     ],
+     [
+      "3c",
+      "4h",
+      "5h",
+      "5s",
+      "6d",
+      "8d",
+      "8c",
+      "8h",
+      "Tc"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 15.5312,
+    "loss_se": 0.6367
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "2s",
+  "bot_loss": 15.5312,
+  "bot_loss_se": 0.6367,
+  "theme": "skill.saving_twos",
+  "turn": 34
+ },
+ {
+  "id": "big2-mnet-t1-5574300067-31",
+  "game": "big2",
+  "skill": "skill.when_to_pass",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300067,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "4s",
+      "7c",
+      "Ac",
+      "2c"
+     ],
+     [
+      "3h",
+      "5s",
+      "6d",
+      "6c",
+      "7d",
+      "7s",
+      "8s",
+      "9c",
+      "Jh",
+      "Js",
+      "As"
+     ],
+     [
+      "6s",
+      "Ts",
+      "Qd",
+      "Qs"
+     ],
+     [
+      "3s",
+      "5d",
+      "9s",
+      "Td",
+      "Kh"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "Ad"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 13.0156,
+    "loss_se": 1.5641
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "As",
+  "bot_loss": 13.0156,
+  "bot_loss_se": 1.5641,
+  "theme": "skill.when_to_pass",
+  "turn": 31
+ },
+ {
+  "id": "big2-mnet-t1-5574300073-00",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300073,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "3s",
+      "4d",
+      "4h",
+      "5s",
+      "8d",
+      "8h",
+      "8s",
+      "9d",
+      "Td",
+      "Jc",
+      "Js",
+      "Qh",
+      "Kd"
+     ],
+     [
+      "3d",
+      "3h",
+      "5c",
+      "5h",
+      "6d",
+      "6c",
+      "9h",
+      "Th",
+      "Qd",
+      "Ad",
+      "Ac",
+      "Ah",
+      "As"
+     ],
+     [
+      "3c",
+      "4s",
+      "5d",
+      "6s",
+      "7s",
+      "8c",
+      "9s",
+      "Tc",
+      "Ts",
+      "Jd",
+      "Kc",
+      "2d",
+      "2h"
+     ],
+     [
+      "4c",
+      "6h",
+      "7d",
+      "7c",
+      "7h",
+      "9c",
+      "Jh",
+      "Qc",
+      "Qs",
+      "Kh",
+      "Ks",
+      "2c",
+      "2s"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h",
+      "Ad",
+      "Ac",
+      "As"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.3906,
+    "loss_se": 1.6088
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h",
+      "Ad",
+      "Ac",
+      "Ah"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.5938,
+    "loss_se": 1.5794
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h",
+      "Ad",
+      "Ah",
+      "As"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.6289,
+    "loss_se": 1.5937
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h",
+      "Ac",
+      "Ah",
+      "As"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.793,
+    "loss_se": 1.5814
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "Ad",
+      "Ac",
+      "Ah",
+      "As"
+     ],
+     "combo": "combo.four_of_a_kind"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 12.1094,
+    "loss_se": 1.6945
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3d",
+      "3h"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 12.8594,
+    "loss_se": 1.5062
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "3d 3h",
+  "bot_loss": 12.8594,
+  "bot_loss_se": 1.5062,
+  "theme": "skill.b2_singles_order",
+  "turn": 0
+ },
+ {
+  "id": "big2-mnet-t1-5574300007-20",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300007,
+   "start": {
+    "current_player": 0,
+    "hands": [
+     [
+      "Kc",
+      "Ac"
+     ],
+     [
+      "3s",
+      "4c",
+      "4h",
+      "5d",
+      "5c",
+      "7s",
+      "8d",
+      "9s",
+      "Th",
+      "Ts",
+      "Kh",
+      "Ks"
+     ],
+     [
+      "Td",
+      "As"
+     ],
+     [
+      "5s",
+      "6c",
+      "8h",
+      "9h",
+      "Jc",
+      "Ad"
+     ]
+    ],
+    "current_play": {
+     "player": 3,
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 0,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ac"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.0039,
+    "loss_se": 1.064
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.7031,
+    "loss_se": 0.9331
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "pass",
+  "bot_loss": 11.7031,
+  "bot_loss_se": 0.9331,
+  "theme": "skill.b2_stop_runner",
+  "turn": 20
+ },
+ {
+  "id": "big2-mnet-t1-5574300049-05",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300049,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4c",
+      "5d",
+      "5c",
+      "5s",
+      "6d",
+      "7s",
+      "8d",
+      "8h",
+      "Qh",
+      "Ks",
+      "Ad",
+      "2s"
+     ],
+     [
+      "6c",
+      "6s",
+      "8c",
+      "8s",
+      "9c",
+      "9h",
+      "Jd",
+      "Qc",
+      "Kc",
+      "Ac",
+      "As"
+     ],
+     [
+      "3h",
+      "4h",
+      "5h",
+      "7c",
+      "7h",
+      "Td",
+      "Th",
+      "Ts",
+      "Kd",
+      "Ah",
+      "2c",
+      "2h"
+     ],
+     [
+      "3c",
+      "3s",
+      "4d",
+      "4s",
+      "6h",
+      "7d",
+      "Tc",
+      "Jc",
+      "Js",
+      "Qd",
+      "Kh",
+      "2d"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.2461,
+    "loss_se": 2.2369
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 17.3164,
+    "loss_se": 2.1076
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 33.4609,
+    "loss_se": 2.0145
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.5391,
+    "loss_se": 2.3141
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "Kd",
+  "bot_loss": 11.2461,
+  "bot_loss_se": 2.2369,
+  "theme": "skill.b2_mixed",
+  "turn": 5
+ },
+ {
+  "id": "big2-mnet-t1-5574300014-41",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300014,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "6h",
+      "Qd",
+      "Qs"
+     ],
+     [
+      "9s",
+      "Td",
+      "Qc"
+     ],
+     [
+      "3c",
+      "3h",
+      "3s",
+      "7d",
+      "7h",
+      "7s",
+      "Tc",
+      "Th",
+      "Ad"
+     ],
+     [
+      "4s",
+      "5d",
+      "6d",
+      "6c",
+      "6s",
+      "7c",
+      "8d",
+      "8s",
+      "Jc",
+      "Js"
+     ]
+    ]
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7d",
+      "7h",
+      "7s",
+      "Tc",
+      "Th"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3h",
+      "3s"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 8.4258,
+    "loss_se": 0.8162
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h",
+      "3s",
+      "7d",
+      "7h",
+      "7s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.3984,
+    "loss_se": 0.3901
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3s",
+      "7d",
+      "7h",
+      "7s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.4141,
+    "loss_se": 0.3905
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3h",
+      "7d",
+      "7h",
+      "7s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.4492,
+    "loss_se": 0.3919
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3h",
+      "3s",
+      "Tc",
+      "Th"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.9062,
+    "loss_se": 0.9052
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "7d",
+      "7h",
+      "7s"
+     ],
+     "combo": "combo.triple"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.6211,
+    "loss_se": 0.9725
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3h",
+      "3s",
+      "7d",
+      "7s"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 15.6289,
+    "loss_se": 0.7853
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "3c 3h 3s Tc Th",
+  "bot_loss": 10.9062,
+  "bot_loss_se": 0.9052,
+  "theme": "skill.b2_stop_runner",
+  "turn": 41
+ },
+ {
+  "id": "big2-mnet-t1-5574300055-06",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300055,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4c",
+      "7c",
+      "8c",
+      "Ts",
+      "Ad",
+      "Ah",
+      "As",
+      "2h",
+      "2s"
+     ],
+     [
+      "4d",
+      "4h",
+      "5c",
+      "6s",
+      "7s",
+      "8d",
+      "Tc",
+      "Jd",
+      "Jc",
+      "Kc",
+      "Kh",
+      "2c"
+     ],
+     [
+      "3s",
+      "5d",
+      "7d",
+      "7h",
+      "8s",
+      "9d",
+      "9h",
+      "Td",
+      "Th",
+      "Jh",
+      "Qs",
+      "Kd",
+      "Ks"
+     ],
+     [
+      "4s",
+      "5h",
+      "5s",
+      "6d",
+      "6c",
+      "8h",
+      "9c",
+      "9s",
+      "Js",
+      "Qd",
+      "Qc",
+      "Ac",
+      "2d"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "Qh"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.1992,
+    "loss_se": 1.7976
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.5,
+    "loss_se": 1.9489
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.5156,
+    "loss_se": 1.8099
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "Ks",
+  "bot_loss": 10.5156,
+  "bot_loss_se": 1.8099,
+  "theme": "skill.b2_mixed",
+  "turn": 6
+ },
+ {
+  "id": "big2-mnet-t1-5574300040-07",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300040,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3c",
+      "4c",
+      "5c",
+      "6d",
+      "7d",
+      "9s",
+      "Tc",
+      "Jc",
+      "Qh",
+      "Ah",
+      "2d"
+     ],
+     [
+      "3h",
+      "3s",
+      "4h",
+      "5s",
+      "6c",
+      "Td",
+      "Th",
+      "Js",
+      "Qd",
+      "Kh",
+      "2h"
+     ],
+     [
+      "6h",
+      "6s",
+      "7c",
+      "7h",
+      "7s",
+      "8c",
+      "8h",
+      "8s",
+      "Jd",
+      "Jh",
+      "Kc",
+      "2s"
+     ],
+     [
+      "4s",
+      "5d",
+      "5h",
+      "9d",
+      "9c",
+      "9h",
+      "Ts",
+      "Qs",
+      "Ad",
+      "Ac",
+      "As"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.8555,
+    "loss_se": 2.1441
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "pass",
+  "bot_loss": 9.8555,
+  "bot_loss_se": 2.1441,
+  "theme": "skill.b2_mixed",
+  "turn": 7
+ },
+ {
+  "id": "big2-mnet-t1-5574300048-26",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300048,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "3c",
+      "4d",
+      "7s",
+      "Jc",
+      "Js",
+      "Qd",
+      "Qc",
+      "Qs",
+      "As"
+     ],
+     [
+      "9h",
+      "Ts",
+      "Qh",
+      "Kd",
+      "Ks",
+      "2s"
+     ],
+     [
+      "3h",
+      "3s",
+      "5d",
+      "5c",
+      "5h",
+      "6c",
+      "6s",
+      "Jh"
+     ],
+     [
+      "4c",
+      "4h",
+      "4s",
+      "5s",
+      "6h",
+      "7c",
+      "8c",
+      "8h",
+      "8s",
+      "9d",
+      "2h"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.375,
+    "loss_se": 2.392
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "2h",
+  "bot_loss": 9.375,
+  "bot_loss_se": 2.392,
+  "theme": "skill.saving_twos",
+  "turn": 26
+ },
+ {
+  "id": "big2-mnet-t1-5574300049-09",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300049,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4c",
+      "5d",
+      "5c",
+      "5s",
+      "6d",
+      "7s",
+      "8d",
+      "8h",
+      "Qh",
+      "Ks",
+      "Ad",
+      "2s"
+     ],
+     [
+      "6c",
+      "6s",
+      "8c",
+      "8s",
+      "9c",
+      "9h",
+      "Jd",
+      "Qc",
+      "Kc",
+      "Ac"
+     ],
+     [
+      "3h",
+      "4h",
+      "5h",
+      "7c",
+      "7h",
+      "Td",
+      "Th",
+      "Ts",
+      "Ah",
+      "2c",
+      "2h"
+     ],
+     [
+      "3c",
+      "3s",
+      "4d",
+      "4s",
+      "6h",
+      "7d",
+      "Tc",
+      "Jc",
+      "Js",
+      "Qd",
+      "2d"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 8.3594,
+    "loss_se": 1.8638
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.5781,
+    "loss_se": 2.1589
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "pass",
+  "bot_loss": 8.3594,
+  "bot_loss_se": 1.8638,
+  "theme": "skill.b2_mixed",
+  "turn": 9
+ },
+ {
+  "id": "big2-mnet-t1-5574300052-03",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300052,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "3c",
+      "3s",
+      "4c",
+      "4h",
+      "7d",
+      "7h",
+      "8s",
+      "9d",
+      "9h",
+      "Th",
+      "Js",
+      "Qh"
+     ],
+     [
+      "3h",
+      "4s",
+      "5s",
+      "6s",
+      "Td",
+      "Tc",
+      "Qd",
+      "Qc",
+      "Qs",
+      "Kc",
+      "Kh",
+      "Ad",
+      "2d"
+     ],
+     [
+      "4d",
+      "6c",
+      "7c",
+      "8d",
+      "8h",
+      "9c",
+      "Jc",
+      "Jh",
+      "Ks",
+      "Ac",
+      "Ah",
+      "2h"
+     ],
+     [
+      "5d",
+      "5c",
+      "5h",
+      "6d",
+      "6h",
+      "9s",
+      "Ts",
+      "Jd",
+      "Kd",
+      "As",
+      "2c",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "8c"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ad"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 8.1758,
+    "loss_se": 1.4939
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 8.4219,
+    "loss_se": 1.628
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.1484,
+    "loss_se": 1.5384
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Td"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.3359,
+    "loss_se": 1.575
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.3555,
+    "loss_se": 1.7446
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 20.6211,
+    "loss_se": 1.682
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 20.6367,
+    "loss_se": 1.9727
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "Kh",
+  "bot_loss": 8.1758,
+  "bot_loss_se": 1.4939,
+  "theme": "skill.b2_mixed",
+  "turn": 3
+ },
+ {
+  "id": "big2-mnet-t1-5574300066-26",
+  "game": "big2",
+  "skill": "skill.b2_stop_runner",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300066,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "6s",
+      "9h",
+      "9s",
+      "Td",
+      "Jc"
+     ],
+     [
+      "3h",
+      "Tc"
+     ],
+     [
+      "3s",
+      "4h",
+      "5h",
+      "6d",
+      "7s",
+      "Th",
+      "Kd",
+      "Ks",
+      "Ad",
+      "As"
+     ],
+     [
+      "4d",
+      "6c",
+      "6h",
+      "7d",
+      "7h",
+      "Ts",
+      "Jd",
+      "Js",
+      "Ac",
+      "Ah"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ad"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.5352,
+    "loss_se": 0.7843
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.7227,
+    "loss_se": 1.0562
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 9.7734,
+    "loss_se": 0.6697
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "Ks",
+  "bot_loss": 7.7227,
+  "bot_loss_se": 1.0562,
+  "theme": "skill.b2_stop_runner",
+  "turn": 26
+ },
+ {
+  "id": "big2-mnet-t1-5574300013-15",
+  "game": "big2",
+  "skill": "skill.b2_break_five",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 5574300013,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "6h",
+      "9c",
+      "Th",
+      "Kd",
+      "Kh",
+      "2d",
+      "2c"
+     ],
+     [
+      "3c",
+      "4c",
+      "5c",
+      "6c",
+      "8c",
+      "8s",
+      "Tc",
+      "Jc",
+      "Js",
+      "Ad",
+      "Ah"
+     ],
+     [
+      "6s",
+      "9h",
+      "9s",
+      "Td",
+      "Jh",
+      "Qd",
+      "Qc"
+     ],
+     [
+      "3s",
+      "5d",
+      "7h",
+      "8d",
+      "9d",
+      "Jd",
+      "Kc"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1230,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "5c",
+      "6c",
+      "Tc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "5c",
+      "6c",
+      "8c"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 5.8555,
+    "loss_se": 0.4254
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "5c",
+      "6c",
+      "Jc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.0898,
+    "loss_se": 0.3419
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "5c",
+      "8c",
+      "Tc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.1953,
+    "loss_se": 0.4441
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "5c",
+      "6c",
+      "8c",
+      "Tc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.4727,
+    "loss_se": 0.4509
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "5c",
+      "Tc",
+      "Jc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.5859,
+    "loss_se": 0.3428
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "5c",
+      "6c",
+      "Tc",
+      "Jc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.5859,
+    "loss_se": 0.3345
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "6c",
+      "8c",
+      "Tc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.5898,
+    "loss_se": 0.4376
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "4c",
+      "6c",
+      "Tc",
+      "Jc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.6445,
+    "loss_se": 0.3387
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4c",
+      "5c",
+      "6c",
+      "Tc",
+      "Jc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.6484,
+    "loss_se": 0.3401
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4c",
+      "5c",
+      "6c",
+      "8c",
+      "Tc"
+     ],
+     "combo": "combo.flush"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.7578,
+    "loss_se": 0.4508
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net-t1",
+  "rung_elo": 1230.0,
+  "bot_move": "4c 5c 6c Tc Jc",
+  "bot_loss": 7.6484,
+  "bot_loss_se": 0.3401,
+  "theme": "skill.b2_break_five",
+  "turn": 15
+ },
+ {
+  "id": "big2-mnet-7406700086-10",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700086,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "3s",
+      "4c",
+      "5h",
+      "6d",
+      "6c",
+      "8d",
+      "8c",
+      "Jd",
+      "Qc",
+      "Qh",
+      "2c"
+     ],
+     [
+      "4d",
+      "5d",
+      "7c",
+      "7h",
+      "8s",
+      "9c",
+      "9s",
+      "Jh",
+      "Js",
+      "Ks",
+      "2h"
+     ],
+     [
+      "3c",
+      "3h",
+      "6h",
+      "6s",
+      "7s",
+      "9h",
+      "Tc",
+      "Ad",
+      "Ac",
+      "Ah",
+      "2d"
+     ],
+     [
+      "4h",
+      "4s",
+      "7d",
+      "8h",
+      "9d",
+      "Td",
+      "Th",
+      "Jc",
+      "Kd",
+      "Kc",
+      "Kh",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.1367,
+    "loss_se": 2.0281
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "2s",
+  "bot_loss": 18.1367,
+  "bot_loss_se": 2.0281,
+  "theme": "skill.saving_twos",
+  "turn": 10
+ },
+ {
+  "id": "big2-mnet-7406700070-09",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700070,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "5h",
+      "6d",
+      "7c",
+      "Td",
+      "Th",
+      "Jc",
+      "Jh",
+      "Js",
+      "Kd",
+      "Kh",
+      "2c",
+      "2h"
+     ],
+     [
+      "3s",
+      "4h",
+      "5c",
+      "6h",
+      "7h",
+      "9d",
+      "9s",
+      "Qh",
+      "Qs",
+      "Ah",
+      "2d",
+      "2s"
+     ],
+     [
+      "3c",
+      "3h",
+      "4c",
+      "4s",
+      "5d",
+      "5s",
+      "6s",
+      "7d",
+      "9h",
+      "Ad",
+      "As"
+     ],
+     [
+      "4d",
+      "6c",
+      "7s",
+      "8d",
+      "8c",
+      "8h",
+      "8s",
+      "9c",
+      "Tc",
+      "Jd",
+      "Qd"
+     ]
+    ],
+    "current_play": {
+     "player": 3,
+     "cards": [
+      "Ac"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.9336,
+    "loss_se": 1.8038
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 14.2539,
+    "loss_se": 2.0055
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 20.7852,
+    "loss_se": 2.1205
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "pass",
+  "bot_loss": 14.2539,
+  "bot_loss_se": 2.0055,
+  "theme": "skill.saving_twos",
+  "turn": 9
+ },
+ {
+  "id": "big2-mnet-7406700086-06",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700086,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "3s",
+      "4c",
+      "5h",
+      "6d",
+      "6c",
+      "8d",
+      "8c",
+      "Jd",
+      "Qc",
+      "Qh",
+      "As",
+      "2c"
+     ],
+     [
+      "4d",
+      "5d",
+      "7c",
+      "7h",
+      "8s",
+      "9c",
+      "9s",
+      "Jh",
+      "Js",
+      "Ks",
+      "2h"
+     ],
+     [
+      "3c",
+      "3h",
+      "6h",
+      "6s",
+      "7s",
+      "9h",
+      "Tc",
+      "Ad",
+      "Ac",
+      "Ah",
+      "2d"
+     ],
+     [
+      "4h",
+      "4s",
+      "7d",
+      "8h",
+      "9d",
+      "Td",
+      "Th",
+      "Jc",
+      "Kd",
+      "Kc",
+      "Kh",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "Qs"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.7656,
+    "loss_se": 1.5312
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.4141,
+    "loss_se": 1.7198
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.4609,
+    "loss_se": 1.7138
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 41.6992,
+    "loss_se": 1.7184
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "pass",
+  "bot_loss": 11.7656,
+  "bot_loss_se": 1.5312,
+  "theme": "skill.b2_mixed",
+  "turn": 6
+ },
+ {
+  "id": "big2-mnet-7406700091-15",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700091,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3h",
+      "4d",
+      "5d",
+      "6d",
+      "7d",
+      "9d",
+      "9h",
+      "Td",
+      "Qs",
+      "2c"
+     ],
+     [
+      "3c",
+      "3s",
+      "4c",
+      "4s",
+      "5h",
+      "8d",
+      "8h",
+      "Th",
+      "Jd",
+      "Kd"
+     ],
+     [
+      "5c",
+      "6c",
+      "6h",
+      "6s",
+      "7h",
+      "9c",
+      "Tc",
+      "Jc",
+      "Qc",
+      "Qh",
+      "Kc",
+      "2s"
+     ],
+     [
+      "4h",
+      "5s",
+      "7c",
+      "7s",
+      "8c",
+      "8s",
+      "9s",
+      "Ts",
+      "Js",
+      "2h"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.0039,
+    "loss_se": 1.1489
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "pass",
+  "bot_loss": 11.0039,
+  "bot_loss_se": 1.1489,
+  "theme": "skill.b2_mixed",
+  "turn": 15
+ },
+ {
+  "id": "big2-mnet-7406700091-19",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700091,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3h",
+      "4d",
+      "5d",
+      "6d",
+      "7d",
+      "9d",
+      "9h",
+      "Td",
+      "Qs"
+     ],
+     [
+      "3c",
+      "3s",
+      "4c",
+      "4s",
+      "5h",
+      "8d",
+      "8h",
+      "Th",
+      "Jd",
+      "Kd"
+     ],
+     [
+      "5c",
+      "6c",
+      "6h",
+      "6s",
+      "7h",
+      "9c",
+      "Tc",
+      "Jc",
+      "Qc",
+      "Qh",
+      "Kc",
+      "2s"
+     ],
+     [
+      "4h",
+      "5s",
+      "7c",
+      "7s",
+      "8c",
+      "8s",
+      "9s",
+      "Ts",
+      "Js",
+      "2h"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.8164,
+    "loss_se": 1.1925
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "pass",
+  "bot_loss": 10.8164,
+  "bot_loss_se": 1.1925,
+  "theme": "skill.b2_mixed",
+  "turn": 19
+ },
+ {
+  "id": "big2-mnet-7406700029-15",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700029,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "5d",
+      "6c",
+      "7c",
+      "8c",
+      "9h",
+      "9s",
+      "Ac",
+      "Ah"
+     ],
+     [
+      "3h",
+      "5s",
+      "7d",
+      "7h",
+      "8d",
+      "9d",
+      "Ts",
+      "Jd",
+      "Js",
+      "2c"
+     ],
+     [
+      "3c",
+      "4h",
+      "4s",
+      "5c",
+      "6h",
+      "7s",
+      "Th",
+      "Jc",
+      "Kc"
+     ],
+     [
+      "4d",
+      "4c",
+      "9c",
+      "Qc",
+      "Qh",
+      "Kd",
+      "Ks",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 8.3164,
+    "loss_se": 0.8219
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 16.3516,
+    "loss_se": 0.9503
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "pass",
+  "bot_loss": 8.3164,
+  "bot_loss_se": 0.8219,
+  "theme": "skill.b2_mixed",
+  "turn": 15
+ },
+ {
+  "id": "big2-mnet-7406700039-25",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700039,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "3s",
+      "8c",
+      "9s",
+      "Td",
+      "Kd",
+      "Kc"
+     ],
+     [
+      "7h",
+      "7s",
+      "2d",
+      "2h"
+     ],
+     [
+      "3h",
+      "4s",
+      "5c",
+      "5s",
+      "6s",
+      "7d",
+      "8s",
+      "Jc",
+      "Jh",
+      "Kh",
+      "2c"
+     ],
+     [
+      "4h",
+      "7c",
+      "8h",
+      "Jd",
+      "Js",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.4141,
+    "loss_se": 1.645
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "2c",
+  "bot_loss": 7.4141,
+  "bot_loss_se": 1.645,
+  "theme": "skill.saving_twos",
+  "turn": 25
+ },
+ {
+  "id": "big2-mnet-7406700013-21",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700013,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "4c",
+      "4h",
+      "4s",
+      "5c",
+      "5h",
+      "6h",
+      "6s",
+      "7h",
+      "8d",
+      "9h",
+      "Js",
+      "Qh"
+     ],
+     [
+      "3s",
+      "4d",
+      "5s",
+      "6d",
+      "7c",
+      "7s",
+      "8h",
+      "8s",
+      "Jh",
+      "Qd",
+      "As"
+     ],
+     [
+      "6c",
+      "7d",
+      "8c",
+      "9c",
+      "Ts",
+      "Kd",
+      "2c",
+      "2h"
+     ],
+     [
+      "3c",
+      "3h",
+      "Tc",
+      "Qc",
+      "Ks",
+      "Ad",
+      "Ac",
+      "Ah",
+      "2s"
+     ]
+    ]
+   }
+  },
+  "seat": 3,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.3477,
+    "loss_se": 1.2938
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3h",
+      "Ad",
+      "Ac",
+      "Ah"
+     ],
+     "combo": "combo.full_house"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.25,
+    "loss_se": 1.3246
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 11.8711,
+    "loss_se": 1.5481
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ad",
+      "Ac"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 22.7344,
+    "loss_se": 1.722
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.5,
+    "loss_se": 1.5712
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.7852,
+    "loss_se": 1.6109
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "3c",
+      "3h"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 26.4297,
+    "loss_se": 1.5035
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "3c 3h Ad Ac Ah",
+  "bot_loss": 7.25,
+  "bot_loss_se": 1.3246,
+  "theme": "skill.b2_singles_order",
+  "turn": 21
+ },
+ {
+  "id": "big2-mnet-7406700030-35",
+  "game": "big2",
+  "skill": "skill.when_to_pass",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700030,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "5c",
+      "5h",
+      "2h",
+      "2s"
+     ],
+     [
+      "Qs"
+     ],
+     [
+      "3h",
+      "3s",
+      "6c",
+      "8d",
+      "8h",
+      "Jd",
+      "Qd",
+      "Qc"
+     ],
+     [
+      "4h",
+      "5s",
+      "Kh"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.1406,
+    "loss_se": 0.4333
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "Kh",
+  "bot_loss": 7.1406,
+  "bot_loss_se": 0.4333,
+  "theme": "skill.when_to_pass",
+  "turn": 35
+ },
+ {
+  "id": "big2-mnet-7406700001-23",
+  "game": "big2",
+  "skill": "skill.b2_singles_order",
+  "prompt": "drill.best_move",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700001,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "3s",
+      "6h",
+      "6s",
+      "7c",
+      "7h",
+      "8h",
+      "9c",
+      "Td",
+      "Jd",
+      "Jc",
+      "Kd",
+      "Ac"
+     ],
+     [
+      "4d",
+      "4s",
+      "Tc",
+      "Ts",
+      "2d",
+      "2s"
+     ],
+     [
+      "6d",
+      "7s",
+      "8d",
+      "8s",
+      "9h",
+      "Jh",
+      "Qc",
+      "2h"
+     ],
+     [
+      "6c",
+      "7d",
+      "9s",
+      "Js"
+     ]
+    ]
+   }
+  },
+  "seat": 1,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc",
+      "Ts"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d",
+      "4s"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.1016,
+    "loss_se": 0.2742
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d",
+      "2s"
+     ],
+     "combo": "combo.pair"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 22.9531,
+    "loss_se": 1.1342
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 23.3633,
+    "loss_se": 1.0639
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "4d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 23.8672,
+    "loss_se": 1.0801
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ts"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.1875,
+    "loss_se": 1.1289
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Tc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 24.625,
+    "loss_se": 1.1452
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 27.293,
+    "loss_se": 0.9316
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "4d 4s",
+  "bot_loss": 7.1016,
+  "bot_loss_se": 0.2742,
+  "theme": "skill.b2_singles_order",
+  "turn": 23
+ },
+ {
+  "id": "big2-mnet-7406700092-14",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700092,
+   "start": {
+    "current_player": 1,
+    "hands": [
+     [
+      "4d",
+      "5d",
+      "5s",
+      "6d",
+      "6h",
+      "Tc",
+      "Qs",
+      "Kc",
+      "Kh",
+      "Ac",
+      "2h"
+     ],
+     [
+      "7d",
+      "Td",
+      "Qd",
+      "Kd",
+      "2d",
+      "2c"
+     ],
+     [
+      "4c",
+      "4h",
+      "5c",
+      "5h",
+      "6c",
+      "6s",
+      "8d",
+      "Th",
+      "Js",
+      "Ah",
+      "As"
+     ],
+     [
+      "9s",
+      "Qc",
+      "Qh",
+      "Ks",
+      "Ad",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 0,
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 1,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.668,
+    "loss_se": 1.6101
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Qd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 14.25,
+    "loss_se": 1.6966
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 15.4336,
+    "loss_se": 1.6699
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2d"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 18.5898,
+    "loss_se": 1.6996
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "2c",
+  "bot_loss": 6.668,
+  "bot_loss_se": 1.6101,
+  "theme": "skill.saving_twos",
+  "turn": 14
+ },
+ {
+  "id": "big2-mnet-7406700013-36",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700013,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4c",
+      "4h",
+      "4s",
+      "5c",
+      "5h",
+      "6h",
+      "6s",
+      "7h",
+      "8d",
+      "9h",
+      "Qh"
+     ],
+     [
+      "3s",
+      "4d",
+      "5s",
+      "6d",
+      "7c",
+      "7s",
+      "8h",
+      "8s",
+      "Jh"
+     ],
+     [
+      "6c",
+      "7d",
+      "8c",
+      "9c",
+      "Ts",
+      "2c"
+     ],
+     [
+      "Qc",
+      "2s"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "As"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.4805,
+    "loss_se": 0.9547
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "2c",
+  "bot_loss": 6.4805,
+  "bot_loss_se": 0.9547,
+  "theme": "skill.saving_twos",
+  "turn": 36
+ },
+ {
+  "id": "big2-mnet-7406700047-27",
+  "game": "big2",
+  "skill": "skill.when_to_pass",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700047,
+   "start": {
+    "current_player": 3,
+    "hands": [
+     [
+      "5s",
+      "6c",
+      "7s",
+      "9d"
+     ],
+     [
+      "Td",
+      "Tc",
+      "2d",
+      "2s"
+     ],
+     [
+      "5d",
+      "6h",
+      "Ts",
+      "Qs"
+     ],
+     [
+      "3s",
+      "4s",
+      "5c",
+      "6d",
+      "8d",
+      "8c",
+      "8s",
+      "Kc",
+      "Kh",
+      "2c"
+     ]
+    ],
+    "current_play": {
+     "player": 2,
+     "cards": [
+      "Kd"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 3,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.2812,
+    "loss_se": 1.3902
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Kh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.2891,
+    "loss_se": 1.391
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 12.6211,
+    "loss_se": 0.9882
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "Kh",
+  "bot_loss": 6.2891,
+  "bot_loss_se": 1.391,
+  "theme": "skill.when_to_pass",
+  "turn": 27
+ },
+ {
+  "id": "big2-mnet-7406700016-11",
+  "game": "big2",
+  "skill": "skill.b2_mixed",
+  "prompt": "drill.play_or_pass",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700016,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "Js",
+      "Qs",
+      "Ac",
+      "2d"
+     ],
+     [
+      "3c",
+      "3s",
+      "5d",
+      "5c",
+      "6s",
+      "8c",
+      "Ts",
+      "Qc",
+      "Kd",
+      "Kh",
+      "As",
+      "2c"
+     ],
+     [
+      "3h",
+      "4s",
+      "7c",
+      "7h",
+      "8s",
+      "9c",
+      "Th",
+      "Jc",
+      "Jh",
+      "Ks",
+      "Ah",
+      "2h",
+      "2s"
+     ],
+     [
+      "5h",
+      "5s",
+      "7s",
+      "8h",
+      "Tc",
+      "Qd",
+      "Qh",
+      "Kc"
+     ]
+    ],
+    "current_play": {
+     "player": 1,
+     "cards": [
+      "Jd"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ks"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 3.3633,
+    "loss_se": 0.6714
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jh"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 4.9648,
+    "loss_se": 1.0056
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Jc"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.168,
+    "loss_se": 1.0127
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2s"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 6.3555,
+    "loss_se": 0.7735
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 7.4414,
+    "loss_se": 1.0176
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2h"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "blunder",
+    "reasons": [],
+    "loss": 10.5977,
+    "loss_se": 1.0093
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "Jc",
+  "bot_loss": 6.168,
+  "bot_loss_se": 1.0127,
+  "theme": "skill.b2_mixed",
+  "turn": 11
+ },
+ {
+  "id": "big2-mnet-7406700012-08",
+  "game": "big2",
+  "skill": "skill.saving_twos",
+  "prompt": "drill.keep_the_two",
+  "position": {
+   "game": "big2",
+   "history": [],
+   "seed": 7406700012,
+   "start": {
+    "current_player": 2,
+    "hands": [
+     [
+      "4d",
+      "4h",
+      "5h",
+      "5s",
+      "6s",
+      "7h",
+      "9c",
+      "9h",
+      "Tc",
+      "As",
+      "2h",
+      "2s"
+     ],
+     [
+      "3h",
+      "4c",
+      "5d",
+      "6d",
+      "6h",
+      "8d",
+      "8s",
+      "Jc",
+      "Jh",
+      "Kc",
+      "Ad",
+      "2d"
+     ],
+     [
+      "5c",
+      "6c",
+      "7d",
+      "8h",
+      "9d",
+      "Td",
+      "Js",
+      "Qc",
+      "Qh",
+      "Ac",
+      "2c"
+     ],
+     [
+      "3c",
+      "3s",
+      "4s",
+      "7c",
+      "7s",
+      "9s",
+      "Th",
+      "Ts",
+      "Qd",
+      "Kd",
+      "Kh"
+     ]
+    ],
+    "current_play": {
+     "player": 3,
+     "cards": [
+      "Ah"
+     ],
+     "combo": "combo.single"
+    }
+   }
+  },
+  "seat": 2,
+  "rating": 1248,
+  "answers": [
+   {
+    "action": {
+     "type": "action.pass"
+    },
+    "grade": "best",
+    "reasons": [],
+    "loss": 0.0,
+    "loss_se": 0.0
+   },
+   {
+    "action": {
+     "type": "action.play",
+     "cards": [
+      "2c"
+     ],
+     "combo": "combo.single"
+    },
+    "grade": "mistake",
+    "reasons": [],
+    "loss": 5.9727,
+    "loss_se": 1.7201
+   }
+  ],
+  "brilliant_answers": [],
+  "source": "solver",
+  "band": "net",
+  "rung_elo": 1247.7,
+  "bot_move": "2c",
+  "bot_loss": 5.9727,
+  "bot_loss_se": 1.7201,
+  "theme": "skill.saving_twos",
+  "turn": 8
+ }
+]

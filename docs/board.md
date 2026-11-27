@@ -3,6 +3,7 @@
 ## Workers
 
 ## Results
+- Task 42a (slot 1, 2026-11-28): ticked. Job 416 pilot (4 bands x 100 deals): 60 puzzle candidates, 15 per band; ~46 % of decisions forced, 7-12 % flat; knee picks a different best move on ~25 %, costing 0.22-0.26 points; ~1.7 s reference + 0.24 s knee per decision. candidates.json committed, counts in docs/study-results/mistakes.md §0. No paid API spend.
 - Task 42a (slot 2, 2026-11-27): built and queued, **not ticked**. `experiments/mine_mistakes.py` (same-rung deals, every decision labelled by reference k=8 n=256 and knee k=3 n=64, puzzle candidates), 4 tests pass. Measured ~5 s per labelled decision, so the pilot is ~15 thread-h (plan said ~3): cpu job 416 (`jobq.ps1 log 416`). Then: counts into `docs/study-results/mistakes.md` §0, tick. No paid API spend.
 - Task 40 (slot 1, 2026-11-27): ticked. Job 408 done (4.15 thread-h). Span `random` → raw network 291 Elo on the per-deal scale; ladder `random` 955, network prior τ = 4.34 1096, τ = 1 1230, raw network 1248; old levels `easy` 1161, `medium` 1200 (anchor), `hard` 1222, `expert` 1236; strict order, every adjacent gap within ±8 Elo (bar ±25). Tables and the reading for Task 41 in `docs/study-results/elo-ladder.md` §3-4; `runs/p6_ladder/ladder.json` committed. No paid API spend.
 - Task 48 (slot 3, 2026-11-27): ticked. Hour 24 vs hour 16, networks only, 2,000 deals per lineup, seed 7: +0.08 [-0.26, +0.42] (1+3), +0.13 [-0.34, +0.60] (ABAB), no measurable difference. `h2h --against N` added; row in `docs/study-results/selfplay-luck.md`. No paid API spend.
