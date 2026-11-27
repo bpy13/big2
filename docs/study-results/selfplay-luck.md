@@ -1,7 +1,9 @@
 # Self-play pilot with the luck taken out (plan Task 36)
 
-Status 2026-11-27: training to hour 8 done, both measured against `expert` (below); from 2026-11-27 every checkpoint is measured against
-the app's `expert` only (Task 36b; jobs in the plan's Tasks 36 and 36b).
+Status 2026-11-27: done. 24 GPU-hours of training (76.6 M games) ended at hour 24; every
+4-hour checkpoint was measured against the app's `expert` (Task 36b) and against its older
+selves (Task 36c). Brian kept the hour-24 network for the expert (decision 0007).
+
 Brian, 2026-11-26: "try the self-play luck removal approach with big2 to utilize the currently
 idle GPU".
 
@@ -74,11 +76,28 @@ policy, and `ppo.py` has neither duplicate deals nor a start network to pull tow
 
 ## Smoke run
 
-(pending: `runs/selfplay_luck/choice.json`)
+Job 343, 2026-11-26 (`runs/selfplay_luck/choice.json`). 10 minutes from r3 at each pull, seed 0,
+duplicate baseline; each end network plays r3 (prior's top move, no search) on 2,000 duplicate
+deals per lineup, paired diff per deal with 95 % range.
+
+| Pull | Updates | Games | KL at end | vs r3 1+3 | vs r3 ABAB |
+|---:|---:|---:|---:|---:|---:|
+| **0.02** | 322 | 659,456 | 0.280 | +3.64 [+3.24, +4.07] | +3.04 [+2.50, +3.62] |
+| 0.1 | 309 | 632,832 | 0.084 | +3.33 [+2.93, +3.72] | +2.82 [+2.25, +3.39] |
+| 0.5 | 291 | 595,968 | 0.011 | +1.83 [+1.54, +2.14] | +1.68 [+1.25, +2.14] |
+
+- Pull taken: **0.02**, the smallest on the grid; no setting got worse than r3, so the rule
+  (smallest pull whose range reaches 0 or above in both lineups) picks it.
+- Baseline taken: **mix** (duplicate mean and oracle critic averaged, oracle weight 0.5). Share
+  of the return variance left (second half of the smoke logs): duplicate 0.63, critic 0.54,
+  mix 0.47. Unlike mahjong (critic R² 0.06), Big Two's critic removes about as much as the
+  duplicate, and the two together more. At the end of training: duplicate 0.46, critic 0.38,
+  mix 0.33.
 
 ## Results against `expert`
 
-Jobs 356 (r3 and hour 8, stop rule) and 357 (hour 4), 2026-11-27. The prior's top move, no
+Jobs 356 (r3 and hour 8, stop rule), 357 (hour 4), 359, 361, 363 (hours 12-20) and 399
+(hour 24, the re-run of failed job 365, Task 47), 2026-11-27. The prior's top move, no
 search, against three `expert` seats (1+3) or two (ABAB), 1,000 deals per lineup, seed 7;
 paired diff per deal (the checkpoint's seat minus `expert`'s on the same cards) with 95 %
 bootstrap range; the gain over r3 is paired deal by deal, mean of both lineups.
@@ -88,6 +107,10 @@ bootstrap range; the gain over r3 is paired deal by deal, mean of both lineups.
 | 0 | 1,000 | -1.93 [-2.53, -1.34] | -1.99 [-2.67, -1.32] | (start r3) |
 | 4 | 1,000 | +3.21 [+2.61, +3.84] | +2.59 [+1.85, +3.37] | +3.07 [+2.68, +3.49] |
 | 8 | 1,000 | +3.47 [+2.86, +4.09] | +3.05 [+2.29, +3.87] | +3.29 [+2.87, +3.72] |
+| 12 | 1,000 | +3.33 [+2.70, +3.98] | +2.85 [+2.04, +3.69] | +3.18 [+2.76, +3.65] |
+| 16 | 1,000 | +3.85 [+3.22, +4.55] | +3.19 [+2.33, +4.01] | +3.47 [+2.99, +3.94] |
+| 20 | 1,000 | +3.69 [+3.07, +4.38] | +2.90 [+2.14, +3.72] | +3.33 [+2.88, +3.80] |
+| 24 | 1,000 | +3.62 [+3.02, +4.24] | +3.25 [+2.47, +4.06] | +3.39 [+2.96, +3.84] |
 
 - Ranges got: about ±0.6 a deal (1+3) and ±0.7-0.8 (ABAB) per lineup, ±0.4 on the gain over r3.
 - r3 alone loses to `expert` by about 2 points a deal; after 4 GPU-hours of self-play the
@@ -95,8 +118,24 @@ bootstrap range; the gain over r3 is paired deal by deal, mean of both lineups.
   hour 4, inside the range). Stop rule passed at hour 8 (gain +3.29 [+2.87, +3.72]), so
   training goes on (job 358).
 - This agrees with the superseded check below (gain +3.05 against ISMCTS-1000 at hour 4).
-- Later hours: evals 359, 361, 363, 365 (hours 12-24) and 366 (last checkpoint and r3 at
-  2,000 deals) append to `runs/selfplay_luck/table_expert.md`; Task 36 copies them here.
+- Hours 12 to 24 stay level with hour 8: every one is +3.2 to +3.5 over r3, and every pair of
+  hours lies inside the others' ranges. Two thirds of the final gain (and more) came in the
+  first 4 hours, as in mahjong.
+- The 2,000-deal final match of the last checkpoint and r3 (jobs 366, 400) was dropped on
+  Brian's word (2026-11-27): "we already know it's much stronger than expert, we need to find
+  out whether this improves over the previous versions".
+
+Training (from `runs/selfplay_luck/log.jsonl`): KL(r3 ‖ policy) per decision and the policy's
+entropy at each checkpoint. The pull held the network about the same distance from r3 all run.
+
+| Hour | Updates | Games | KL to r3 | Entropy |
+|---:|---:|---:|---:|---:|
+| 4 | 7,683 | 15.7 M | 0.350 | 0.326 |
+| 8 | 14,218 | 29.1 M | 0.362 | 0.303 |
+| 12 | 19,837 | 40.6 M | 0.371 | 0.312 |
+| 16 | 25,846 | 52.9 M | 0.383 | 0.302 |
+| 20 | 32,325 | 66.2 M | 0.380 | 0.308 |
+| 24 | 37,382 | 76.6 M | 0.376 | 0.307 |
 
 ## Without luck removal (Task 36d)
 
@@ -121,7 +160,40 @@ no duplicate, oracle critic only. Measured vs r3 at 2,000 deals per lineup and v
 
 ## Head to head against older selves (Task 36c)
 
-(pending: `runs/selfplay_luck/table_h2h.md`, jobs 367-371: hour 8 vs 4, then each later hour vs the previous 4-hour checkpoint and vs hour 8; networks only, 2,000 deals per lineup)
+Jobs 367-370 and 401 (hour 24, the re-run of failed job 371, Task 47). Networks only (each
+plays its prior's top move), 2,000 deals per lineup (the first 1,000 are the `expert` matches'
+deals), seed 7; paired diff per deal, the first-named hour's seat minus the other's, with 95 %
+range.
+
+| Hour | Against | Deals | 1+3 | ABAB |
+|---:|---|---:|---:|---:|
+| 8 | hour 4 (previous) | 2,000 | +0.10 [-0.24, +0.46] | +0.43 [-0.09, +0.93] |
+| 12 | hour 8 (previous) | 2,000 | -0.07 [-0.42, +0.28] | -0.10 [-0.62, +0.38] |
+| 16 | hour 8 (first above expert) | 2,000 | +0.13 [-0.23, +0.49] | +0.11 [-0.38, +0.63] |
+| 16 | hour 12 (previous) | 2,000 | -0.10 [-0.45, +0.26] | -0.05 [-0.52, +0.44] |
+| 20 | hour 8 (first above expert) | 2,000 | -0.10 [-0.46, +0.26] | -0.24 [-0.74, +0.27] |
+| 20 | hour 16 (previous) | 2,000 | -0.10 [-0.46, +0.25] | -0.00 [-0.49, +0.48] |
+| 24 | hour 8 (first above expert) | 2,000 | +0.25 [-0.09, +0.59] | +0.38 [-0.13, +0.89] |
+| 24 | hour 20 (previous) | 2,000 | +0.07 [-0.26, +0.42] | +0.40 [-0.09, +0.89] |
+
+- No head-to-head after hour 4 is clear of luck at 2,000 deals: training plateaued at about
+  hour 8, within ±0.4 a deal. Hour 24 is the only checkpoint leaning positive against both its
+  predecessor and hour 8.
+
+## Verdict
+
+- Self-play with the luck taken out works for Big Two: from r3 (-1.9 a deal against `expert`)
+  the network alone, with no search, beats the app's `expert` (ISMCTS-10,000) by about +3.4 a
+  deal in both lineups, a gain of +3.39 [+2.96, +3.84] over r3. Most of it came in the first
+  4 GPU-hours; hours 8 to 24 are level within ±0.4.
+- Unlike Dou Dizhu, the gain against its own start carried over to the outside benchmark. The
+  start was 2 points below that benchmark (Dou Dizhu's was level with it), and half the seats
+  were frozen opponents.
+- Luck removal explains part of the gain, not most of it (Task 36d): about three quarters
+  remains with none of it, and the oracle critic alone matches the duplicate.
+- Kept: Brian (2026-11-27) chose the hour-24 network as the network inside the new expert
+  (decision 0007, Tasks 38-41, 45). The shipped app's `expert` is unchanged by this task.
+- This task started no second long run (that needs Brian's word).
 
 ## First measure (superseded): against r3 and ISMCTS-1000
 
