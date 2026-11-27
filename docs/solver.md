@@ -212,6 +212,30 @@ cards in all hands, not the hidden cards, so it fires only at `max_cards` = 10 o
 fewer (build-phase3.md §4). It runs at the root of ISMCTS and PUCT, and it falls
 back to the normal search when its node budget runs out (`exact: false`).
 
+### 6.6 Network play-outs (`netsearch`)
+
+`crates/search/src/netsearch.rs` (plan Task 38) checks the network's own
+proposals against each other. It keeps the network's top `k` moves by prior, plus
+any move the caller forces in (the move being graded). It draws `n` deals of the
+hidden cards with the rules mask. On each deal it plays every candidate, then
+`depth` plies in which every seat plays the network's top move. The position
+reached is scored as `value_mix · value head + (1 − value_mix) · real score of
+playing on the same way`. With `depth = full` the play-out runs to the end and
+uses the real score. Every candidate sees the same deals, so each one gets its
+mean, its standard error, and the paired loss to the best with its own standard
+error. Deal `j` is seeded by `(seed, j)`, so the result does not depend on the
+thread count.
+
+`value_mix` mirrors PUCT's `leaf_network_weight` so the budget study (Task 39)
+can sweep both the same way (orchestrator, 2026-11-27). Brian's playground showed
+the value head undervaluing some moves by about 2 points (deal 23), so the study
+should include `value_mix < 1` in its sweep.
+
+Use: `big2._core.net_search(state, net=…, k=3, n=64, depth=None)`, the agent spec
+`netsearch:net=….pknn,k=3,n=64,depth=full`, or `big2 search --net … --seat …
+--hand … --k 3 --n 64 --depth full` for one position. PUCT with the same `.pknn`
+stays the second family (`puct:net=…`).
+
 ## References
 
 * Cowling, Powley, Whitehouse. *Information Set Monte Carlo Tree Search.* IEEE

@@ -19,6 +19,7 @@ tournament runner create them::
     make_agent("ismcts:iterations=1000,rollout=structured")
     make_agent("pimc:iterations=200")
     make_agent("puct:simulations=2000,net=models/big2-pvnet-r0.pknn")
+    make_agent("netsearch:net=runs/p6_net/selfplay-h24.pknn,k=3,n=64,depth=full")
     make_agent("qnet:temperature=1.0")  # models/big2-qnet-duty.pknn unless path=…
     make_agent("dmc:checkpoint=runs/dmc/v1/best.pt")
     make_agent("dmcsearch:checkpoint=runs/dmc/v1/best.pt,determinizations=32,top=6")
@@ -33,7 +34,7 @@ import random
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Protocol
 
-from big2._core import Big2State, analyze
+from big2._core import Big2State, analyze, net_search
 from big2.agents.patwa import PatwaGreedy, PatwaSmart
 
 if TYPE_CHECKING:
@@ -131,6 +132,62 @@ class SearchAgent:
         return self.analyze(state)["moves"][0]["cards"]
 
 
+@dataclass
+class NetSearchAgent:
+    """Network play-out search (:func:`big2._core.net_search`): the network's top
+    ``k`` moves by prior, each played out on ``n`` paired deals for ``depth`` plies of
+    network moves (``None`` = to the end), then scored by the value head. Plays the
+    candidate with the best mean.
+
+    Extra keyword options go to :func:`big2._core.net_search` (``value_mix``,
+    ``threads``, ``time_limit``, ``belief``).
+    """
+
+    net: str
+    k: int = 3
+    n: int = 64
+    depth: int | None = None
+    seed: int = 0
+    options: dict[str, Any] = field(default_factory=dict)
+    name: str = ""
+    _calls: int = field(default=0, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        if not self.name:
+            depth = "full" if self.depth is None else self.depth
+            self.name = f"netsearch:k={self.k},n={self.n},depth={depth}"
+
+    def search(self, state: Big2State) -> dict[str, Any]:
+        """Full search output for the player to act."""
+        self._calls += 1
+        return net_search(
+            state,
+            net=self.net,
+            k=self.k,
+            n=self.n,
+            depth=self.depth,
+            seed=(self.seed * 1_000_003 + self._calls) % 2**64,
+            **self.options,
+        )
+
+    def act(self, state: Big2State) -> int:
+        legal = state.legal_actions()
+        if len(legal) == 1:
+            self._calls += 1  # as SearchAgent: later seeds do not depend on forced moves
+            return int(legal[0])
+        return int(self.search(state)["candidates"][0]["cards"])
+
+
+def parse_depth(value: Any) -> int | None:
+    """``"full"`` (or ``None``) → ``None``; otherwise a non-negative ply count."""
+    if value is None or str(value).lower() == "full":
+        return None
+    depth = int(value)
+    if depth < 0:
+        raise ValueError(f"depth must be 'full' or at least 0, not {value!r}")
+    return depth
+
+
 def _parse_value(v: str) -> Any:
     for conv in (int, float):
         try:
@@ -150,6 +207,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
     cuts it short, ``rollout=…`` picks its policy as for ISMCTS; ``belief=rules`` samples
     only the deals the rules allow, for PUCT and ISMCTS alike; ``belief=net,belief_net=….pknn``
     weights them by a learned belief network, see :mod:`big2.rl.belief`),
+    ``netsearch:net=….pknn[,k=3,n=64,depth=full|<plies>,value_mix=1,…]`` (paired network
+    play-outs of the network's top k moves, see :class:`NetSearchAgent`),
     ``patwa-greedy``, ``patwa-smart[:<weight>=…]`` (see :mod:`big2.agents.patwa`),
     ``qnet[:path=….pknn,temperature=…]`` (see :mod:`big2.agents.qnet`),
     ``charlesworth[:temperature=…]`` (his released network, play it with
@@ -185,6 +244,18 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         simulations = int(opts.pop("simulations", 2000))
         return SearchAgent(
             algorithm="puct", iterations=simulations, seed=seed or 0, options=opts, name=spec
+        )
+    if kind == "netsearch":
+        if "net" not in opts:
+            raise ValueError(f"netsearch needs net=<path to .pknn> in {spec!r}")
+        return NetSearchAgent(
+            net=str(opts.pop("net")),
+            k=int(opts.pop("k", 3)),
+            n=int(opts.pop("n", 64)),
+            depth=parse_depth(opts.pop("depth", None)),
+            seed=seed or 0,
+            options=opts,
+            name=spec,
         )
     if kind in ("patwa-greedy", "patwa-smart"):
         # Approximations of Patwa (2026)'s rule-based opponents (big2.agents.patwa).
@@ -227,8 +298,8 @@ def make_agent(spec: str, seed: int | None = None) -> Agent:
         return RolloutSearchAgent(str(opts.pop("checkpoint")), seed=seed or 0, name=spec, **opts)
     raise ValueError(
         f"unknown agent kind {kind!r} in {spec!r} "
-        "(random, greedy, ismcts, pimc, puct, patwa-greedy, patwa-smart, qnet, pvnet, dmc, "
-        "dmcsearch)"
+        "(random, greedy, ismcts, pimc, puct, netsearch, patwa-greedy, patwa-smart, qnet, pvnet, "
+        "dmc, dmcsearch)"
     )
 
 
@@ -237,6 +308,8 @@ __all__ = [
     "RandomAgent",
     "GreedyAgent",
     "SearchAgent",
+    "NetSearchAgent",
+    "parse_depth",
     "PatwaGreedy",
     "PatwaSmart",
     "make_agent",
