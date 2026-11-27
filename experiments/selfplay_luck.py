@@ -42,7 +42,8 @@ from typing import Any
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parent.parent
+#: BIG2_LUCK_ROOT points at the checkout that holds ``runs/`` when this file is run from another.
+ROOT = Path(os.environ.get("BIG2_LUCK_ROOT") or Path(__file__).resolve().parent.parent)
 OUT = ROOT / "runs" / "selfplay_luck"
 SMOKE = ROOT / "runs" / "selfplay_luck_smoke"
 START = "runs/net_r3/best.pt"
@@ -301,8 +302,11 @@ H2H_DEALS = 2000
 FIRST_ABOVE_EXPERT = 8
 
 
-def h2h_pairs(hour: int) -> list[tuple[str, int]]:
-    """The older selves hour ``hour`` plays: the previous 4-hour checkpoint and hour 8."""
+def h2h_pairs(hour: int, against: int | None = None) -> list[tuple[str, int]]:
+    """The older selves hour ``hour`` plays: the previous 4-hour checkpoint and hour 8,
+    or just hour ``against`` when given (Task 48)."""
+    if against is not None:
+        return [("other", against)]
     pairs = [("prev", hour - 4)]
     if hour > FIRST_ABOVE_EXPERT + 4:
         pairs.append(("h8", FIRST_ABOVE_EXPERT))
@@ -312,7 +316,7 @@ def h2h_pairs(hour: int) -> list[tuple[str, int]]:
 def h2h_stage(args: argparse.Namespace) -> None:
     """Hour N against its older selves, networks only (prior top move, no search)."""
     hour = args.hour
-    for name, older in h2h_pairs(hour):
+    for name, older in h2h_pairs(hour, getattr(args, "against", None)):
         folder = OUT / "h2h" / f"h{hour:02d}_vs_h{older:02d}"
         path = folder / f"results_{args.deals}.json"
         if path.exists():
@@ -341,7 +345,8 @@ def h2h_table() -> str:
     for f in sorted((OUT / "h2h").glob("h*/results_*.json")):
         r = json.loads(f.read_text())
         cells = [fmt(r[lu]["paired_diff"], r[lu]["paired_ci95"]) for lu in LINEUPS]
-        what = f"hour {r['older']} ({'previous' if r['kind'] == 'prev' else 'first above expert'})"
+        kinds = {"prev": "previous", "h8": "first above expert", "other": "chosen"}
+        what = f"hour {r['older']} ({kinds[r['kind']]})"
         lines.append(f"| {r['hour']} | {what} | {r['deals']:,} | " + " | ".join(cells) + " |")
     text = "\n".join(lines) + "\n"
     (OUT / "table_h2h.md").write_text(text, encoding="utf-8")
@@ -524,6 +529,7 @@ def main() -> None:
     h = sub.add_parser("h2h")
     h.add_argument("--hour", type=int, required=True)
     h.add_argument("--deals", type=int, default=H2H_DEALS)
+    h.add_argument("--against", type=int, help="play only this older hour (default: previous, 8)")
     for name in ("nodup-train", "nodup-eval"):
         n = sub.add_parser(name)
         n.add_argument(

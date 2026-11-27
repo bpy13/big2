@@ -121,7 +121,21 @@ no duplicate, oracle critic only. Measured vs r3 at 2,000 deals per lineup and v
 
 ## Head to head against older selves (Task 36c)
 
-(pending: `runs/selfplay_luck/table_h2h.md`, jobs 367-371: hour 8 vs 4, then each later hour vs the previous 4-hour checkpoint and vs hour 8; networks only, 2,000 deals per lineup)
+Networks only (prior top move, no search), 2,000 duplicate deals per lineup, seed 7, paired difference per deal with 95 % range; positive means the hour in the first column is stronger. Jobs 367-371, and for hour 24 vs hour 16 (Task 48, `h2h --hour 24 --against 16`, run directly, 8 threads) one extra run.
+
+| Hour | Against | Deals | 1+3 | ABAB |
+|---:|---|---:|---:|---:|
+| 8 | hour 4 (previous) | 2,000 | +0.10 [-0.24, +0.46] | +0.43 [-0.09, +0.93] |
+| 12 | hour 8 (previous) | 2,000 | -0.07 [-0.42, +0.28] | -0.10 [-0.62, +0.38] |
+| 16 | hour 8 (first above expert) | 2,000 | +0.13 [-0.23, +0.49] | +0.11 [-0.38, +0.63] |
+| 16 | hour 12 (previous) | 2,000 | -0.10 [-0.45, +0.26] | -0.05 [-0.52, +0.44] |
+| 20 | hour 8 (first above expert) | 2,000 | -0.10 [-0.46, +0.26] | -0.24 [-0.74, +0.27] |
+| 20 | hour 16 (previous) | 2,000 | -0.10 [-0.46, +0.25] | -0.00 [-0.49, +0.48] |
+| 24 | hour 8 (first above expert) | 2,000 | +0.25 [-0.09, +0.59] | +0.38 [-0.13, +0.89] |
+| 24 | hour 16 (chosen) | 2,000 | +0.08 [-0.26, +0.42] | +0.13 [-0.34, +0.60] |
+| 24 | hour 20 (previous) | 2,000 | +0.07 [-0.26, +0.42] | +0.40 [-0.09, +0.89] |
+
+Hour 24 vs hour 16: +0.08 [-0.26, +0.42] (1+3), +0.13 [-0.34, +0.60] (ABAB). Both ranges include 0: no measurable difference between hours 16 and 24.
 
 ## First measure (superseded): against r3 and ISMCTS-1000
 
