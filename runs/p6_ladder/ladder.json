@@ -1,0 +1,470 @@
+{
+  "task": "Task 40: ladder rungs below the expert and their Elo",
+  "network": "runs/p6_net/selfplay-h24.pknn",
+  "anchor": {
+    "rung": "medium",
+    "elo": 1200.0,
+    "why": "hk-games D98: today's medium = 1200 until Task 41 picks the app's medium"
+  },
+  "quick": false,
+  "settings": {
+    "lineup": "ABAB, four rotations per deal (duplicate), duty on, tiered scoring",
+    "pairwise_rule": "higher final score = 1, equal = 0.5, every seat of one rung vs every seat of the other",
+    "fit": "maximum-likelihood Bradley-Terry, draws as half, 400 log10 scale",
+    "ranges": "95 % percentile bootstrap over deals, 1000 resamples",
+    "span_deals": 500,
+    "probe_deals": 200,
+    "fit_deals_first": 200,
+    "target_gap_half_width": 25.0,
+    "caps": {
+      "network rungs": 3000,
+      "hard/expert": 500
+    },
+    "seed": 11
+  },
+  "rungs": [
+    {
+      "name": "random",
+      "kind": "ladder",
+      "spec": "random",
+      "temperature": null,
+      "elo": 955.2,
+      "range95": [
+        949.4,
+        960.5
+      ],
+      "deals": 2900
+    },
+    {
+      "name": "net-t4.34",
+      "kind": "ladder",
+      "spec": "netprior:net=runs/p6_net/selfplay-h24.pknn,temperature=4.34",
+      "temperature": 4.34,
+      "elo": 1095.6,
+      "range95": [
+        1087.8,
+        1102.3
+      ],
+      "deals": 1000
+    },
+    {
+      "name": "easy",
+      "kind": "old-level",
+      "spec": "greedy:structured=1,epsilon=0.1",
+      "temperature": null,
+      "elo": 1160.6,
+      "range95": [
+        1155.9,
+        1165.3
+      ],
+      "deals": 3300
+    },
+    {
+      "name": "medium",
+      "kind": "old-level",
+      "spec": "qnet:temperature=1.0",
+      "temperature": null,
+      "elo": 1200.0,
+      "range95": [
+        1200.0,
+        1200.0
+      ],
+      "deals": 2400
+    },
+    {
+      "name": "hard",
+      "kind": "old-level",
+      "spec": "ismcts:iterations=500",
+      "temperature": null,
+      "elo": 1221.8,
+      "range95": [
+        1215.5,
+        1228.5
+      ],
+      "deals": 800
+    },
+    {
+      "name": "net-t1",
+      "kind": "ladder",
+      "spec": "netprior:net=runs/p6_net/selfplay-h24.pknn,temperature=1",
+      "temperature": 1.0,
+      "elo": 1230.0,
+      "range95": [
+        1225.4,
+        1234.4
+      ],
+      "deals": 2900
+    },
+    {
+      "name": "expert",
+      "kind": "old-level",
+      "spec": "ismcts:iterations=10000",
+      "temperature": null,
+      "elo": 1236.5,
+      "range95": [
+        1231.2,
+        1241.6
+      ],
+      "deals": 2200
+    },
+    {
+      "name": "net",
+      "kind": "ladder",
+      "spec": "netprior:net=runs/p6_net/selfplay-h24.pknn,temperature=0",
+      "temperature": 0.0,
+      "elo": 1247.7,
+      "range95": [
+        1243.3,
+        1252.4
+      ],
+      "deals": 2500
+    }
+  ],
+  "ladder": [
+    "random",
+    "net-t4.34",
+    "net-t1",
+    "net"
+  ],
+  "ladder_gaps": [
+    {
+      "lower": "random",
+      "upper": "net-t4.34",
+      "gap": 140.4,
+      "range95": [
+        133.1,
+        147.6
+      ],
+      "half_width": 7.3,
+      "pair_games": 3200,
+      "deals": 200,
+      "within_25": true
+    },
+    {
+      "lower": "net-t4.34",
+      "upper": "net-t1",
+      "gap": 134.4,
+      "range95": [
+        127.1,
+        141.8
+      ],
+      "half_width": 7.4,
+      "pair_games": 3200,
+      "deals": 200,
+      "within_25": true
+    },
+    {
+      "lower": "net-t1",
+      "upper": "net",
+      "gap": 17.6,
+      "range95": [
+        13.2,
+        22.2
+      ],
+      "half_width": 4.5,
+      "pair_games": 8000,
+      "deals": 500,
+      "within_25": true
+    }
+  ],
+  "adjacent_gaps_all": [
+    {
+      "lower": "random",
+      "upper": "net-t4.34",
+      "gap": 140.4,
+      "range95": [
+        133.1,
+        147.6
+      ],
+      "half_width": 7.3,
+      "pair_games": 3200,
+      "deals": 200,
+      "within_25": true
+    },
+    {
+      "lower": "net-t4.34",
+      "upper": "easy",
+      "gap": 65.0,
+      "range95": [
+        58.4,
+        72.3
+      ],
+      "half_width": 7.0,
+      "pair_games": 3200,
+      "deals": 200,
+      "within_25": true
+    },
+    {
+      "lower": "easy",
+      "upper": "medium",
+      "gap": 39.4,
+      "range95": [
+        34.7,
+        44.1
+      ],
+      "half_width": 4.7,
+      "pair_games": 8000,
+      "deals": 500,
+      "within_25": true
+    },
+    {
+      "lower": "medium",
+      "upper": "hard",
+      "gap": 21.8,
+      "range95": [
+        15.5,
+        28.5
+      ],
+      "half_width": 6.5,
+      "pair_games": 3200,
+      "deals": 200,
+      "within_25": true
+    },
+    {
+      "lower": "hard",
+      "upper": "net-t1",
+      "gap": 8.2,
+      "range95": [
+        1.9,
+        14.7
+      ],
+      "half_width": 6.4,
+      "pair_games": 3200,
+      "deals": 200,
+      "within_25": true
+    },
+    {
+      "lower": "net-t1",
+      "upper": "expert",
+      "gap": 6.5,
+      "range95": [
+        1.6,
+        11.1
+      ],
+      "half_width": 4.8,
+      "pair_games": 8000,
+      "deals": 500,
+      "within_25": true
+    },
+    {
+      "lower": "expert",
+      "upper": "net",
+      "gap": 11.1,
+      "range95": [
+        6.0,
+        16.3
+      ],
+      "half_width": 5.2,
+      "pair_games": 8000,
+      "deals": 500,
+      "within_25": true
+    }
+  ],
+  "strict_order": true,
+  "ladder_gaps_within_25": true,
+  "old_levels": {
+    "random": {
+      "elo": 955.2,
+      "range95": [
+        949.4,
+        960.5
+      ]
+    },
+    "easy": {
+      "elo": 1160.6,
+      "range95": [
+        1155.9,
+        1165.3
+      ]
+    },
+    "medium": {
+      "elo": 1200.0,
+      "range95": [
+        1200.0,
+        1200.0
+      ]
+    },
+    "hard": {
+      "elo": 1221.8,
+      "range95": [
+        1215.5,
+        1228.5
+      ]
+    },
+    "expert": {
+      "elo": 1236.5,
+      "range95": [
+        1231.2,
+        1241.6
+      ]
+    }
+  },
+  "gap_notes": {},
+  "pairings": [
+    {
+      "a": "easy",
+      "b": "expert",
+      "deals": 500,
+      "thread_seconds": 3148.2
+    },
+    {
+      "a": "easy",
+      "b": "hard",
+      "deals": 200,
+      "thread_seconds": 53.2
+    },
+    {
+      "a": "easy",
+      "b": "medium",
+      "deals": 500,
+      "thread_seconds": 33.3
+    },
+    {
+      "a": "easy",
+      "b": "net",
+      "deals": 500,
+      "thread_seconds": 10.4
+    },
+    {
+      "a": "easy",
+      "b": "net-t1",
+      "deals": 500,
+      "thread_seconds": 11.9
+    },
+    {
+      "a": "easy",
+      "b": "net-t2.66",
+      "deals": 200,
+      "thread_seconds": 4.9
+    },
+    {
+      "a": "easy",
+      "b": "net-t4.34",
+      "deals": 200,
+      "thread_seconds": 4.8
+    },
+    {
+      "a": "easy",
+      "b": "net-t7.07",
+      "deals": 200,
+      "thread_seconds": 5.5
+    },
+    {
+      "a": "easy",
+      "b": "random",
+      "deals": 500,
+      "thread_seconds": 0.0
+    },
+    {
+      "a": "expert",
+      "b": "hard",
+      "deals": 200,
+      "thread_seconds": 1318.2
+    },
+    {
+      "a": "expert",
+      "b": "net",
+      "deals": 500,
+      "thread_seconds": 3121.2
+    },
+    {
+      "a": "expert",
+      "b": "net-t1",
+      "deals": 500,
+      "thread_seconds": 3082.8
+    },
+    {
+      "a": "expert",
+      "b": "random",
+      "deals": 500,
+      "thread_seconds": 3728.7
+    },
+    {
+      "a": "hard",
+      "b": "medium",
+      "deals": 200,
+      "thread_seconds": 68.1
+    },
+    {
+      "a": "hard",
+      "b": "net-t1",
+      "deals": 200,
+      "thread_seconds": 62.1
+    },
+    {
+      "a": "medium",
+      "b": "net",
+      "deals": 500,
+      "thread_seconds": 51.6
+    },
+    {
+      "a": "medium",
+      "b": "net-t1",
+      "deals": 500,
+      "thread_seconds": 53.7
+    },
+    {
+      "a": "medium",
+      "b": "net-t4.34",
+      "deals": 200,
+      "thread_seconds": 23.8
+    },
+    {
+      "a": "medium",
+      "b": "random",
+      "deals": 500,
+      "thread_seconds": 54.8
+    },
+    {
+      "a": "net-t1",
+      "b": "net-t4.34",
+      "deals": 200,
+      "thread_seconds": 8.2
+    },
+    {
+      "a": "net-t1",
+      "b": "random",
+      "deals": 500,
+      "thread_seconds": 16.6
+    },
+    {
+      "a": "net-t2.66",
+      "b": "net-t7.07",
+      "deals": 200,
+      "thread_seconds": 10.3
+    },
+    {
+      "a": "net-t4.34",
+      "b": "net-t7.07",
+      "deals": 200,
+      "thread_seconds": 10.9
+    },
+    {
+      "a": "net-t4.34",
+      "b": "random",
+      "deals": 200,
+      "thread_seconds": 7.0
+    },
+    {
+      "a": "net-t7.07",
+      "b": "random",
+      "deals": 200,
+      "thread_seconds": 8.1
+    },
+    {
+      "a": "net",
+      "b": "net-t1",
+      "deals": 500,
+      "thread_seconds": 21.3
+    },
+    {
+      "a": "net",
+      "b": "random",
+      "deals": 500,
+      "thread_seconds": 13.5
+    }
+  ],
+  "thread_hours": 4.15,
+  "games": 38400,
+  "deals": 9600
+}
