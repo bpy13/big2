@@ -2,6 +2,7 @@
 
 ## Workers
 - slot 1: Task 38 (network play-out search in Rust), building
+- slot 2: Task 37 (self-play network in Rust), building
 
 ## Results
 - Task 36d (slot 1, 2026-11-27): ticked. From r3, 10 min, gain over r3 vs `expert`: luck-removed +2.29, no luck removal at all +1.78, oracle critic only +2.30. Luck removal accounts for part (about a quarter) of the gain; the critic alone matches it. Table in `docs/study-results/selfplay-luck.md`. No paid API spend.
