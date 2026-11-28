@@ -1,6 +1,7 @@
 # Board
 
 ## Workers
+- slot 1: Task 43 (grade lines, trivial flag, accuracy, luck-removed rating), running since 2026-11-28
 
 ## Results
 - Task 49 (slot 2, 2026-11-28): **done**. Sharp decisions (not forced, not flat, second-best loses >= 2.75) on Task 42's 7 bands x 300 deals: 2,185 of 8,400 deal-seats have >= 3 sharp (26 %; 22-35 % a band); 2,046 with at most 2 seats per deal, so the 2,000 bar is met with 2.3 % spare and every band clears 150 (lowest 248). 300 deals a band is the measurement itself, no projection. Table in `docs/study-results/mistakes.md` §3, `experiments/sharp_pass.py`. No paid API spend.
