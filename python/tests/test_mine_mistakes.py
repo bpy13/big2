@@ -79,3 +79,72 @@ def test_candidate_needs_clear_best() -> None:
     noisy = decision()
     noisy["ref"][1]["loss_se"] = 3.0  # lead's range covers 0
     assert mm.candidate(noisy, elo) is None
+
+
+# -- Task 42 (PUCT reference, decisions-<band>.jsonl) ---------------------------------------
+
+needs_belief = pytest.mark.skipif(
+    not (ROOT / mm.NET).exists() or not (ROOT / mm.BELIEF_NET).exists(),
+    reason="network or belief file missing",
+)
+
+
+def test_options_and_grading() -> None:
+    pri = {1: 0.5, 2: 0.3, 4: 0.195, 8: 0.004, 16: 0.001}
+    assert mm.options_of(pri, [16]) == [1, 2, 4, 8, 16]
+    moves = mm.grade_moves({1: (2.0, 0.3), 2: (-1.0, 0.4), 0: (2.1, 0.0)}, pri)
+    assert [m["action"] for m in moves] == ["pass", "3d", "3c"]
+    assert moves[0]["loss"] == 0 and moves[0]["loss_se"] == 0
+    assert moves[-1]["loss"] == pytest.approx(3.1) and moves[-1]["loss_se"] == pytest.approx(0.4)
+    assert not mm.is_flat(moves)
+    assert mm.is_flat([{"loss": 0.0, "loss_se": 0.0}, {"loss": 1.0, "loss_se": 0.6}])
+
+
+def test_rung_probs() -> None:
+    pri = {0: 0.6, 1: 0.3, 2: 0.1}
+    moves = [{"action": "pass"}, {"action": "3d"}, {"action": "3c"}]
+    assert mm.rung_probs("netprior:net=x.pknn,temperature=0", moves, pri) == "exact"
+    assert [m["rung_prob"] for m in moves] == [1.0, 0.0, 0.0]
+    mm.rung_probs("netprior:net=x.pknn,temperature=1", moves, pri)
+    assert [m["rung_prob"] for m in moves] == pytest.approx([0.6, 0.3, 0.1], abs=1e-6)
+    assert mm.rung_probs("ismcts:iterations=500", moves, pri) == "net_prior_t1"
+
+
+def decision42(**over: object) -> dict:
+    d = {
+        "game": "big2", "deal_id": 1, "turn": 0, "seat": 0, "band": "b", "rung_elo": 1200.0,
+        "position": {"hands": [["3d"], ["4d"], ["5d"], ["6d"]], "current_player": 0,
+                     "current_play": None},
+        "legal_count": 2, "played": "pass", "forced": False, "flat": False, "seed": 7,
+        "loss": 3.5, "loss_se": 0.4, "reference": "puct", "best": "3d",
+        "moves": [
+            {"action": "3d", "ev": 1.0, "se": 0.1, "prior": 0.7, "loss": 0.0, "loss_se": 0.0},
+            {"action": "pass", "ev": -2.5, "se": 0.1, "prior": 0.3, "loss": 3.5, "loss_se": 0.4},
+        ],
+    }
+    d.update(over)
+    return d
+
+
+def test_validate42() -> None:
+    assert mm.validate42(decision42()) == []
+    assert mm.validate42({**decision42(), "forced": True}) == []
+    assert mm.validate42(decision42(played="9s"))
+    assert mm.validate42(decision42(loss=1.0))
+    bad = decision42()
+    del bad["rung_elo"]
+    assert mm.validate42(bad)
+
+
+@needs_belief
+def test_play_deal42(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(mm, "PUCT_REF", {**mm.PUCT_REF, "iterations": 16, "belief_candidates": 64})
+    monkeypatch.setattr(mm, "RECHECK_EVERY", 3)
+    recs = mm.play_deal42("net", f"netprior:net={mm.NET},temperature=0", 1247.7, 5)
+    assert recs and all(mm.validate42(r) == [] for r in recs)
+    assert len(recs[0]["history"]) == len(recs)
+    scored = [r for r in recs if not r["forced"]]
+    assert scored and all(r["rung_prob_kind"] == "exact" for r in scored)
+    assert any("repeat" in r and "rules" in r for r in scored)
+    for r in scored:
+        assert sum(m["rung_prob"] for m in r["moves"]) <= 1.0 + 1e-6

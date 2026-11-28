@@ -206,7 +206,7 @@ where
         cfg.leaf_network_weight >= 1.0,
         "leaf_network_weight < 1 mixes in rollouts: use puct_with_rollout"
     );
-    run(state, observer, cfg, net, sampler, None::<&NoRollout>)
+    run(state, observer, cfg, net, sampler, None::<&NoRollout>, None)
 }
 
 /// [`puct_with`] plus a `rollout` policy for the leaf value
@@ -226,7 +226,50 @@ where
     S: Sampler<G>,
     P: Policy<G>,
 {
-    run(state, observer, cfg, net, sampler, Some(rollout))
+    run(state, observer, cfg, net, sampler, Some(rollout), None)
+}
+
+/// [`puct_with_rollout`] with the observer's first action fixed to `first`: every
+/// simulation starts with `first` and the rest of the tree is searched as usual, so
+/// the result values that one move with the whole budget (grading a move the plain
+/// search would rarely visit; plan Task 42). The returned moves hold `first` alone.
+/// The exact information-set endgame (`cfg.infoset_endgame`) is not used: callers
+/// that want it solve every move at once with [`crate::infoset_endgame`].
+///
+/// # Panics
+/// If `first` is not legal at `state`.
+pub fn puct_from_move<G, N, S, P>(
+    state: &G,
+    observer: Player,
+    cfg: &PuctConfig,
+    net: &N,
+    sampler: &S,
+    rollout: &P,
+    first: G::Action,
+) -> PuctAnalysis<G::Action>
+where
+    G: Transposable,
+    N: PriorValue<G>,
+    S: Sampler<G>,
+    P: Policy<G>,
+{
+    assert!(
+        state.legal_actions_vec().contains(&first),
+        "the fixed first move must be legal"
+    );
+    let cfg = PuctConfig {
+        infoset_endgame: None,
+        ..cfg.clone()
+    };
+    run(
+        state,
+        observer,
+        &cfg,
+        net,
+        sampler,
+        Some(rollout),
+        Some(first),
+    )
 }
 
 fn run<G, N, S, P>(
@@ -236,6 +279,7 @@ fn run<G, N, S, P>(
     net: &N,
     sampler: &S,
     rollout: Option<&P>,
+    first: Option<G::Action>,
 ) -> PuctAnalysis<G::Action>
 where
     G: Transposable,
@@ -283,6 +327,7 @@ where
             net,
             sampler,
             rollout,
+            first,
         };
         search_tree(state, observer, &ctx, sims, deadline, anytime, &mut rng)
     };
@@ -295,7 +340,10 @@ where
     };
 
     // Merge root statistics across threads; keep every legal action, even unvisited ones.
-    let legal = state.legal_actions_vec();
+    let legal = match first {
+        Some(a) => vec![a],
+        None => state.legal_actions_vec(),
+    };
     let mut merged: Vec<(G::Action, Sums)> = legal.iter().map(|&a| (a, Sums::default())).collect();
     let mut simulations = 0;
     for (stats, sims, _) in &per_thread {
@@ -336,19 +384,21 @@ where
 }
 
 /// What one search thread works with.
-struct Ctx<'a, N, S, P> {
+struct Ctx<'a, A, N, S, P> {
     cfg: &'a PuctConfig,
     net: &'a N,
     sampler: &'a S,
     /// The leaf rollout policy; only played when `leaf_network_weight < 1`.
     rollout: Option<&'a P>,
+    /// The observer's fixed first action ([`puct_from_move`]), if any.
+    first: Option<A>,
 }
 
 /// Runs one tree for `simulations` (or until `deadline`) and returns root-child sums.
 fn search_tree<G, N, S, P>(
     root: &G,
     observer: Player,
-    ctx: &Ctx<'_, N, S, P>,
+    ctx: &Ctx<'_, G::Action, N, S, P>,
     simulations: u64,
     deadline: Option<Instant>,
     anytime: Option<Instant>,
@@ -390,6 +440,12 @@ where
                 break Estimate::from(&s.outcome().expect("a finished game has an outcome"));
             };
             s.legal_actions(&mut legal);
+            if node == 0 {
+                if let Some(a) = ctx.first {
+                    legal.clear();
+                    legal.push(a);
+                }
+            }
             ensure_priors(&mut tree[node], &s, &legal, ctx, root, to_move);
 
             let best = select(&tree, node, &legal, cfg.c_puct);
@@ -440,7 +496,7 @@ fn ensure_priors<G, N, S, P>(
     node: &mut Node<G::Action>,
     s: &G,
     legal: &[G::Action],
-    ctx: &Ctx<'_, N, S, P>,
+    ctx: &Ctx<'_, G::Action, N, S, P>,
     root: &G,
     to_move: Player,
 ) where
@@ -516,7 +572,7 @@ fn select<A: Copy + Eq>(tree: &[Node<A>], node: usize, legal: &[A], c: f64) -> A
 fn evaluate_leaf<G, N, S, P>(
     node: &mut Node<G::Action>,
     s: &mut G,
-    ctx: &Ctx<'_, N, S, P>,
+    ctx: &Ctx<'_, G::Action, N, S, P>,
     root: &G,
     endgame: &mut Endgame<G>,
     rng: &mut SmallRng,
@@ -684,6 +740,28 @@ mod tests {
 
     /// (b) The search never depends on the true hidden cards: two states that
     /// differ only in cards the observer cannot see give the same analysis.
+    #[test]
+    fn puct_from_move_spends_the_whole_budget_on_that_move() {
+        let net = tiny_net();
+        let s = mid_game(7, 5);
+        let me = s.current_player().unwrap();
+        let legal = s.legal_actions_vec();
+        assert!(legal.len() > 1);
+        let c = PuctConfig {
+            seed: 7,
+            ..cfg(300)
+        };
+        let free = puct(&s, me, &c, &net);
+        // The move the free search visits least is the one this mode exists for.
+        let rare = free.analysis.moves.last().unwrap().action;
+        let a = puct_from_move(&s, me, &c, &net, &UniformSampler, &Greedy::default(), rare);
+        let b = puct_from_move(&s, me, &c, &net, &UniformSampler, &Greedy::default(), rare);
+        assert_eq!(a.analysis.moves.len(), 1);
+        assert_eq!(a.analysis.moves[0].action, rare);
+        assert_eq!(a.analysis.moves[0].visits, 300);
+        assert_eq!(fingerprint(&a.analysis), fingerprint(&b.analysis));
+    }
+
     #[test]
     fn puct_never_depends_on_hidden_cards() {
         let net = tiny_net();

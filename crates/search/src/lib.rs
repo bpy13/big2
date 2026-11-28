@@ -44,5 +44,6 @@ pub use ismcts::{ismcts, ismcts_with, IsmctsConfig, Leaf, NoEvaluator};
 pub use netsearch::{net_search, Depth, NetCandidate, NetSearch, NetSearchResult};
 pub use pimc::{pimc, PimcConfig};
 pub use puct::{
-    puct, puct_with, puct_with_rollout, NoRollout, PuctAnalysis, PuctConfig, PuctPolicy,
+    puct, puct_from_move, puct_with, puct_with_rollout, NoRollout, PuctAnalysis, PuctConfig,
+    PuctPolicy,
 };

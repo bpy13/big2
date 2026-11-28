@@ -45,3 +45,46 @@ theme, the bot's move, its loss and every answer's loss): themes `skill.b2_mixed
 `skill.b2_break_five` 5, `skill.when_to_pass` 3. `runs/` is git-ignored: `candidates.json` and
 `summary.json` are committed with `git add -f`; `decisions.jsonl` (13.8 MB) stays in the
 `big2-2` worktree's `runs/p6_mistakes_pilot/` and in this one, uncommitted.
+
+## 1. Task 42: method (PUCT-2,000 reference, decisions 0010 and 0011)
+
+- **Reference.** PUCT at 2,000 simulations on the hour-24 network, `c_puct` 2.5 (Task 52 has
+  not ticked). Hidden cards come from the phase 3 belief network (`belief="net"`,
+  `runs/p6_mistakes/belief-r1.pknn`, 2,048 candidate deals), which reads the play history.
+  The exact information-set endgame applies at 12 or fewer hidden cards and 10 or fewer in all
+  hands, with deals weighed by the same network. Each move graded gets its own search with the
+  root fixed to that move (`analyze(root_move=...)`), with the same seed for each. The moves
+  graded are those with prior at least 1 %, the top 8 by prior, and the move played. Loss =
+  EV(best) - EV(move); loss SE = `hypot(se_best, se_move)`. `flat` = every move's loss is below
+  0.2 or its 95 % range covers 0. There is no knee scoring (decision 0010).
+- **Bands.** Every rung of Task 40's ladder except `random`, each table being four seats of
+  one rung: `net-t4.34` (1096), `easy` (1161), `medium` (1200), `hard` (1222), `net-t1` (1230),
+  `expert` (1236), `net` (1248).
+- **File.** `runs/p6_mistakes/decisions-<band>.jsonl` uses the plan's shape (`game`, `deal_id`,
+  `seat`, `band`, `rung_elo`, `position`, `legal_count`, `moves` = `[{action, ev, se, prior,
+  loss, loss_se, rung_prob}]` best first, `played`, `loss`, `loss_se`, `forced`, `flat`,
+  `reference`, `seed`). It also carries `turn`, `best`, `exact` and `seconds`, and the deal's
+  full action history (`history`) on the deal's first line. `rung_prob` is exact for the
+  network-prior rungs and is the network prior at τ = 1 for the others (`rung_prob_kind`).
+- **Checks.** One decision in 20 is labelled again with a new seed (`repeat`) and with
+  `belief="rules"` (`rules`); the report gives the share whose D102 word stays the same.
+- **Cost.** A root-fixed search takes 0.17-0.34 s on one thread while the queue's other jobs
+  run, so one graded decision is about 1.2-2.1 s. A deal is 27-89 s with labelling (about 60 s
+  on average), so 7 bands x 300 deals is about 35 thread-h.
+
+### 1.1 The 36 review puzzles regraded (hk-games review 2026-11-27)
+
+`runs/p6_mistakes/review36-regraded.json` (`mine_mistakes.py review36`). Each puzzle's source
+position was replayed from its deal with the full history, and every answer was graded by the
+reference above.
+
+- **B3-02** (deal 5574300040, turn 41; to beat 10♠, player 4 holds 4♠ A♠): J♣ stays best. Q♥
+  loses 12.5 ± 0.5 points (was 19.0) and pass loses 7.6 (was 8.5); both are still blunders.
+  Over 6 seeds Q♥'s loss ranged 11.6-14.7 at 2,048 belief candidates, and 8.4-16.2 at the
+  default 256.
+- **Best answer changes** in 8 of 36: B1-06, B1-09, B3-05, B3-08, B4-01, B4-05, B4-06, B4-09.
+- **The bot's move is no longer a mistake** (loss under the 2.75 inaccuracy line) in 6:
+  B3-07, B3-08, B4-01, B4-05, B4-06, B4-09. Under this reference these are not puzzles.
+- **Grade words** change for 46 of the 194 answers. The reference's best move is always among
+  the listed answers.
+- **None used the exact endgame:** each puzzle has more than 10 cards in all hands.

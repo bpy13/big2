@@ -157,6 +157,7 @@ def analyze(
     infoset_endgame: int | None = None,
     infoset_max_cards: int = 10,  # ... and at most this many cards in all hands
     infoset_max_nodes: int = 1_000_000,
+    root_move: int | None = None,  # puct only: fix the first move (a legal card mask)
 ) -> AnalysisResult: ...
 class NetCandidate(TypedDict):
     cards: int

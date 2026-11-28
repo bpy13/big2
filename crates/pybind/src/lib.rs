@@ -18,11 +18,11 @@ use big2_big2::plan;
 use big2_big2::pvnet::PvNet;
 use big2_big2::value::ValueNet;
 use big2_big2::{classify, Action, RuleSet, State};
-use big2_games::{Game, Policy};
+use big2_games::{Game, Policy, Rewind};
 use big2_search::{
-    ismcts_with, pimc, puct_with_rollout, Analysis, Belief, BeliefConfig, DealPrior, Depth,
-    InfosetConfig, IsmctsConfig, Leaf, NetSampler, NetSearch, Objective, OracleSampler, PimcConfig,
-    PolicyModel, PuctConfig, RulesMask, Sampler, UniformSampler,
+    ismcts_with, pimc, puct_from_move, puct_with_rollout, Analysis, Belief, BeliefConfig,
+    DealPrior, Depth, InfosetConfig, IsmctsConfig, Leaf, NetSampler, NetSearch, Objective,
+    OracleSampler, PimcConfig, PolicyModel, PuctConfig, RulesMask, Sampler, UniformSampler,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -78,6 +78,41 @@ impl DealPrior<State> for NetPrior {
             .iter()
             .map(|d| BeliefNet::deal_log_weight(&lp, observer, d))
             .collect()
+    }
+}
+
+/// The belief network as weights for the exact information-set endgame, which lists
+/// every deal instead of drawing them: a deal the rules exclude
+/// ([`Rewind::history_consistent`]) weighs 0, any other `exp(log weight)` relative to
+/// the true deal (exact Bayes under the network, no tempering).
+struct NetWeight {
+    lp: big2_big2::belief_net::CardLogProbs,
+    observer: usize,
+    offset: f64,
+}
+
+impl NetWeight {
+    fn new(prior: &NetPrior, root: &State, observer: usize) -> Self {
+        let lp = prior.0.card_log_probs(root);
+        let offset = BeliefNet::deal_log_weight(&lp, observer, root);
+        NetWeight {
+            lp,
+            observer,
+            offset,
+        }
+    }
+}
+
+impl Sampler<State> for NetWeight {
+    fn sample(&self, root: &State, observer: usize, rng: &mut SmallRng) -> State {
+        root.determinize(observer, rng)
+    }
+
+    fn weight(&self, deal: &State) -> f64 {
+        if !deal.history_consistent() {
+            return 0.0;
+        }
+        (BeliefNet::deal_log_weight(&self.lp, self.observer, deal) - self.offset).exp()
     }
 }
 
@@ -539,9 +574,14 @@ impl PyState {
 /// exactly over every deal of the hidden cards once at most that many are hidden
 /// and at most `infoset_max_cards` are in all hands (`infoset_max_nodes` positions
 /// at most; then the search runs) and reports `exact`
-/// and `forced` (`(winner, plays)`). The GIL is released while searching.
+/// and `forced` (`(winner, plays)`); with `belief="net"` it weighs every deal by the
+/// belief network (rules-excluded deals 0), with `"rules"` by the rules mask, else
+/// uniformly. `root_move` (PUCT only, a legal card mask) fixes the first move: the
+/// whole budget values that one move and `moves` holds it alone (grading a move the
+/// free search would rarely visit; an exact endgame, when it applies, still answers
+/// for every move). The GIL is released while searching.
 #[pyfunction]
-#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_net=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None, infoset_endgame=None, infoset_max_cards=10, infoset_max_nodes=1_000_000))]
+#[pyo3(signature = (state, *, algorithm="ismcts", iterations=10_000, time_limit=None, exploration=None, threads=1, seed=0, objective="score", endgame_threshold=0, endgame_max_nodes=20_000, rollout_epsilon=0.1, rollout="greedy", rollout_plan_depth=DEFAULT_PLAN_DEPTH, belief=None, belief_net=None, belief_candidates=256, belief_epsilon=0.2, belief_min_ess=0.25, value=None, value_rollout_weight=0.0, net=None, c_puct=None, anytime_first_ms=None, leaf_network_weight=None, rollout_moves=None, infoset_endgame=None, infoset_max_cards=10, infoset_max_nodes=1_000_000, root_move=None))]
 #[allow(clippy::too_many_arguments)]
 fn analyze<'py>(
     py: Python<'py>,
@@ -573,6 +613,7 @@ fn analyze<'py>(
     infoset_endgame: Option<usize>,
     infoset_max_cards: usize,
     infoset_max_nodes: u64,
+    root_move: Option<u64>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let player = state
         .inner
@@ -589,6 +630,15 @@ fn analyze<'py>(
     };
     let rollout = Rollout::parse(rollout, rollout_epsilon, rollout_plan_depth)?;
     let s = state.inner.clone();
+    if root_move.is_some() && algorithm != "puct" {
+        return Err(value_error("root_move works with puct only"));
+    }
+    let root_move = root_move
+        .map(|c| s.action_for_cards(c).map_err(value_error))
+        .transpose()?;
+    if root_move.is_some_and(|a| !s.legal_actions_vec().contains(&a)) {
+        return Err(value_error("root_move must be a legal move"));
+    }
     // "oracle" sees the true hidden cards: a diagnostic upper bound, not fair play.
     let oracle = belief == Some("oracle");
     // "rules": uniform deals minus those the rules exclude (last-card duty; Task 18).
@@ -661,9 +711,15 @@ fn analyze<'py>(
                 max_cards: infoset_max_cards,
                 max_nodes: infoset_max_nodes,
             };
-            let r = py.detach(|| match &rules_mask {
-                Some(m) => big2_search::infoset_endgame(&s, player, &ic, objective, m),
-                None => big2_search::infoset_endgame(&s, player, &ic, objective, &UniformSampler),
+            let r = py.detach(|| match (&rules_mask, &net_prior) {
+                (Some(m), _) => big2_search::infoset_endgame(&s, player, &ic, objective, m),
+                (None, Some(p)) => {
+                    let w = NetWeight::new(p, &s, player);
+                    big2_search::infoset_endgame(&s, player, &ic, objective, &w)
+                }
+                (None, None) => {
+                    big2_search::infoset_endgame(&s, player, &ic, objective, &UniformSampler)
+                }
             });
             r.and_then(|r| {
                 exact = Some(r.exact);
@@ -781,12 +837,29 @@ fn analyze<'py>(
                         .as_ref()
                         .and_then(|p| NetSampler::new(&s, player, p, &bcfg, &mut rng));
                     if let Some(n) = &netted {
-                        let r = puct_with_rollout(&s, player, &cfg, &*net, n, &rollout);
+                        let r = match root_move {
+                            Some(a) => puct_from_move(&s, player, &cfg, &*net, n, &rollout, a),
+                            None => puct_with_rollout(&s, player, &cfg, &*net, n, &rollout),
+                        };
                         (r, Some(n.ess()))
                     } else {
-                        let r = match &rules_mask {
-                            Some(m) => puct_with_rollout(&s, player, &cfg, &*net, m, &rollout),
-                            None => puct_with_rollout(
+                        let r = match (&rules_mask, root_move) {
+                            (Some(m), Some(a)) => {
+                                puct_from_move(&s, player, &cfg, &*net, m, &rollout, a)
+                            }
+                            (Some(m), None) => {
+                                puct_with_rollout(&s, player, &cfg, &*net, m, &rollout)
+                            }
+                            (None, Some(a)) => puct_from_move(
+                                &s,
+                                player,
+                                &cfg,
+                                &*net,
+                                &UniformSampler,
+                                &rollout,
+                                a,
+                            ),
+                            (None, None) => puct_with_rollout(
                                 &s,
                                 player,
                                 &cfg,
