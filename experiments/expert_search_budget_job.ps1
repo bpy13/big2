@@ -10,6 +10,9 @@
 #   -Stage beyond -Simulations N  (cpu lane, Task 51): PUCT at N simulations vs the raw network,
 #                                  2,000 deals per lineup, into runs/p6_budget/beyond
 #   -Stage beyond-report           : table and chart of puct200..puct<last> (Task 51)
+#   -Stage cpuct -CPuct W [-Simulations N] (cpu lane, Task 52): PUCT at N (default 2,000)
+#                                  simulations and c_puct W vs the raw network, 2,000 deals per
+#                                  lineup, into runs/p6_budget/cpuct
 #   -Stage report                  : table, knee, curve (runs\p6_budget\report.md, curve.svg/png)
 # Add with: powershell -NoProfile -File C:\Users\brian\OneDrive\Documents\workspace\repo\.claude\job-queue\jobq.ps1 add -Lane <lane> -Script <this file> -ScriptArgs "-Stage <stage>" [-After '<ids>']
 # Every stage resumes when added again (matches are cached in 100-deal blocks; timed settings
@@ -17,8 +20,9 @@
 # python\big2\_core.pyd has `net_search`; this worktree's must not be rebuilt while Task 36
 # jobs run); the scripts, network and outputs live in this worktree.
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('screen', 'timing-native', 'finalists', 'confirm', 'timing-node', 'report', 'beyond', 'beyond-report')][string]$Stage,
+    [Parameter(Mandatory = $true)][ValidateSet('screen', 'timing-native', 'finalists', 'confirm', 'timing-node', 'report', 'beyond', 'beyond-report', 'cpuct')][string]$Stage,
     [int]$Simulations = 0,
+    [double]$CPuct = 0,
     [string[]]$Settings = @('all'),
     [int]$Threads = 0
 )
@@ -40,5 +44,6 @@ switch ($Stage) {
     'report' { & $py $script report }
     'beyond' { & $py $script beyond --simulations $Simulations }
     'beyond-report' { & $py $script beyond-report }
+    'cpuct' { $sims = if ($Simulations -gt 0) { $Simulations } else { 2000 }; & $py $script cpuct --simulations $sims --c-puct $CPuct }
 }
 exit $LASTEXITCODE

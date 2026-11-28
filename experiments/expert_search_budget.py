@@ -118,13 +118,15 @@ def playout(k: int, n: int, depth: int | str, value_mix: float = 1.0) -> dict[st
     }
 
 
-def puct(simulations: int) -> dict[str, Any]:
+def puct(simulations: int, c_puct: float = C_PUCT) -> dict[str, Any]:
+    tag = "" if c_puct == C_PUCT else f"-c{c_puct:g}"
     return {
-        "name": f"puct{simulations}",
+        "name": f"puct{simulations}{tag}",
         "family": "PUCT",
-        "spec": f"puct:net={NET},simulations={simulations},c_puct={C_PUCT},belief=rules",
+        "spec": f"puct:net={NET},simulations={simulations},c_puct={c_puct:g},belief=rules",
         "step": f"netpuct {simulations} 1",
         "simulations": simulations,
+        "c_puct": c_puct,
     }
 
 
@@ -740,6 +742,20 @@ def beyond_report_stage(args: argparse.Namespace) -> None:
     svg_to_png(BEYOND / "beyond.svg", BEYOND / "beyond.png")
 
 
+# exploration weight (Task 52) --------------------------------------------------------
+
+CPUCT = OUT / "cpuct"
+
+
+def cpuct_stage(args: argparse.Namespace) -> None:
+    """PUCT at ``--simulations`` and ``--c-puct`` against the raw network, 2,000 deals per
+    lineup (same seed and deals as the confirm); cached in blocks, so adding it again resumes."""
+    s = puct(args.simulations, args.c_puct)
+    res = versus(s, RAW, args.deals, CPUCT / s["name"])
+    lu = {k: v["paired_diff"] for k, v in res["lineups"].items()}
+    log(f"{s['name']}: gain {fmt(res['gain']['mean'], res['gain']['ci95'])}, lineups {lu}")
+
+
 # main -------------------------------------------------------------------------------
 
 
@@ -772,6 +788,11 @@ def main() -> None:
     p = sub.add_parser("beyond-report")
     p.add_argument("--deals", type=int, default=CONFIRM_DEALS)
     p.set_defaults(fn=beyond_report_stage)
+    p = sub.add_parser("cpuct")
+    p.add_argument("--simulations", type=int, default=2000)
+    p.add_argument("--c-puct", type=float, required=True)
+    p.add_argument("--deals", type=int, default=CONFIRM_DEALS)
+    p.set_defaults(fn=cpuct_stage)
     args = ap.parse_args()
     args.fn(args)
 
