@@ -88,3 +88,50 @@ reference above.
 - **Grade words** change for 46 of the 194 answers. The reference's best move is always among
   the listed answers.
 - **None used the exact endgame:** each puzzle has more than 10 cards in all hands.
+
+## 2. Task 42: losses per band (jobs 439, 440, 441)
+
+Seven bands, 300 same-rung deals each, every decision labelled by the §1 reference
+(`runs/p6_mistakes/decisions-<band>.jsonl`, `report.md`, `table.json`). Every line passes
+`mine_mistakes.validate42`, every deal's history is stored once, and every graded option carries
+`rung_prob`. "Graded" = neither forced nor flat. Losses are in points, against the reference's best.
+
+| band (rung Elo) | deals | decisions | forced | flat | graded | loss mean / p50 / p75 / p90 / p97 / p99 | share above 0.2 / 0.69 / 2.75 / 6.86 | same word: new seed / rules belief |
+|---|---|---|---|---|---|---|---|---|
+| net-t4.34 (1096) | 300 | 16,952 | 47.1 % | 3.2 % | 8,689 | 1.92 / 0.27 / 2.25 / 5.67 / 11.40 / 18.49 | 51.5 % / 42.2 % / 21.5 % / 7.4 % | 82.3 % (424) / 80.9 % (424) |
+| easy (1161) | 300 | 13,159 | 46.4 % | 2.7 % | 6,858 | 1.49 / 0.00 / 1.27 / 4.39 / 9.84 / 19.70 | 40.0 % / 31.1 % / 15.5 % / 5.3 % | 86.3 % (350) / 83.1 % (350) |
+| medium (1200) | 300 | 13,844 | 43.0 % | 2.9 % | 7,663 | 1.47 / 0.06 / 1.64 / 4.29 / 9.73 / 15.74 | 45.3 % / 36.1 % / 16.5 % / 5.4 % | 82.1 % (368) / 79.9 % (368) |
+| hard (1222) | 300 | 13,096 | 41.5 % | 3.0 % | 7,435 | 1.33 / 0.00 / 1.25 / 4.01 / 9.21 / 14.82 | 40.8 % / 31.9 % / 14.8 % / 4.9 % | 83.5 % (399) / 81.2 % (399) |
+| net-t1 (1230) | 300 | 13,472 | 47.3 % | 2.9 % | 6,889 | 1.00 / 0.00 / 0.74 / 2.92 / 7.75 / 13.49 | 34.2 % / 25.7 % / 10.6 % / 3.6 % | 88.1 % (369) / 82.9 % (369) |
+| expert (1236) | 300 | 12,543 | 43.6 % | 2.2 % | 6,922 | 1.02 / 0.00 / 0.91 / 3.45 / 7.02 / 11.40 | 35.2 % / 27.5 % / 12.5 % / 3.2 % | 84.4 % (378) / 81.2 % (378) |
+| net (1248) | 300 | 13,138 | 46.1 % | 3.0 % | 6,875 | 0.89 / 0.00 / 0.51 / 2.72 / 6.99 / 11.96 | 30.4 % / 22.9 % / 9.9 % / 3.1 % | 83.4 % (308) / 85.1 % (308) |
+
+Pooled: the D102 word stays the same with a new seed in 84.2 % of relabelled decisions, and
+with `belief="rules"` in 81.9 %. Cost: 1.26 s per graded decision on one thread; the exact
+endgame answered 3.0 % of graded decisions. Neither the deal count nor the reference was cut.
+
+- **Losses fall with rung Elo.** Mean loss goes from 1.92 (net-t4.34) to 0.89 (net), and the
+  share above the 2.75 inaccuracy line from 21.5 % to 9.9 %. The order breaks only where the
+  ladder's own Elo gaps are inside its noise: `easy` vs `medium` (1.49 vs 1.47 mean, but medium
+  has more losses above 0.2) and `net-t1` vs `expert` (1.00 vs 1.02).
+- **About 45 % of decisions are forced** (only one legal move, mostly pass) and 2-3 % are
+  flat. Task 43's trivial rule removes roughly half of all decisions.
+- **Even the top rung loses more than 2.75 points on about 10 % of graded decisions** under
+  D102. That points to D102's lines being too tight for this reference; Task 43 fits new ones.
+- **Repeatability is about 84 %.** One graded decision in six changes its D102 word on a new
+  seed: the reference's own noise moves losses near a line across it. The rules-belief check changes the word in 18 %, only slightly
+  more than reseeding does, so the history-aware belief moves single grades but not the band
+  distributions much.
+- **B3-02** is not in these deals. §1.1 stands: J♣ best, Q♥ loses 12.5.
+- **Re-grade?** Task 52 kept `c_puct` 2.5, the weight used here, so it gives no reason to
+  re-grade. Task 51 has not reported yet.
+
+Histograms (loss of the move played, share of graded decisions, bins split at the D102 lines):
+
+![net-t4.34](../img/mistakes/hist-net-t4.34.png)
+![easy](../img/mistakes/hist-easy.png)
+![medium](../img/mistakes/hist-medium.png)
+![hard](../img/mistakes/hist-hard.png)
+![net-t1](../img/mistakes/hist-net-t1.png)
+![expert](../img/mistakes/hist-expert.png)
+![net](../img/mistakes/hist-net.png)
