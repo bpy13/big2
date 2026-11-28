@@ -629,6 +629,117 @@ const {{ chromium }} = require({json.dumps(str(pw))});
     return True
 
 
+# beyond 2,000 simulations (Task 51) --------------------------------------------------
+
+BEYOND = OUT / "beyond"
+BEYOND_SIMS = (200, 500, 1000, 2000, 4000, 8000, 16000, 32000)
+
+
+def beyond_stage(args: argparse.Namespace) -> None:
+    """PUCT at ``--simulations`` against the raw network, 2,000 deals per lineup (same seed and
+    deals as the confirm); cached in blocks, so adding it again resumes."""
+    s = puct(args.simulations)
+    versus(s, RAW, args.deals, BEYOND / s["name"])
+
+
+def beyond_result(sims: int, deals: int) -> dict[str, Any] | None:
+    for folder in (OUT / "screen" / f"puct{sims}", BEYOND / f"puct{sims}"):
+        path = folder / f"results_{deals}.json"
+        if path.exists():
+            return read_json(path)
+    return None
+
+
+def beyond_report_stage(args: argparse.Namespace) -> None:
+    """Table (markdown) and chart (SVG, PNG) of gain against simulations, 200 to the last run."""
+    rows = []
+    for sims in BEYOND_SIMS:
+        r = beyond_result(sims, args.deals)
+        if r is None:
+            continue
+        lu = {k: v["paired_diff"] for k, v in r["lineups"].items()}
+        lci = {k: v["paired_ci95"] for k, v in r["lineups"].items()}
+        rows.append(
+            {
+                "sims": sims,
+                "gain": r["gain"]["mean"],
+                "ci": r["gain"]["ci95"],
+                "lineups": lu,
+                "lineup_ci": lci,
+                "ms": r["seconds_per_move"] * 1000.0,
+            }
+        )
+    for prev, row in zip([None, *rows], rows, strict=False):
+        row["per_doubling"] = (
+            None
+            if prev is None
+            else (row["gain"] - prev["gain"]) / math.log2(row["sims"] / prev["sims"])
+        )
+    lines = [
+        "| Simulations | Gain over raw network [95 %] | 1+3 | ABAB | ms a move | Gain per doubling |",  # noqa: E501
+        "|---:|---|---|---|---:|---:|",
+    ]
+    for r in rows:
+        pd = "" if r["per_doubling"] is None else f"{r['per_doubling']:+.3f}"
+        lines.append(
+            f"| {r['sims']:,} | {fmt(r['gain'], r['ci'])} | "
+            f"{fmt(r['lineups']['1+3'], r['lineup_ci']['1+3'])} | "
+            f"{fmt(r['lineups']['ABAB'], r['lineup_ci']['ABAB'])} | {r['ms']:.0f} | {pd} |"
+        )
+    BEYOND.mkdir(parents=True, exist_ok=True)
+    text = chr(10).join(lines) + chr(10)
+    (BEYOND / "table.md").write_text(text, encoding="utf-8")
+    write_json(BEYOND / "table.json", rows)
+    log(text)
+    if len(rows) < 2:
+        return
+    W, H, L, R, T, B = 900, 560, 90, 40, 60, 90
+    xs = [math.log2(r["sims"]) for r in rows]
+    x0, x1 = min(xs), max(xs)
+    lo = min(r["ci"][0] for r in rows)
+    hi = max(r["ci"][1] for r in rows)
+    lo, hi = min(0.0, lo) - 0.05, hi + 0.05
+    px = lambda v: L + (v - x0) / (x1 - x0 or 1) * (W - L - R)  # noqa: E731
+    py = lambda v: T + (hi - v) / (hi - lo) * (H - T - B)  # noqa: E731
+    el = [
+        f'<rect width="{W}" height="{H}" fill="white"/>',
+        f'<text x="{W / 2}" y="34" font-size="24" text-anchor="middle" font-weight="bold">'
+        "Gain over the raw network, PUCT by simulations</text>",
+        f'<line x1="{L}" y1="{py(0)}" x2="{W - R}" y2="{py(0)}" stroke="#999" stroke-dasharray="6"/>',  # noqa: E501
+        f'<line x1="{L}" y1="{T}" x2="{L}" y2="{H - B}" stroke="#333"/>',
+        f'<line x1="{L}" y1="{H - B}" x2="{W - R}" y2="{H - B}" stroke="#333"/>',
+        f'<text x="{W / 2}" y="{H - 20}" font-size="20" text-anchor="middle">'
+        "simulations a move (log scale)</text>",
+        f'<text transform="translate(26 {H / 2}) rotate(-90)" font-size="20" '
+        'text-anchor="middle">points a deal</text>',
+    ]
+    t = math.ceil(lo * 2) / 2
+    while t <= hi:
+        el.append(
+            f'<text x="{L - 10}" y="{py(t) + 7}" font-size="18" text-anchor="end">{t:.1f}</text>'
+        )
+        t += 0.5
+    pts = []
+    for r, x in zip(rows, xs, strict=True):
+        cx = px(x)
+        el.append(
+            f'<line x1="{cx}" y1="{py(r["ci"][0])}" x2="{cx}" y2="{py(r["ci"][1])}" stroke="#1f6feb" stroke-width="4"/>'  # noqa: E501
+        )
+        el.append(f'<circle cx="{cx}" cy="{py(r["gain"])}" r="8" fill="#1f6feb"/>')
+        el.append(
+            f'<text x="{cx}" y="{H - B + 30}" font-size="18" text-anchor="middle">{r["sims"]:,}</text>'  # noqa: E501
+        )
+        pts.append(f"{cx},{py(r['gain'])}")
+    el.append(f'<polyline points="{" ".join(pts)}" fill="none" stroke="#1f6feb" stroke-width="2"/>')
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" font-family="sans-serif">'  # noqa: E501
+        + "".join(el)
+        + "</svg>"
+    )
+    (BEYOND / "beyond.svg").write_text(svg, encoding="utf-8")
+    svg_to_png(BEYOND / "beyond.svg", BEYOND / "beyond.png")
+
+
 # main -------------------------------------------------------------------------------
 
 
@@ -654,6 +765,13 @@ def main() -> None:
     p.set_defaults(fn=confirm_stage)
     p = sub.add_parser("report")
     p.set_defaults(fn=report_stage)
+    p = sub.add_parser("beyond")
+    p.add_argument("--simulations", type=int, required=True)
+    p.add_argument("--deals", type=int, default=CONFIRM_DEALS)
+    p.set_defaults(fn=beyond_stage)
+    p = sub.add_parser("beyond-report")
+    p.add_argument("--deals", type=int, default=CONFIRM_DEALS)
+    p.set_defaults(fn=beyond_report_stage)
     args = ap.parse_args()
     args.fn(args)
 
