@@ -140,5 +140,13 @@ results in `runs/p6_budget/cpuct/puct2000-c0.25/results_2000.json` and `-c0.5`.
 | Setting | Gain over raw network [95 %] | 1+3 | ABAB |
 |---|---|---|---|
 | puct2000, c 2.5 (Task 39) | +0.34 [+0.10, +0.57] | +0.26 [+0.05, +0.47] | +0.41 [+0.07, +0.75] |
-| puct2000, c 0.5 | (job 430) | | |
-| puct2000, c 0.25 | (job 429) | | |
+| puct2000, c 0.5 | -0.84 [-1.19, -0.49] | -0.65 [-1.00, -0.29] | -1.04 [-1.52, -0.53] |
+| puct2000, c 0.25 | -1.35 [-1.72, -0.98] | -1.22 [-1.63, -0.81] | -1.48 [-1.99, -1.01] |
+
+Both smaller weights lose to the raw network, and the loss grows as the weight drops: c 0.5 is
+1.2 points a deal below c 2.5, c 0.25 is 1.7 below, both well outside the 95 % ranges, in both
+lineups. With little exploration the search locks onto noisy early scores (one simulation's SD
+is about 9 points) and drops the network's prior, which is the better guide at this budget.
+So the reading in (1) is right about the mechanism, but leaning on the prior is what makes
+c 2.5 the best of the weights tried; the weight stays at 2.5. No weight won, so Task 51's 4,000-16,000 runs need not be
+redone. (Weights above 2.5 were not tried.)
