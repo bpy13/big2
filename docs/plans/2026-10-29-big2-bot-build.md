@@ -1194,7 +1194,7 @@ noise band), `reference` (settings string), `seed`.
   - What: the same measure as Task 36c (networks only, prior top move, 2,000 deals per lineup, 1+3 and ABAB, seed 7, paired with 95 % range), hour 24 vs hour 16. `experiments/selfplay_luck.py h2h` only plays hour N vs N-4 and hour 8: add an option (e.g. `--against 16`) rather than changing the default, and run it at once on the PC (about 3 minutes, 8 threads, CPUs 4-19 only: it is short, so run it directly or as a cpu queue job with `-Threads 8`). Use the import setup Task 47 fixed (the big2-p6budget snapshot) so `_core` matches.
   - Done when: the hour 24 vs hour 16 row (both lineups, ranges) is in `docs/study-results/selfplay-luck.md`'s head-to-head table; report the row.
 
-- [ ] **Task 49: sharp-decision pass rate** (sonnet) `[parallel-ok]` (beside earlier phases) needs: Task 42 (taken: slot 2, 2026-11-28 12:00)
+- [x] **Task 49: sharp-decision pass rate** (sonnet) `[parallel-ok]` (beside earlier phases) needs: Task 42
   - Why: hk-games D161 choice 5 (Brian, 2026-11-28: "Let's try that one first"): a deal becomes a puzzle when the seat has at least 3 sharp decisions. Text from hk-games Task E10.
   - What: on Task 42's relabel of the pilot, a decision is sharp when it is not forced, not flat, and the second-best move loses at least the inaccuracy line (D102 2.75 until Task 43). A deal-seat qualifies with at least 3 sharp decisions. Count passing deal-seats per band on the pilot's 400 deals. If under 2,000 deal-seats would pass over all bands at 300 deals a band, report it and plan more deals rather than lowering the bar.
   - Done when: per-band pass counts and the projection to 300 deals a band in `docs/study-results/mistakes.md`.

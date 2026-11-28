@@ -135,3 +135,34 @@ Histograms (loss of the move played, share of graded decisions, bins split at th
 ![net-t1](../img/mistakes/hist-net-t1.png)
 ![expert](../img/mistakes/hist-expert.png)
 ![net](../img/mistakes/hist-net.png)
+
+## 3. Task 49: sharp-decision pass rate
+
+Run on Task 42's relabel (`experiments/sharp_pass.py`; 7 bands x 300 same-rung deals x 4 seats,
+reference of §1; this replaces the 4-band, 100-deal pilot of §0). A decision is **sharp** when it
+is not forced, not flat, and the second-best graded move loses at least 2.75 (D102's inaccuracy
+line; Task 43 may move it). A deal-seat **passes** with at least 3 sharp decisions.
+
+| band (rung Elo) | deal-seats | sharp decisions | seats with >=1 / >=2 sharp | **pass (>=3)** | pass rate | >=4 / >=5 | deals with a passing seat | passing seats, at most 2 per deal |
+|---|---|---|---|---|---|---|---|---|
+| net-t4.34 (1096) | 1,200 | 2,447 | 1,001 / 692 | **414** | 34.5 % | 216 / 84 | 255 | 375 |
+| easy (1161) | 1,200 | 1,887 | 930 / 544 | **262** | 21.8 % | 99 / 37 | 182 | 248 |
+| medium (1200) | 1,200 | 2,090 | 960 / 586 | **308** | 25.7 % | 141 / 67 | 211 | 291 |
+| hard (1222) | 1,200 | 2,139 | 950 / 582 | **306** | 25.5 % | 154 / 76 | 212 | 291 |
+| net-t1 (1230) | 1,200 | 2,082 | 953 / 596 | **302** | 25.2 % | 147 / 56 | 210 | 289 |
+| expert (1236) | 1,200 | 1,962 | 917 / 563 | **281** | 23.4 % | 125 / 52 | 191 | 258 |
+| net (1248) | 1,200 | 2,127 | 950 / 594 | **312** | 26.0 % | 155 / 76 | 214 | 294 |
+| **all** | 8,400 | 14,734 | 6,661 / 4,157 | **2,185** | 26.0 % | 1,037 / 448 | 1,475 | **2,046** |
+
+- **Projection to 300 deals a band: it is the measurement.** Task 42 already has 300 deals a
+  band, so no scaling is needed: 2,185 deal-seats pass (2,046 when at most 2 seats per deal are
+  kept, the sharp rule of Task E10), against the bar of 2,000. The bar is met, with only 2.3 %
+  to spare on the capped count.
+- **Per band the bar of 150 is met everywhere**: the lowest band (`easy`, 248 capped) has 1.65 times it.
+  The share of passing seats is 22-35 %, highest in the weakest band.
+- **Little headroom.** Task 50 will drop some of these (theme coverage needs 30 a theme on the
+  headline decision, and positions must give a clean tree). If it cuts more than about 2 % of the
+  capped count, 2,000 is missed: plan 100 more deals a band as a reserve (7 x 100 deals at about
+  60 s a deal = 11.7 thread-h), rather than lowering the bar.
+- Grade noise (§2: 84 % repeatability) moves some seats across the line; the count is stable to
+  a few percent, not to the exact seat.

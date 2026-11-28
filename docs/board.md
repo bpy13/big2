@@ -3,6 +3,7 @@
 ## Workers
 
 ## Results
+- Task 49 (slot 2, 2026-11-28): **done**. Sharp decisions (not forced, not flat, second-best loses >= 2.75) on Task 42's 7 bands x 300 deals: 2,185 of 8,400 deal-seats have >= 3 sharp (26 %; 22-35 % a band); 2,046 with at most 2 seats per deal, so the 2,000 bar is met with 2.3 % spare and every band clears 150 (lowest 248). 300 deals a band is the measurement itself, no projection. Table in `docs/study-results/mistakes.md` §3, `experiments/sharp_pass.py`. No paid API spend.
 - Task 42 (slot 1, 2026-11-28): **done**. Jobs 439-441: 7 bands x 300 same-rung deals, every decision labelled by PUCT-2000 + belief net (`runs/p6_mistakes/decisions-<band>.jsonl`). Mean loss falls from 1.92 (net-t4.34) to 0.89 (net); share above D102's 2.75 from 21.5 % to 9.9 %; ~45 % of decisions forced, 2-3 % flat. Same D102 word on a new seed 84.2 %, with the rules belief 81.9 %. Table + histograms in `docs/study-results/mistakes.md` §2. Task 43 can start. No paid API spend.
 - Task 52 (slot 1, 2026-11-28): **done**. Lower c_puct loses at puct2000 vs the raw network: c 0.5 -0.84 [-1.19, -0.49], c 0.25 -1.35 [-1.72, -0.98] (c 2.5: +0.34 [+0.10, +0.57]). The weight stays 2.5; no redo of Task 51. Jobs 429, 430. No paid API spend.
 - Task 51 (slot 1, 2026-11-28): queued, **not ticked**. Driver stages `beyond` / `beyond-report` added; cpu jobs 425 (puct4000), 426 (8000), 427 (16000), 428 (report; `jobq.ps1 log 428`, `runs/p6_budget/beyond/table.md`). Then: table + chart into the study doc, 32,000 only if 16,000 still gains beyond noise, tick. No paid API spend.
