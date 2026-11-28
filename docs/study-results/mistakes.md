@@ -166,3 +166,37 @@ line; Task 43 may move it). A deal-seat **passes** with at least 3 sharp decisio
   60 s a deal = 11.7 thread-h), rather than lowering the bar.
 - Grade noise (§2: 84 % repeatability) moves some seats across the line; the count is stable to
   a few percent, not to the exact seat.
+
+## 4. Task 50: branch exploration (method; results pending jobs 444-447)
+
+Driver `experiments/branch_explore.py`, explorer `python/big2/teach/grading/branches.py`
+(game-agnostic), queue script `experiments/branch_explore_job.ps1`.
+
+- **Deal-seats.** §3's rule: 2,046 (at most 2 a deal).
+- **Stand-in player.** The band rung's own move probabilities over every legal move: exact
+  for `net-t4.34` and `net-t1` (softmax of log prior / τ); the network prior at τ = 1 for
+  the search rungs and for `net` (τ = 0 would be deterministic, so the main line alone
+  would cover everything; orchestrator's call, 2026-11-28).
+- **Growing the tree.** First the main line (the source deal; its grades are §2's, they
+  count toward the cap). Then, best first, the unexplored own move with the highest path
+  probability is played. The band's bots answer it (a fresh agent seeded from the deal seed,
+  seat and number of actions, so a branch replays from its history alone) up to the seat's
+  next decision, which is graded by §1's reference. Forced decisions are free and outside
+  the cap. The run stops at 90 % coverage or at the cap.
+- **Coverage.** The probability that a stand-in player's whole path, from the seat's first
+  decision to the deal's end, meets only graded decisions. The order does not depend on
+  the cap, so the pilot at cap 80 also gives caps 20 and 40 (its prefix).
+- **File.** `runs/p6_branches/<run>/trees.jsonl`, one deal-seat a line: `coverage`,
+  `coverage_main`, `curve` (graded, coverage), `graded`, `seconds`, and `nodes` keyed by
+  hk-games `deal_puzzles.history_hash` (checked equal on a real tree). Each node holds
+  `turn`, `history`, `path_p`, `main_line`, `children` (own move -> key or `end`),
+  `trivial`, `theme` (the existing tagger), `exact`, `elo: null` (Task 44 fits it,
+  orchestrator's call 2026-11-28), and `options` (app action, `loss`, `loss_se`, `grade`
+  under D102, `ev`, `se`, `prior`, `rung_prob` of the stand-in, `rung_probs` for τ 4.34 and 1).
+- **Smoke** (2 deal-seats, cap 12): 1.5 s a new grade on one thread. The `expert` band's
+  bots took about 6 s a deal-seat. The `expert` seat went from 0.3 % coverage on the main
+  line (its bot took a 1 %-prior move early) to 62 % at 9 grades. The `net-t4.34` seat
+  stayed at 0 %: at τ 4.34 the stand-in is close to uniform over dozens of legal moves, so
+  that band cannot reach 90 % at any practical cap.
+- **Jobs** (cpu): 444 pilot (100 deal-seats, cap 80), 445 its report
+  (`runs/p6_branches/pilot/report.md`), 446 full run at cap 40, 447 its report.

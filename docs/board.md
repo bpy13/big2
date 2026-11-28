@@ -2,9 +2,9 @@
 
 ## Workers
 - slot 1: Task 43 (grade lines, trivial flag, accuracy, luck-removed rating), running since 2026-11-28
-- slot 2: Task 50 (branch exploration), building
 
 ## Results
+- Task 50 (slot 2, 2026-11-28): built and queued, **not ticked**. Best-first branch explorer (`python/big2/teach/grading/branches.py`, `experiments/branch_explore.py`; keys = hk-games `history_hash`, `elo` null for Task 44, `net` band uses the τ=1 prior: orchestrator's calls). Jobs (cpu): 444 pilot (100 deal-seats, cap 80), 445 pilot report (`runs/p6_branches/pilot/report.md`), 446 full at cap 40 (2,046 deal-seats), 447 full report. Smoke: 1.5 s a grade; `net-t4.34` (τ 4.34, near uniform) cannot reach 90 % coverage. Then: pilot table + cap into `docs/study-results/mistakes.md` §4, tick. No paid API spend.
 - Task 49 (slot 2, 2026-11-28): **done**. Sharp decisions (not forced, not flat, second-best loses >= 2.75) on Task 42's 7 bands x 300 deals: 2,185 of 8,400 deal-seats have >= 3 sharp (26 %; 22-35 % a band); 2,046 with at most 2 seats per deal, so the 2,000 bar is met with 2.3 % spare and every band clears 150 (lowest 248). 300 deals a band is the measurement itself, no projection. Table in `docs/study-results/mistakes.md` §3, `experiments/sharp_pass.py`. No paid API spend.
 - Task 42 (slot 1, 2026-11-28): **done**. Jobs 439-441: 7 bands x 300 same-rung deals, every decision labelled by PUCT-2000 + belief net (`runs/p6_mistakes/decisions-<band>.jsonl`). Mean loss falls from 1.92 (net-t4.34) to 0.89 (net); share above D102's 2.75 from 21.5 % to 9.9 %; ~45 % of decisions forced, 2-3 % flat. Same D102 word on a new seed 84.2 %, with the rules belief 81.9 %. Table + histograms in `docs/study-results/mistakes.md` §2. Task 43 can start. No paid API spend.
 - Task 52 (slot 1, 2026-11-28): **done**. Lower c_puct loses at puct2000 vs the raw network: c 0.5 -0.84 [-1.19, -0.49], c 0.25 -1.35 [-1.72, -0.98] (c 2.5: +0.34 [+0.10, +0.57]). The weight stays 2.5; no redo of Task 51. Jobs 429, 430. No paid API spend.
