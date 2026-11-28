@@ -43,7 +43,7 @@ BOTS = [
 STEP = 0.5
 RATIO = 1.5
 HALF_WIDTH = 100.0
-K_MIN = 0.02
+PRECISION_DEALS = (10, 50, 100, 400, 2000)
 
 
 def fmt(x: float | None, nd: int = 2) -> str:
@@ -146,7 +146,8 @@ def build_report(out: Path, m: int) -> dict[str, Any]:
 
     # 4. luck-removed rating
     luck_path = out / f"luck-m{m}.jsonl"
-    luck = {k: v["mean"] for k, v in read_luck(luck_path).items()}
+    luck_recs = read_luck(luck_path)
+    luck = {k: v["mean"] for k, v in luck_recs.items()}
     games = ladder_games() + ladder_games(out / "pairs")
     same = same_rung_games(out)
     strengths = rt.fit_strengths(games, luck)
@@ -164,12 +165,27 @@ def build_report(out: Path, m: int) -> dict[str, Any]:
         "c": c,
         "margin_sd": msd,
         "deals_for_pm100": rt.deals_for_half_width(c, msd, HALF_WIDTH),
-        "k_min": K_MIN,
+        "k_min": rt.K_MIN,
+        "prior_deals": rt.PRIOR_DEALS,
+        "half_width_after": {str(n): rt.half_width_after(c, msd, n) for n in PRECISION_DEALS},
+        "steady_jitter": rt.steady_jitter(c, msd, rt.K_MIN),
         "variance_cut": rt.variance_cut(games, luck),
         "variance_cut_same_rung": {
             b: rt.variance_cut([g for g in same if g["players"][0] == b], luck) for b in BANDS
         },
     }
+    if m > 0:
+        # The sampled estimate is the deal's true expectation plus noise of variance
+        # mean(sd^2) / m, so the cut at other sample counts follows from the one measured.
+        noise = float(np.mean([x**2 for v in luck_recs.values() for x in v["sd"]]))
+        vc = res["rating"]["variance_cut"]
+        var_score = vc["score_sd"] ** 2
+        limit = vc["cut"] + noise / (m * var_score)
+        res["rating"]["luck_noise"] = {
+            "playout_var": noise,
+            "cut_limit": limit,
+            "cut_at": {str(k): limit - noise / (k * var_score) for k in (1, 4, 16, 64)},
+        }
     # pairing check: observed vs predicted margin of a vs b
     pair_rows = []
     by_pair: dict[tuple[str, str], list[float]] = {}
@@ -281,8 +297,11 @@ def proposal(res: dict[str, Any]) -> dict[str, Any]:
             "margin": "seat's score minus its luck",
             "expected_margin": "s_player - mean(s over the four seats), s = rating / c",
             "c": r["c"],
-            "update": "R <- R + max(1/(n+1), k_min) * c * (margin - expected_margin)",
+            "update": "R <- R + max(1/(n+prior_deals+1), k_min) * c * (margin - expected_margin)",
             "k_min": r["k_min"],
+            "prior_deals": r["prior_deals"],
+            "half_width_after": r["half_width_after"],
+            "steady_jitter": r["steady_jitter"],
             "margin_sd": r["margin_sd"],
             "deals_for_pm100": r["deals_for_pm100"],
             "bots": {
@@ -415,6 +434,12 @@ def markdown(res: dict[str, Any]) -> str:
         f"rating points per point of margin a deal; margin SD {r['margin_sd']:.2f}; deals for "
         f"+-100 (95 %): {r['deals_for_pm100']}.\n"
     )
+    hw = ", ".join(f"{n} deals +-{x:.0f}" for n, x in r["half_width_after"].items())
+    o.append(
+        f"95 % half-width of a player's rating after {hw}; steady step k_min = "
+        f"{r['k_min']:.4f} leaves a jitter SD of {r['steady_jitter']:.0f} on a constant player; "
+        f"the start rating counts as {r['prior_deals']} deals.\n"
+    )
     o.append(row("bot", "strength (points a deal)", "rating", "95 % range", "half A", "half B"))
     o.append(sep(6))
     for name in sorted(r["ratings"], key=lambda n: r["ratings"][n]):
@@ -436,6 +461,14 @@ def markdown(res: dict[str, Any]) -> str:
         f"{v['margin_sd']:.2f}, cut {pct(v['cut'])}; duplicate leave-one-out baseline cut "
         f"{pct(v.get('duplicate_cut'))} (margin SD {fmt(v.get('duplicate_margin_sd'))}).\n"
     )
+    if "luck_noise" in r:
+        ln = r["luck_noise"]
+        at = ", ".join(f"m={k}: {pct(x)}" for k, x in ln["cut_at"].items())
+        o.append(
+            f"Self-play noise: one sampled game's score varies with SD "
+            f"{math.sqrt(ln['playout_var']):.2f} around the deal's expectation, so the cut at "
+            f"other sample counts is {at}; limit (exact expectation) {pct(ln['cut_limit'])}.\n"
+        )
     o.append(
         "Same-rung tables (Task 42's deals): variance cut and mean margin by seat (should be 0):\n"
     )

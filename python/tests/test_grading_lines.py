@@ -174,13 +174,20 @@ def test_rating_recovers_strengths_and_is_not_capped():
 def test_update_and_deals_needed():
     c = 150.0  # rating points per point of margin
     # a 1500 player at a table of three 1500s: expected margin 0; wins 2 points -> rating up
-    r1 = rt.update(1500.0, 0, 2.0, [1500.0] * 3, c)
+    r1 = rt.update(1500.0, 0, 2.0, [1500.0] * 3, c, prior_deals=0)
     assert r1 == pytest.approx(1500.0 + 1.0 * c * 2.0)
+    # the start rating counts as prior_deals deals
+    r1p = rt.update(1500.0, 0, 2.0, [1500.0] * 3, c, prior_deals=19)
+    assert r1p == pytest.approx(1500.0 + c * 2.0 / 20)
     # after many deals the step is k_min
     r2 = rt.update(1500.0, 10_000, 2.0, [1500.0] * 3, c, k_min=0.02)
     assert r2 == pytest.approx(1500.0 + 0.02 * c * 2.0)
     # expected margin against weaker opponents is positive, so the same win moves less
-    r3 = rt.update(1500.0, 0, 2.0, [600.0] * 3, c)
+    r3 = rt.update(1500.0, 0, 2.0, [600.0] * 3, c, prior_deals=0)
     assert r3 < r1
+    assert rt.half_width_after(c, 20.0, 400) == pytest.approx(1.96 * 150 * 20 / 20)
+    assert rt.steady_jitter(c, 20.0, 1 / 400) == pytest.approx(
+        3000 * math.sqrt((1 / 400) / (2 - 1 / 400))
+    )
     assert rt.expected_margin(10.0, [0.0, 0.0, 0.0]) == pytest.approx(7.5)
     assert rt.deals_for_half_width(c, 20.0, 100.0) == math.ceil((1.96 * 150 * 20 / 100) ** 2)

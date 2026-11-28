@@ -1,8 +1,8 @@
 """Luck estimates and the new expert's games for the luck-removed rating (plan Task 43).
 
     python experiments/grading_rating.py luck --m 0    # one top-move self-play of every deal
-    python experiments/grading_rating.py luck --m 16   # 16 sampled self-plays (tau 1) of every deal
     python experiments/grading_rating.py luck --m 16   # 16 sampled self-plays (tau 1) a deal
+    python experiments/grading_rating.py play          # puct2000 vs net / expert, ABAB, 500 deals
     python experiments/grading_rating.py report        # runs/p6_grading/report.md + proposal.json
 
 ``luck`` plays every deal of Task 40's ladder games (``runs/p6_ladder/pairs``, copied from the

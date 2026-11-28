@@ -18,9 +18,12 @@ the zero player (random play) at 0 and the top player (the expert's network play
 move) at ``top_rating`` (3000). ``c`` = rating points per point of margin a deal.
 
 **A player's rating after each deal** (:func:`update`): with ``n`` deals so far,
-``R <- R + K * c * (margin - expected_margin)``, ``K = max(1 / (n + 1), k_min)``: the running
-mean of the margins while few deals are known, a fixed step afterwards so the rating follows a
-player who improves. :func:`deals_for_half_width` gives the deals a stable rating needs.
+``R <- R + K * c * (margin - expected_margin)``, ``K = max(1 / (n + prior_deals + 1), k_min)``:
+a running mean of the margins that starts from the prior rating (worth ``prior_deals`` deals)
+while few deals are known, and a fixed step ``k_min`` afterwards so the rating follows a player
+who improves. :func:`deals_for_half_width` gives the deals a stable rating needs,
+:func:`half_width_after` the 95 % half-width after ``n`` deals and :func:`steady_jitter` the SD a
+fixed step leaves on a player whose strength does not change.
 """
 
 from __future__ import annotations
@@ -36,6 +39,14 @@ Luck = Mapping[Any, Sequence[float]]
 
 TOP_RATING = 3000.0
 """The expert's network (top move) on the scale; random play sits at 0."""
+
+K_MIN = 1 / 400
+"""The fixed step once a player has 400 deals: a changed strength shows within a few hundred
+deals, and a constant player's rating jitters by about 3.5 % of one deal's rating swing."""
+
+PRIOR_DEALS = 20
+"""The start rating counts as this many deals, so one lucky deal cannot move a new player by
+thousands of points."""
 
 
 def margins(games: Iterable[Game], luck: Luck) -> list[tuple[str, Any, int, float]]:
@@ -109,18 +120,36 @@ def update(
     margin: float,
     opponent_ratings: Sequence[float],
     c: float,
-    k_min: float = 0.02,
+    k_min: float = K_MIN,
+    prior_deals: int = PRIOR_DEALS,
 ) -> float:
     """The rating after one more deal. ``deals`` is the count before this deal; the step is the
-    running-mean weight ``1 / (deals + 1)`` until it falls to ``k_min``, then ``k_min``."""
+    running-mean weight ``1 / (deals + prior_deals + 1)`` (the start rating counts as
+    ``prior_deals`` deals) until it falls to ``k_min``, then ``k_min``."""
     exp = expected_margin(rating / c, [r / c for r in opponent_ratings])
-    k = max(1.0 / (deals + 1), k_min)
+    k = max(1.0 / (deals + prior_deals + 1), k_min)
     return rating + k * c * (margin - exp)
 
 
 def deals_for_half_width(c: float, margin_sd: float, half_width: float = 100.0) -> int:
     """Deals whose mean margin puts the rating inside ``± half_width`` (95 %)."""
     return int(math.ceil((1.96 * c * margin_sd / half_width) ** 2))
+
+
+def half_width_after(c: float, margin_sd: float, deals: int) -> float:
+    """The 95 % half-width of a rating that is the mean margin of ``deals`` deals."""
+    if deals <= 0:
+        raise ValueError("deals must be positive")
+    return 1.96 * c * margin_sd / math.sqrt(deals)
+
+
+def steady_jitter(c: float, margin_sd: float, k: float) -> float:
+    """SD of a rating updated with a fixed step ``k`` for a player of constant strength
+    (``R <- R + k * (x - R)`` with ``x`` of SD ``c * margin_sd`` has variance ``k / (2 - k)``
+    times the input's)."""
+    if not 0 < k < 2:
+        raise ValueError("k must be between 0 and 2")
+    return c * margin_sd * math.sqrt(k / (2 - k))
 
 
 def margin_sd(games: Iterable[Game], luck: Luck, strengths: Mapping[str, float]) -> float:
@@ -218,14 +247,18 @@ def split_by_rotation(games: Iterable[Game], parity_of: Any) -> list[dict[str, A
 
 
 __all__ = [
+    "K_MIN",
+    "PRIOR_DEALS",
     "TOP_RATING",
     "bootstrap_ratings",
     "deals_for_half_width",
     "expected_margin",
     "fit_strengths",
+    "half_width_after",
     "margin_sd",
     "margins",
     "split_by_rotation",
+    "steady_jitter",
     "to_rating",
     "update",
     "variance_cut",

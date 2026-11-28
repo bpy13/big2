@@ -1,0 +1,232 @@
+{
+ "task": "Task 43: grade lines, trivial flag, accuracy, luck-removed rating",
+ "reference": "PUCT-2000, c_puct 2.5, belief=net, exact endgame at <= 12 hidden cards (decision 0010)",
+ "trivial": {
+  "rule": "forced (one legal move) or flat (every evaluated move's loss under 0.2 points or its 95 % range covers 0); no grade word, counts in no score",
+  "share_by_band": {
+   "net-t4.34": 0.4874351109013686,
+   "easy": 0.47883577779466524,
+   "medium": 0.4464750072233459,
+   "hard": 0.4322693952351863,
+   "net-t1": 0.48864311163895485,
+   "expert": 0.44813840389061627,
+   "net": 0.47670878368092556
+  }
+ },
+ "lines": {
+  "great": 0.5,
+  "good": 2.5,
+  "inaccuracy": 7.0,
+  "mistake": 10.5
+ },
+ "lines_words": [
+  "great",
+  "good",
+  "inaccuracy",
+  "mistake",
+  "blunder"
+ ],
+ "lines_rule": {
+  "top_band": "net",
+  "medium_band": "medium",
+  "good_share": 0.1,
+  "inaccuracy_share": 0.03,
+  "mistake_share": 0.03,
+  "min_great": 0.2,
+  "ratio": 1.5,
+  "step": 0.5,
+  "noise_half_width": 0.48333600000000004,
+  "raw": [
+   0.48333600000000004,
+   2.7218200000000006,
+   6.987004,
+   9.732260000000005
+  ]
+ },
+ "d102": {
+  "great": 0.2,
+  "good": 0.69,
+  "inaccuracy": 2.75,
+  "mistake": 6.86
+ },
+ "accuracy_s": 10.098865286222745,
+ "accuracy": "mean over non-trivial decisions of 100 * exp(-loss / accuracy_s)",
+ "apl": "mean points lost over non-trivial decisions",
+ "elo_from_apl": {
+  "a": 2828.322705996641,
+  "b": -1818.4558550377403,
+  "formula": "rating = a + b * ln(APL)",
+  "rms_residual": 103.39455677024281,
+  "games_for_pm100": {
+   "net-t4.34": 1350,
+   "easy": 2857,
+   "medium": 1259,
+   "hard": 1867,
+   "net-t1": 2160,
+   "expert": 1806,
+   "net": 2068
+  }
+ },
+ "rating": {
+  "scale": {
+   "zero": "random",
+   "top": "net",
+   "top_rating": 3000.0
+  },
+  "luck": "the hour-24 network plays all four seats of the deal; m=16 sampled games at temperature 1",
+  "margin": "seat's score minus its luck",
+  "expected_margin": "s_player - mean(s over the four seats), s = rating / c",
+  "c": 102.02371771935967,
+  "update": "R <- R + max(1/(n+prior_deals+1), k_min) * c * (margin - expected_margin)",
+  "k_min": 0.0025,
+  "prior_deals": 20,
+  "half_width_after": {
+   "10": 1335.0143104473777,
+   "50": 597.0365498190689,
+   "100": 422.1685929932836,
+   "400": 211.0842964966418,
+   "2000": 94.39976718984235
+  },
+  "steady_jitter": 76.20026120581765,
+  "margin_sd": 21.111967304972605,
+  "deals_for_pm100": 1783,
+  "bots": {
+   "random": {
+    "rating": 0.0,
+    "range95": [
+     0.0,
+     0.0
+    ]
+   },
+   "easy": {
+    "rating": 1988.9330598048955,
+    "range95": [
+     1935.63315085805,
+     2046.1779705108995
+    ]
+   },
+   "medium": {
+    "rating": 2304.6576016910212,
+    "range95": [
+     2251.6734938105437,
+     2360.2874865387294
+    ]
+   },
+   "hard": {
+    "rating": 2424.738816017688,
+    "range95": [
+     2345.5929690809185,
+     2517.9833709060817
+    ]
+   },
+   "expert": {
+    "rating": 2712.4859373639592,
+    "range95": [
+     2661.2462641213774,
+     2767.3964648845954
+    ]
+   },
+   "net": {
+    "rating": 3000.0,
+    "range95": [
+     3000.0,
+     3000.0
+    ]
+   },
+   "puct2000": {
+    "rating": 3047.333391970381,
+    "range95": [
+     2980.5105258378303,
+     3110.8484250696474
+    ]
+   }
+  },
+  "rungs": {
+   "easy": {
+    "rating": 1988.9330598048955,
+    "range95": [
+     1935.63315085805,
+     2046.1779705108995
+    ]
+   },
+   "expert": {
+    "rating": 2712.4859373639592,
+    "range95": [
+     2661.2462641213774,
+     2767.3964648845954
+    ]
+   },
+   "hard": {
+    "rating": 2424.738816017688,
+    "range95": [
+     2345.5929690809185,
+     2517.9833709060817
+    ]
+   },
+   "medium": {
+    "rating": 2304.6576016910212,
+    "range95": [
+     2251.6734938105437,
+     2360.2874865387294
+    ]
+   },
+   "net": {
+    "rating": 3000.0,
+    "range95": [
+     3000.0,
+     3000.0
+    ]
+   },
+   "net-t1": {
+    "rating": 2871.420171220112,
+    "range95": [
+     2815.436795377933,
+     2925.090813934213
+    ]
+   },
+   "net-t2.66": {
+    "rating": 2220.0340261991355,
+    "range95": [
+     2088.3070506290974,
+     2351.793939636623
+    ]
+   },
+   "net-t4.34": {
+    "rating": 1556.964018449174,
+    "range95": [
+     1470.4146398869555,
+     1636.5837761374783
+    ]
+   },
+   "net-t7.07": {
+    "rating": 1148.5471766115497,
+    "range95": [
+     1048.866821456116,
+     1240.3368333197175
+    ]
+   },
+   "puct2000": {
+    "rating": 3047.333391970381,
+    "range95": [
+     2980.5105258378303,
+     3110.8484250696474
+    ]
+   },
+   "random": {
+    "rating": 0.0,
+    "range95": [
+     0.0,
+     0.0
+    ]
+   }
+  },
+  "variance_cut": {
+   "seats": 169600,
+   "score_sd": 27.576528165459433,
+   "margin_sd": 22.180878189053246,
+   "cut": 0.3530387088535277,
+   "duplicate_cut": 0.32853904110737076,
+   "duplicate_margin_sd": 22.596957643871217
+  }
+ }
+}

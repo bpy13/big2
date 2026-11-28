@@ -5,6 +5,37 @@ Example, Why it matters, Options with the Default marked. The orchestrator turns
 
 ## Open
 
+**Grade words, accuracy and the luck-removed rating: do these settings go into the app?** (Task 43)
+- What it is: how the app grades one move, scores one game, and rates a player. (1) A move's loss
+  is the points the expert's search says it gave away. Trivial moves (only one legal move, or
+  every move worth the same within noise) get no word and count in nothing; that is about half
+  of all moves. (2) Words by loss in points: great up to 0.5, good up to 2.5, inaccuracy up to
+  7, mistake up to 10.5, blunder above (today: 0.2 / 0.69 / 2.75 / 6.86). (3) A game's accuracy
+  (0-100) is the average of `100 x exp(-loss / 10.1)` over its non-trivial moves, so a loss of 7
+  scores 50; the average points lost (APL) is shown beside it. (4) The rating is points won
+  minus the luck of the cards: the luck of a deal is what the expert's network scores when it
+  plays all four seats of that deal (16 sampled games). Random play is 0, the raw network 3000,
+  and the network with search lands at 3047. A player's rating moves after each deal by
+  `K x 102 x (points minus luck minus what the table's ratings predict)`, K = 1/(deals + 21)
+  until it reaches 1/400. Details: `docs/study-results/grading-template.md`,
+  `runs/p6_grading/proposal.json`.
+- Example: in Task 42's games the raw network (the best bot without search) loses more than 2.75
+  points on 10 % of its non-trivial moves, so today's lines call a tenth of the expert's own moves
+  mistakes; under the new lines it plays 75 % great, 14 % good, 8 % inaccuracy, 3 % mistake or
+  blunder. Where the six bots sit on the new scale: random 0, easy (greedy) 1989, medium
+  (Q-network) 2305, hard (ISMCTS-500) 2425, old expert (ISMCTS-10,000) 2712, raw hour-24 network
+  3000; new expert (network + PUCT-2,000) 3047 [2981, 3111]. A player who has played 100 deals
+  has a rating known to about +-420; after 400 deals +-210; after 2,000 deals +-95 (the cards
+  decide about a third of a deal's score; the luck term removes 35 % of the variance, the most the
+  method can reach is 37 %).
+- Why it matters: every grade word players see, the accuracy number on each game, and the rating
+  shown on the ladder and used to match puzzles; hk-games Tasks E2 and E3 build from this file.
+- Options: (a) take the proposal as it stands (lines 0.5 / 2.5 / 7 / 10.5, accuracy as above,
+  rating with the raw network at 3000 and the new expert at 3047, show the APL-based estimate
+  only as "performance this game"); (b) same, but pin the new expert at 3000 (then the raw network
+  is 2954, old expert 2670, medium 2270); (c) keep today's lines (0.2 / 0.69 / 2.75 / 6.86) and
+  take only the trivial rule, accuracy and rating. Default: (a).
+
 ## Answered
 
 **Keep the hour-24 self-play network for `expert`, or keep the old one?** (Task 36)
