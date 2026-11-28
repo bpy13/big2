@@ -35,6 +35,7 @@ Example, Why it matters, Options with the Default marked. The orchestrator turns
   only as "performance this game"); (b) same, but pin the new expert at 3000 (then the raw network
   is 2954, old expert 2670, medium 2270); (c) keep today's lines (0.2 / 0.69 / 2.75 / 6.86) and
   take only the trivial rule, accuracy and rating. Default: (a).
+- Card sent 2026-11-28 (orchestrator).
 
 ## Answered
 
