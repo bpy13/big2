@@ -1200,7 +1200,7 @@ noise band), `reference` (settings string), `seed`.
   - Done when: per-band pass counts and the projection to 300 deals a band in `docs/study-results/mistakes.md`.
   - Notes: about 1 thread-hour.
 
-- [ ] **Task 50: branch exploration with reasonable coverage** (opus) (beside earlier phases) needs: Task 42, Task 49
+- [ ] **Task 50: branch exploration with reasonable coverage** (opus) `[parallel-ok]` (beside earlier phases) needs: Task 42, Task 49
   - Why: hk-games D161 choice 2 (Brian, 2026-11-28: "The puzzle should have explored a reasonable coverage of branches"). Text from hk-games Task E10.
   - What: for each qualifying deal-seat, stand in for a player of the deal's bracket with the bracket rung's policy. Expand the most likely unexplored own decision first (by path probability), grade every legal option at the reference, and let the seeded band bots play on to the next own decision. Stop at 90 % path-probability coverage or 40 graded decisions per deal-seat, main line included. Pilot first: 100 deal-seats, report coverage at caps 20/40/80, then fix the cap. Output per node: history key, turn, trivial, elo, theme, options, path_p; per deal-seat: coverage.
   - Done when: the pilot's coverage table at caps 20/40/80 and the chosen cap in `docs/study-results/mistakes.md`; the tree file for every qualifying deal-seat; queue ids written here.
